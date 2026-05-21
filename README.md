@@ -1,0 +1,136 @@
+English | [繁體中文](./README.zh-TW.md)
+
+# VVibe Skills
+
+AI agent skills for [VVibe](https://vvibe.ai) creators. Integrate VVibe services — analytics, member sync, invitation email, pre-deploy security scanning — into any project with your AI coding agent.
+
+## Installation
+
+```bash
+# All skills
+npx skills add vvibe/vvibe-skills
+
+# Specific skill
+npx skills add vvibe/vvibe-skills --skill vvibe-analytics
+```
+
+## Updating
+
+```bash
+# Update all installed skills to latest
+npx skills update
+
+# Update a specific skill
+npx skills update vvibe-analytics
+```
+
+## Skills
+
+| Skill | Description | Triggers |
+|-------|-------------|----------|
+| **vvibe-analytics** | GA4 analytics setup, VVibe event tracking, and dashboard connection | `GA4`, `Google Analytics`, `event tracking` |
+| **vvibe-member** | User sync to VVibe — migration, incremental sync, and dashboard viewing | `user sync`, `member sync`, `user management` |
+| **vvibe-sentry** | Pre-deploy codebase security audit — orchestrates gitleaks, osv-scanner, semgrep, plus VVibe-integration checks. Reports back to the dashboard. | `VVibe sentry scan`, `security audit`, `pre-deploy check`, `secret leak`, `dependency CVE` |
+| **vvibe-email** | Wire invitation-email registration links to either a VVibe-hosted CTA (zero setup) or a self-hosted waitlist landing page on the vibe coder's own domain | `invitation email`, `waitlist landing page`, `app base URL` |
+
+## VVibe Analytics Integration
+
+```bash
+npx skills add vvibe/vvibe-skills --skill vvibe-analytics
+```
+
+Helps creators install Google Analytics 4 on their websites and connect analytics to the VVibe dashboard.
+
+- GA4 installation for Next.js (App Router / Pages Router), React SPA, and vanilla HTML
+- 5 VVibe standard events + GA4 ecommerce event mapping
+- VVibe dashboard authorization flow
+
+**Prerequisites:** Google Analytics 4 account with a Measurement ID (`G-XXXXXXX`) and a VVibe account.
+
+**Skill triggers:**
+- "Help me install Google Analytics on my website"
+- "I want to track VVibe checkout events"
+- "Set up GA4 for my Next.js project"
+- "I want to see website analytics in my VVibe dashboard"
+- "Connect Google Analytics to VVibe"
+
+## VVibe User Management
+
+```bash
+npx skills add vvibe/vvibe-skills --skill vvibe-member
+```
+
+Helps vibe coders sync their application users to VVibe, so creators can view users and subscription status in the Dashboard.
+
+- Bulk migration with batching and backoff
+- Incremental sync with fire-and-forget pattern
+- Dashboard viewing at `https://vvibe.ai/dashboard/users`
+- Sync log tracking
+
+**Prerequisites:** VVibe API Key (`pcs_live_*` or `pcs_test_*`). Apply at [VVibe Dashboard](https://vvibe.ai/dashboard).
+
+**Skill triggers:**
+- "Sync my users to VVibe"
+- "Help me migrate existing users to VVibe"
+- "Set up incremental user sync with VVibe"
+
+## VVibe Sentry Codebase Audit
+
+```bash
+npx skills add vvibe/vvibe-skills --skill vvibe-sentry
+```
+
+Runs a pre-deploy security and reliability audit on the creator's codebase. Sentry **orchestrates established open-source scanners** — it doesn't re-invent them. The agent's value is in driving the tools, normalising their output into a single severity-graded report, and walking the creator through fixes in plain language.
+
+Four layers:
+
+- 🔐 **Secrets** — [gitleaks](https://github.com/gitleaks/gitleaks) scans git history + working tree for committed API keys (AWS, GCP, GitHub, OpenAI, `VVIBE_API_KEY` patterns, etc.)
+- 📦 **Dependencies** — [osv-scanner](https://github.com/google/osv-scanner) + `npm audit` for known CVEs
+- 🛡️ **Static analysis** — [semgrep](https://semgrep.dev/) with OWASP Top 10 + JS/TS rule packs (SQL injection, XSS, SSRF, hardcoded secrets, missing auth, unsafe `eval`, weak crypto)
+- 🪢 **VVibe integration** — sentry-internal checks for VVibe-specific patterns (API key hygiene, member sync idempotency, email opt-out respect, analytics PII)
+
+Every finding is graded CRITICAL / WARNING / INFO. Read-only — never modifies user code. Optionally reports the summary to the dashboard at `https://vvibe.ai/dashboard/sentry-scans`, or via the `vibe_report_health_check` MCP tool when an agent is connected.
+
+**Prerequisites:** [gitleaks](https://github.com/gitleaks/gitleaks), [osv-scanner](https://github.com/google/osv-scanner), and [semgrep](https://semgrep.dev/) installed (sentry gracefully skips any missing tool). Optional: VVibe API Key (`pcs_live_*` or `pcs_test_*`) to report results to the dashboard.
+
+**Skill triggers:**
+- "Run a VVibe sentry scan before I deploy"
+- "Audit my codebase for security issues"
+- "Scan for committed secrets / leaked API keys"
+- "Check my dependencies for CVEs"
+- "Is my project safe to go live?"
+
+## VVibe Invitation Email Integration
+
+```bash
+npx skills add vvibe/vvibe-skills --skill vvibe-email
+```
+
+Helps vibe coders wire the registration link inside VVibe invitation emails to the right destination — either VVibe's hosted waitlist page (zero setup) or the vibe coder's own `/waitlist/[creatorSlug]` landing page (full UX control).
+
+- Mode A — embed `https://vvibe.ai/waitlist/{creatorSlug}` as a CTA, no backend code
+- Mode B — register `appBaseUrl` and host the page yourself; click tracking still goes through VVibe
+- Templates for Next.js, React SPA, and plain HTML in Mode B
+- Cross-links to `vvibe-member` for syncing the new signup back to the dashboard
+
+**Prerequisites:** VVibe API Key (`pcs_live_*` or `pcs_test_*`). For Mode B, an HTTPS-reachable domain for the waitlist page.
+
+**Skill triggers:**
+- "Where does the registration email link land?"
+- "Set up a VVibe waitlist landing page on my own site"
+- "Embed a VVibe waitlist CTA in my hero section"
+- "Configure the app base URL for invitation emails"
+
+## Using a Different Backend
+
+These skills default to `https://vvibe.ai` — direct installers need no setup. To run a fork against a self-hosted or compatible backend, set `VVIBE_API_HOST`; both the bundled scripts and agent-generated code honor it:
+
+```bash
+VVIBE_API_HOST=https://your-backend.example.com
+```
+
+See [PROVIDER.md](./PROVIDER.md) for the backend compatibility contract.
+
+## License
+
+Apache 2.0

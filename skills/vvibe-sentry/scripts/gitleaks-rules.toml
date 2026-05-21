@@ -1,0 +1,27 @@
+# VVibe-specific gitleaks rules.
+# Loaded automatically by scripts/report.mjs via `--config`.
+#
+# These extend gitleaks' built-in ruleset; they do NOT replace it. Use
+# `[extend]` rather than `[rules]` at the top level so default rules
+# (AWS, GitHub, GCP, Stripe, OpenAI, etc.) keep firing.
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "vvibe-live-api-key"
+description = "VVibe live API key (pcs_live_*)"
+regex = '''pcs_live_[A-Za-z0-9_-]{12,}'''
+keywords = ["pcs_live_"]
+
+[[rules]]
+id = "vvibe-test-api-key"
+description = "VVibe test API key (pcs_test_*)"
+regex = '''pcs_test_[A-Za-z0-9_-]{12,}'''
+keywords = ["pcs_test_"]
+
+[[rules]]
+id = "vvibe-env-leak"
+description = "VVIBE_API_KEY hardcoded into source"
+regex = '''VVIBE_API_KEY\s*=\s*['"][A-Za-z0-9_-]{12,}['"]'''
+keywords = ["VVIBE_API_KEY"]
