@@ -85,21 +85,65 @@ All non-scheduled standards run **the same** 4 layers. The standard only changes
 
 **Advanced — single-layer mode.** If the user explicitly asks to run only one layer ("only check secrets", "re-run SAST"), accept that as `--layer secrets|deps|sast|vvibe`. Do not surface this as a main option.
 
-### Step 4 — Detect / install scanners
+### Step 4 — Scanner tiers (orchestrator handles this)
 
-Sentry needs three external tools. Detect what's already installed; offer to install what's missing. Detection (run from the project root):
+**Do not pre-flight scanner availability with shell commands before invoking `report.mjs`.** The orchestrator runs detection itself and picks the best available source per layer. The agent's job is to invoke the orchestrator and explain the resulting tier to the user — not to second-guess.
 
-```bash
-gitleaks version    # if not found → install via brew / winget / `go install` / download release
-osv-scanner --version  # if not found → install via brew / `go install` / download release
-semgrep --version   # if not found → install via `pipx install semgrep` or `brew install semgrep`
-```
+Each layer has a cascade of sources, prioritized by user cost (cheaper to user wins when the rule set matches):
 
-If a tool is missing, the agent should **offer one install command per OS** and wait for the user to run it (or run it on their behalf if they consent). Don't auto-install — installing security tooling is a decision the user should make consciously.
+| Tier | Source | Coverage | User cost | Use case |
+|---|---|---|---|---|
+| **2 (canonical)** | Native binary (`gitleaks`/`osv-scanner`/`semgrep`) | Full | High (install) | Dedicated security-conscious teams |
+| **2 (Docker)** | Pinned Docker image | Full | High (4 GB Docker Desktop) | Already-Docker shops |
+| **1 (GitHub)** | `gh api` reading Secret Scanning + Dependabot + Code Scanning | Near-full (server-side) | 1-click setup | GitHub-hosted repos |
+| **0 (built-in)** | Pure-Node scanners shipped with the skill (regex, OSV.dev HTTP) | Partial | **Zero** | Default for everyone |
 
-`npm audit` ships with npm; no install step required if `package.json` exists.
+Tier-0 is **always available** (no install, no Docker, no network beyond OSV.dev). Tier-1 augments on top when `gh` CLI is installed + authenticated AND the repo is on GitHub. Tier-2 replaces tier-0 when the canonical tool is detected on PATH or in Docker.
 
-The `scripts/report.mjs` orchestrator gracefully degrades: if a tool is missing it skips that layer, marks it as `skipped` in the report, and continues. **Do not refuse to scan just because one tool is missing.**
+**Pinned Docker images** (tier-2 Docker variant):
+
+| Tool | Image |
+|---|---|
+| gitleaks | `zricethezav/gitleaks:latest` |
+| osv-scanner | `ghcr.io/google/osv-scanner:latest` |
+| semgrep | `semgrep/semgrep:latest` |
+
+First Docker run pulls the image (~50–500 MB). The orchestrator prints `📦 First-time pull: <image>` to stderr before pulling so the user understands the wait.
+
+**Layer status in the report — five states** (distinct, agent must explain differently):
+
+| Status | Meaning | What the agent should say |
+|---|---|---|
+| `ok` | Tier-2 canonical scanner ran → full coverage | Normal — show the count |
+| `ok-tier0` | Only built-in / OSV API fallback ran → partial coverage | "Scanned with built-in rules. For deeper coverage, install \<tool\> or enable Docker." |
+| `n/a` | Layer doesn't apply to this project (e.g. DEPS on a no-lockfile site) | "Not applicable — nothing to scan" |
+| `skipped` | Layer is relevant but no source could run (rare — only for unparseable lockfiles like Cargo.lock without osv-scanner) | "I couldn't scan this layer — \<install hint surfaces here\>" |
+| `error` | A scanner was invoked but crashed | Surface the stderr; do not retry blindly |
+
+**GitHub augmentation status** is reported separately in `report.github`:
+
+- `used: bool` — whether augmentation ran
+- `repo: { owner, repo }` — only present if used
+- `layerStatus: { secrets, deps, sast }` each one of `ok | disabled | forbidden | error`
+  - `disabled` → feature is off on the repo. Offer to enable Dependabot/Secret Scanning, or generate a CodeQL workflow.
+  - `forbidden` → `gh` token lacks the scope. Suggest `gh auth refresh -s security_events`.
+
+When `sast: disabled`, you can call `generateCodeqlWorkflow()` from `scripts/scanners/github.mjs` and offer to write `.github/workflows/codeql.yml`. **Do not auto-commit** — show the diff and let the user commit.
+
+**Project relevance** drives whether each layer is even attempted (`report.relevance`):
+
+- `git: bool` — without `.git`, gitleaks runs with `--no-git` (working-tree only, no history coverage). Built-in tier-0 SECRETS is always working-tree-only.
+- `lockfiles: { npm, pnpm, yarn, bun, python, go, rust, ruby, php }` — which ecosystems are present.
+- `depsRelevant: bool` — at least one manifest or lockfile exists.
+- `sastRelevant: bool` — at least one source-tree marker exists (`src/`, `app/`, `main.py`, etc.).
+
+**Coverage gate** (`report.coverage`):
+
+- `pre-launch` and `gold` standards **fail with exit 1** when any layer is `skipped` (banner: `🔴 INCOMPLETE — N layers couldn't run; cannot certify`). Reasoning: shipping with unknown coverage is worse than acknowledging the gap.
+- `routine` and `report-only` warn but pass.
+- `--allow-skipped` is the ship-anyway escape hatch for CI users who knowingly accept the gap.
+
+**Install hints**: when a layer ends up `skipped`, the report carries `installHint: { command, note, platform }`. The agent should surface the command verbatim — these IDs are verified (`Gitleaks.Gitleaks`, `Google.OSVScanner`, `brew install ...`, `pipx install semgrep`). If `command` is null + `note` mentions Docker, the platform has no native install path (e.g. semgrep on Windows) — prefer tier-0 + Docker over recommending WSL.
 
 ### Step 5 — Run the scan
 
