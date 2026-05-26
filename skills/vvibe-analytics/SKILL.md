@@ -1,7 +1,7 @@
 ---
 name: vvibe-analytics
-version: 0.1.0
-description: Help VVibe creators install Google Analytics 4 (GA4) on their websites, set up VVibe event tracking, and connect their GA4 account to VVibe for viewing analytics dashboards. Trigger when the user mentions Google Analytics, GA4, tracking, analytics, website traffic, event tracking, or wants to connect analytics to VVibe.
+version: 0.2.0
+description: Help VVibe creators install Google Analytics 4 (GA4) on their websites, set up VVibe event tracking, and connect their GA4 account to VVibe for viewing analytics dashboards. Also covers utm tracking & traffic-source attribution at the GA4 layer; for signup-time first-touch attribution, see the vvibe-member skill. Trigger when the user mentions Google Analytics, GA4, tracking, analytics, website traffic, event tracking, utm tracking, traffic source, referral attribution, or wants to connect analytics to VVibe.
 ---
 
 # VVibe Analytics Integration
@@ -34,6 +34,14 @@ Use this skill to help a VVibe creator install Google Analytics 4 on their websi
   - configuration options
 - Prefer concise code samples in JavaScript or TypeScript when the user does not ask for another stack.
 - Always include `.env` configuration and `.gitignore` verification steps.
+
+## UTM tracking & traffic-source attribution — split between two skills
+
+GA4 (this skill) automatically captures `utm_source` / `utm_medium` / `utm_campaign` / `utm_term` / `utm_content` on every page view as **traffic-level analytics**. You'll see them in GA4's Acquisition reports without any extra work. Use this for funnel analysis: "how many sessions came from `utm_source=insforge` last month? What's the bounce rate?"
+
+For **signup-time first-touch attribution** — pinning each individual user record to the source that originally brought them — use the **`vvibe-member` skill's Step 7**. That skill walks through adding a `user_attribution` table, a middleware that captures utm/referrer to a 30-day cookie, and a signup hook that snapshots the cookie to the DB so every user has a permanent `(utm_source, utm_medium, utm_campaign, referrer)` of record.
+
+Both layers are useful and complementary: GA4 tells you traffic patterns; `user_attribution` tells you which paying user came from which partner. Recommend installing both for any creator running paid partnerships.
 
 ## Part A — GA4 Installation & Event Tracking
 
