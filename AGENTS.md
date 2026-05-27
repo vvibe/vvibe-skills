@@ -63,7 +63,7 @@ SKILL.md is the entry point when an agent loads a skill. References are loaded o
 - Gracefully degrades — any missing OSS scanner downgrades its layer to `skipped` and the rest still run
 - Reporting (optional, two paths):
   - MCP-connected agent → call `vibe_report_health_check`
-  - Standalone → `POST /api/creator-subscription/health-check-reports` with `Authorization: Bearer {VVIBE_API_KEY}`
+  - Standalone → `POST /api/health-scans/reports` with `Authorization: Bearer {VVIBE_API_KEY}`
 - Results flow into the creator's Vibe dashboard at `https://vvibe.ai/dashboard/sentry-scans`
 
 ## Provider Abstraction

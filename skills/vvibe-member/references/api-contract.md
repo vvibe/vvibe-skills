@@ -17,14 +17,14 @@ Authorization: Bearer {VVIBE_API_KEY}
 ```
 
 - API Key prefix determines mode: `pcs_live_*` (production) / `pcs_test_*` (sandbox)
-- The Sync endpoint (`POST .../users/sync`) only accepts API Key auth.
+- The Sync endpoint (`POST .../members/sync`) only accepts API Key auth.
 - GET endpoints also accept Firebase JWT (for Dashboard SSO login).
 
 ---
 
 ## Endpoints
 
-### 1. POST /api/creator-subscription/admin/users/sync
+### 1. POST /api/members/sync
 
 Batch upsert users. Max 100 per call.
 
@@ -96,7 +96,7 @@ syncToVVibe(userData).catch(err => console.error('[VVibe Sync]', err))
 
 ---
 
-### 2. GET /api/creator-subscription/admin/users
+### 2. GET /api/members
 
 List users with pagination, search, and subscription enrichment.
 
@@ -167,7 +167,7 @@ List users with pagination, search, and subscription enrichment.
 
 ---
 
-### 3. GET /api/creator-subscription/admin/users/{userId}
+### 3. GET /api/members/{userId}
 
 Get a single user with subscription info.
 
@@ -203,7 +203,7 @@ Get a single user with subscription info.
 
 ---
 
-### 4. GET /api/creator-subscription/admin/users/stats
+### 4. GET /api/members/stats
 
 Get aggregated user statistics.
 
@@ -224,7 +224,7 @@ Get aggregated user statistics.
 
 ---
 
-### 5. GET /api/creator-subscription/admin/users/sync-logs
+### 5. GET /api/members/sync-logs
 
 Get sync history logs.
 

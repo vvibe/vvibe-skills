@@ -1,6 +1,6 @@
 ---
 name: vvibe-member
-version: 0.2.0
+version: 0.3.0
 description: Help users sync and manage their application users in VVibe (initial migration, incremental sync, dashboard viewing) AND capture first-touch attribution (utm_*, referrer) at signup so creators can see where each user came from. Trigger when the user mentions VVibe user sync, user management, user synchronization, member sync, signup attribution, utm tracking, referral tracking, or wants to push user data to VVibe.
 ---
 
@@ -11,7 +11,7 @@ Use this skill to help a human user integrate VVibe's User Management API. This 
 ## Key Concepts
 
 - **Source of truth**: The user's data lives in the vibe coder's system. VVibe is a read-only mirror + subscription status overlay.
-- **Sync API**: Push-based. The vibe coder calls `POST /api/creator-subscription/admin/users/sync` to send user data to VVibe.
+- **Sync API**: Push-based. The vibe coder calls `POST /api/members/sync` to send user data to VVibe.
 - **Dashboard**: Creators view users at `https://vvibe.ai/dashboard/members`. It is **read-only** — all changes come from the Sync API.
 - **Subscription enrichment**: Each user's row shows their VVibe subscription status (if any) as an attribute. No subscription = "Free".
 
@@ -31,7 +31,7 @@ The example helper in `scripts/sync_user.mjs` already follows this pattern. See 
 
 Uses the same Creator Subscription API Key (`pcs_live_*` / `pcs_test_*`).
 
-- The Sync API (`POST .../users/sync`) **only accepts API Key auth** (needs `apiKeyId` to identify data ownership).
+- The Sync API (`POST .../members/sync`) **only accepts API Key auth** (needs `apiKeyId` to identify data ownership).
 - GET endpoints accept both API Key and Firebase JWT.
 
 ## Workflow
@@ -146,7 +146,7 @@ async function syncToVVibe(users: Array<{
 
     try {
       const res = await fetch(
-        `${VVIBE_API_HOST}/api/creator-subscription/admin/users/sync`,
+        `${VVIBE_API_HOST}/api/members/sync`,
         {
           method: 'POST',
           headers: {
@@ -216,7 +216,7 @@ await syncToVVibe([userData]) // if this fails, user registration fails too
 
 ### Step 5 — Run Initial Sync
 
-> **Heads up — VVibe may auto-send welcome emails on this sync.** When `syncToVVibe` upserts a user, VVibe fires a `welcome_free` (or `welcome_paid` if the user has an active subscription) email by default. If the vibe coder's app already sends its own welcome flow, **disable the matching template before running the initial sync**, or the backfill will explode into one duplicate email per existing user. To disable: `GET /api/creator-email/templates/welcome_free` to fetch the current template, then `PUT` the same payload back with `enabled: false` (the endpoint validates `subject`, `greeting`, and `body` as required non-empty strings — you cannot send `{ enabled: false }` alone). Same flow for `welcome_paid`. See the `vvibe-email` skill for details.
+> **Heads up — VVibe may auto-send welcome emails on this sync.** When `syncToVVibe` upserts a user, VVibe fires a `welcome_free` (or `welcome_paid` if the user has an active subscription) email by default. If the vibe coder's app already sends its own welcome flow, **disable the matching template before running the initial sync**, or the backfill will explode into one duplicate email per existing user. To disable: `GET /api/email/templates/welcome_free` to fetch the current template, then `PUT` the same payload back with `enabled: false` (the endpoint validates `subject`, `greeting`, and `body` as required non-empty strings — you cannot send `{ enabled: false }` alone). Same flow for `welcome_paid`. See the `vvibe-email` skill for details.
 
 Branch on the path picked in Step 3b.
 

@@ -156,7 +156,7 @@ with CVSS-derived severities; 0.2.0 unifies on the CVSS bands.
 
 ## Reporting endpoint
 
-REST: `POST ${VVIBE_API_HOST}/api/creator-subscription/health-check-reports`
+REST: `POST ${VVIBE_API_HOST}/api/health-scans/reports`
 
 ```
 Authorization: Bearer ${VVIBE_API_KEY}

@@ -13,7 +13,7 @@
 
 const API_KEY = process.env.VVIBE_API_KEY
 const API_HOST = process.env.VVIBE_API_HOST || 'https://vvibe.ai'
-const API_URL = `${API_HOST}/api/creator-subscription/admin/users/sync`
+const API_URL = `${API_HOST}/api/members/sync`
 
 /**
  * Sync a single user to VVibe.

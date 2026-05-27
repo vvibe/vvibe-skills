@@ -1,6 +1,6 @@
 ---
 name: vvibe-email
-version: 0.1.0
+version: 0.2.0
 description: Help VVibe creators run follower-email campaigns end-to-end — create a draft, save and iterate on subject + HTML body, send it via Vibe MCP, read post-send analytics — and wire up where the invitation email's CTA redirects (VVibe-hosted waitlist, self-hosted /waitlist/[slug], or directly into the creator's existing register flow). Trigger when the user mentions invitation emails, follower outreach campaigns, sending an email blast to followers, drafting an email campaign, waitlist signup landing page, app base URL, embedding a waitlist CTA, skipping the waitlist when a member system already exists, or asks how the registration email link works / where it lands.
 ---
 
@@ -32,13 +32,13 @@ Auto-fired on subscription-lifecycle events. One shared template per merchant �
 
 | Template type | Triggered by | Common reason to disable |
 |---|---|---|
-| `welcome_free` | `POST /admin/users/sync` upserts a user with no active subscription | The vibe coder's app already sends its own welcome email |
+| `welcome_free` | `POST /members/sync` upserts a user with no active subscription | The vibe coder's app already sends its own welcome email |
 | `welcome_paid` | Payment callback (status `completed`), or sync that adds an active subscription | The vibe coder customizes the upgrade email in their own product |
 | `subscription_canceled` | `POST /subscriptions/{id}/cancel`, or self-service portal cancel | The vibe coder wants control over cancellation timing/copy |
 
 Disable from the dashboard or via REST:
 ```bash
-curl -X PUT https://vvibe.ai/api/creator-email/templates/welcome_free \
+curl -X PUT https://vvibe.ai/api/email/templates/welcome_free \
   -H "Authorization: Bearer ${VVIBE_API_KEY}" \
   -H "Content-Type: application/json" \
   -d '{ "enabled": false }'
@@ -98,8 +98,8 @@ What to do:
 
 1. **Confirm `appBaseUrl` is empty** (it is by default). If the merchant previously enabled Mode B, clear it:
    - **Vibe MCP (preferred):** call `vibe_update_brand` with `{ "appBaseUrl": "" }` — no API key needed.
-   - **REST fallback:** `PUT /api/creator-subscription/config` with `{ "appBaseUrl": "" }`.
-2. **Find the creator's slug** — `GET /api/creator-subscription/config` returns the merchant config. The slug also appears in the VVibe Dashboard.
+   - **REST fallback:** `PUT /api/store-config` with `{ "appBaseUrl": "" }`.
+2. **Find the creator's slug** — `GET /api/store-config` returns the merchant config. The slug also appears in the VVibe Dashboard.
 3. **Embed the CTA URL** in the vibe coder's app, email signature, social bio, etc.:
    ```
    https://vvibe.ai/waitlist/{creatorSlug}
@@ -120,7 +120,7 @@ See `references/self-hosted-waitlist.md` for complete code templates (Next.js, R
 
 **REST fallback:**
 ```bash
-curl -X PUT https://vvibe.ai/api/creator-subscription/config \
+curl -X PUT https://vvibe.ai/api/store-config \
   -H "Authorization: Bearer ${VVIBE_API_KEY}" \
   -H "Content-Type: application/json" \
   -d '{ "appBaseUrl": "https://your-app.example.com" }'
@@ -186,7 +186,7 @@ Use when the project already has its own register / signup flow.
 
 **REST fallback:**
 ```bash
-curl -X PUT https://vvibe.ai/api/creator-subscription/config \
+curl -X PUT https://vvibe.ai/api/store-config \
   -H "Authorization: Bearer ${VVIBE_API_KEY}" \
   -H "Content-Type: application/json" \
   -d '{ "appBaseUrl": "https://your-app.example.com", "inviteRedirectPath": "/signup" }'

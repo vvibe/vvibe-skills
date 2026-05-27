@@ -31,10 +31,10 @@ To work unmodified, a fork's backend must be wire-compatible with the VVibe REST
 
 - **Auth**: `Authorization: Bearer ${VVIBE_API_KEY}` on all admin endpoints.
 - **Endpoints** referenced by the skills (relative to `VVIBE_API_HOST`):
-  - Member sync: `/api/creator-subscription/admin/users/sync`
-  - Email: `/api/creator-email/templates/{name}`, `/api/creator-email/campaigns/*`, `/api/waitlist/{slug}`
+  - Member sync: `/api/members/sync`
+  - Email: `/api/email/templates/{name}`, `/api/email/campaigns/*`, `/api/waitlist/{slug}`
   - Click tracking: `/r/{code}` (HTTP 302 to the resolved landing page)
-  - Sentry reporting: `/api/creator-subscription/health-check-reports`
+  - Sentry reporting: `/api/health-scans/reports`
 - **Response shapes**: The skills assume `{ data: ... }`-wrapped responses. See `skills/vvibe-member/references/api-contract.md` for the user-sync contract.
 
 If your backend diverges from any of the above, `VVIBE_API_HOST` alone won't be enough — you'll need to fork the skills.

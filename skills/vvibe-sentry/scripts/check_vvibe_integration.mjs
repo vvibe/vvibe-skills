@@ -79,14 +79,14 @@ function checkHardcodedApiKey(file, content, rel) {
 
 /**
  * VVIBE-002: member-sync should send an Idempotency-Key header.
- * Triggers on fetch calls to /users/sync that lack the header.
+ * Triggers on fetch calls to /members/sync that lack the header.
  */
 function checkMemberSyncIdempotency(file, content, rel) {
-  if (!/users\/sync/.test(content)) return []
-  // Look at each fetch(...) block touching users/sync; if the block doesn't
+  if (!/members\/sync/.test(content)) return []
+  // Look at each fetch(...) block touching members/sync; if the block doesn't
   // contain "Idempotency-Key", flag it.
   const findings = []
-  const re = /fetch\s*\(([^)]*users\/sync[^)]*)\)/g
+  const re = /fetch\s*\(([^)]*members\/sync[^)]*)\)/g
   let m
   while ((m = re.exec(content))) {
     const block = content.slice(m.index, Math.min(content.length, m.index + 600))
@@ -110,15 +110,15 @@ function checkMemberSyncIdempotency(file, content, rel) {
 
 /**
  * VVIBE-003: email skill must respect unsubscribed_at when sending.
- * Looks for code that posts to /creator-email/campaigns/.../send without
+ * Looks for code that posts to /email/campaigns/.../send without
  * a guard on unsubscribed status.
  */
 function checkEmailUnsubscribeRespected(file, content, rel) {
-  if (!/creator-email\/campaigns\/[^"'`]+\/send/.test(content)) return []
+  if (!/email\/campaigns\/[^"'`]+\/send/.test(content)) return []
   if (/unsubscribed[_-]?at|unsubscribedAt|status.*unsubscribed|isUnsubscribed/i.test(content)) {
     return []
   }
-  const line = lineOf(content, content.search(/creator-email\/campaigns\/[^"'`]+\/send/))
+  const line = lineOf(content, content.search(/email\/campaigns\/[^"'`]+\/send/))
   return [
     f({
       code: 'VVIBE-003',

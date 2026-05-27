@@ -315,7 +315,7 @@ syncToVVibe([{ email, name, status: 'active' }]).catch((err) =>
 
 ## Common Mistakes
 
-- **Using `http://` for `appBaseUrl`** — VVibe rejects with 400 at `PUT /api/creator-subscription/config`. Always HTTPS.
+- **Using `http://` for `appBaseUrl`** — VVibe rejects with 400 at `PUT /api/store-config`. Always HTTPS.
 - **Forgetting to forward `ref` and `outboxId`** on the form POST — the campaign click is logged but the signup can't be pinned to a specific recipient, so the `signedUp` funnel stage stays at 0 for that signup. `outboxId` (= URL `utm_content`) is what does the per-recipient pinning.
 - **Putting `appBaseUrl` behind authentication** — the page must be publicly reachable. Anyone with a valid invitation link can land on it.
 - **Renaming the path** — VVibe's redirect uses the literal `/waitlist/{slug}`. Aliasing to `/signup/{slug}` produces 404s.

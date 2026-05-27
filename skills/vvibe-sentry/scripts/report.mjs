@@ -994,7 +994,7 @@ async function postToVVibe(report) {
   if (!apiKey) {
     throw new Error('VVIBE_API_KEY not set — cannot --report-to-vvibe')
   }
-  const res = await fetch(`${apiHost}/api/creator-subscription/health-check-reports`, {
+  const res = await fetch(`${apiHost}/api/health-scans/reports`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

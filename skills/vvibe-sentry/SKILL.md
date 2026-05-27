@@ -1,6 +1,6 @@
 ---
 name: vvibe-sentry
-version: 0.1.0
+version: 0.2.0
 description: Run a pre-deploy security and reliability audit on the creator's codebase. Trigger when the user mentions VVibe sentry scan, security audit, pre-deploy check, secret leak, dependency CVE, vulnerability scan, or wants to verify the codebase is safe to go live.
 ---
 
@@ -216,7 +216,7 @@ vibe_report_health_check({
 })
 ```
 
-This populates the creator's dashboard at `/dashboard/sentry-scans`. The MCP tool returns a URL the creator can visit. The full report (with all findings) goes via REST POST to `${VVIBE_API_HOST}/api/creator-subscription/health-check-reports` if an API key is set; otherwise the dashboard sees only the summary.
+This populates the creator's dashboard at `/dashboard/sentry-scans`. The MCP tool returns a URL the creator can visit. The full report (with all findings) goes via REST POST to `${VVIBE_API_HOST}/api/health-scans/reports` if an API key is set; otherwise the dashboard sees only the summary.
 
 See `references/health-check-contract.md` for the full payload schema.
 
@@ -298,7 +298,7 @@ This layer only fires on files that look like they call VVibe — the script gre
 
 ## Provider configuration
 
-The reporting endpoint defaults to `https://vvibe.ai/api/creator-subscription/health-check-reports`. Override via `VVIBE_API_HOST` (honoured by `scripts/report.mjs`). See [PROVIDER.md](../../PROVIDER.md) at the repo root.
+The reporting endpoint defaults to `https://vvibe.ai/api/health-scans/reports`. Override via `VVIBE_API_HOST` (honoured by `scripts/report.mjs`). See [PROVIDER.md](../../PROVIDER.md) at the repo root.
 
 ## CI integration
 

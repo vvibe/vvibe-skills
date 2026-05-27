@@ -8,7 +8,7 @@ Use VVibe's hosted waitlist page. Zero server-side code in the vibe coder's app.
 https://vvibe.ai/waitlist/{creatorSlug}
 ```
 
-`creatorSlug` is the public-facing slug for the creator's profile. Get it from `GET /api/creator-subscription/config` or the VVibe Dashboard.
+`creatorSlug` is the public-facing slug for the creator's profile. Get it from `GET /api/store-config` or the VVibe Dashboard.
 
 ## Placement Examples
 
