@@ -2,7 +2,17 @@
 
 ## When to use this
 
-Use this reference when the creator's system is the source of truth for users and you need to **push** that data into VVibe so it surfaces in the Dashboard at `https://vvibe.ai/dashboard/members`. Covers initial backfill plus incremental hooks on registration, login, profile update, and deletion. If you are reading users back out of VVibe, or receiving events from VVibe, you are in the wrong mode — return to the routing SKILL.md. For exact wire shapes (request/response fields, status codes, errors) see [./api-contract.md](./api-contract.md).
+Use this reference when the creator's system is the source of truth for users and you need to **push** that data into VVibe so it surfaces in the Dashboard at `https://vvibe.ai/dashboard/members`. Covers initial backfill plus incremental hooks on registration, login, profile update, deletion, **email change, restore-from-deleted, and admin batch imports**. If you are reading users back out of VVibe, or receiving events from VVibe, you are in the wrong mode — return to the routing SKILL.md. For exact wire shapes (request/response fields, status codes, errors) see [./api-contract.md](./api-contract.md).
+
+## What does NOT need syncing
+
+Don't sync these — VVibe owns them on its side. Syncing creates conflicts, not improvements:
+
+- **Subscription state from VVibe-hosted checkout.** When the user pays on VVibe's hosted checkout page, VVibe records the subscription itself. The creator's app learns about it via `member.subscription_changed` webhook (inbound-webhook mode), not by pushing.
+- **VVibe-side waitlist signups.** Submissions to the public `/r/{creatorSlug}` waitlist page are stored by VVibe; the creator's app reads them via query-read or receives them via `member.created` webhook.
+- **Email delivery / open / click events.** VVibe's email skill tracks these; the creator's app does not push them back.
+
+Sync ONLY the user records the creator's own app produces (signups in the app, profile edits in the app, deletions in the app).
 
 ## 1. Consent
 
@@ -172,9 +182,12 @@ await syncToVVibe([userData])
 **Where to insert sync calls — pass all mapped fields at each hook point:**
 
 - **User registration** — after successful signup, sync the new user. **If the form or URL carried a referral / promo parameter (e.g. `?ref=EARLY2026`, `?code=`, `?promo=`, `?coupon=`), pass it as `signup_ref_code`.** Recorded regardless of whether a matching discount exists — checkout application is the payment integration's job. **First-write-wins**: later syncs with a different code are dropped with `errors: [{ reason: 'signup_ref_code_already_recorded' }]`.
-- **Profile update** — after successful save, sync updated fields.
+- **Profile update** — after successful save, sync updated fields. **Plan label changes belong here** — if the app's `user.plan_name` changes (e.g. user picks a different tier in the app's own UI), sync with the new `plan_name`. Distinct from VVibe-side subscription status, which VVibe maintains itself.
+- **Email change** — **DO NOT just sync the new email.** `email` is the dedup key (`UNIQUE(profile_id, api_key_id, email)`), so syncing a new email creates a brand-new VVibe member and orphans the old one — the creator loses sync continuity AND ends up with stale rows in their dashboard. **Correct sequence**: (1) `syncToVVibe([{ email: oldEmail, status: 'deleted' }])`, then (2) `syncToVVibe([{ email: newEmail, ...allOtherFields, status: 'active' }])`. Both calls fire-and-forget; do them in order, not in parallel. Subscription history does NOT carry over — this is a known v1 limitation. If the app doesn't support email change (most don't), skip this hook.
 - **Login** — call sync in the framework's auth hook (Payload `afterLogin`, NextAuth `events.signIn`, Supabase auth webhooks, Django/Flask-Login `user_logged_in`) and pass `lastLoginAt: new Date()` to the helper — it's typed `Date | null` and the helper handles ISO conversion. No need to persist in the creator's DB.
 - **Account deletion** — sync with `status: "deleted"` to remove from VVibe.
+- **Account restore (un-deletion)** — if the app supports recovering a soft-deleted account, sync `status: 'active'` with the same email to re-activate the VVibe row. Skip if the app has no restore feature.
+- **Admin batch imports** — if the app has an admin tool that bulk-creates users (CSV upload, JSON import, API-based provisioning), wire `syncToVVibe(batch)` at the end of the import handler. Easy to forget because it's not a per-user event — explicitly add a hook in the import handler, not just the per-user lifecycle.
 - **Waitlist signup** — if the merchant uses `vvibe-email` in self-hosted mode (Mode B), after POST to `/api/waitlist` succeeds call `syncToVVibe([{ email, name, status: 'active' }])` fire-and-forget.
 
 ## 5. Run initial sync
@@ -220,11 +233,14 @@ Review the codebase and present this per-lifecycle-event checklist:
 ## VVibe Sync Endpoint Checklist
 ✅ / ❌ User registration — {file:line} | Reason: {why}
 ✅ / ❌ User login (update last_login_at) — {file:line} | Reason: {why}
-✅ / ❌ User profile update — {file:line} | Reason: {why}
-✅ / ❌ User deletion (status: "deleted") — {file:line} | Reason: {why}
+✅ / ❌ User profile update (incl. plan_name changes) — {file:line} | Reason: {why}
+✅ / ❌ Email change (delete-then-create sequence) — {file:line} | Reason: {why}
+✅ / ❌ Account deletion (status: "deleted") — {file:line} | Reason: {why}
+✅ / ❌ Account restore / un-delete (status: "active" re-sync) — {file:line} | Reason: {why}
+✅ / ❌ Admin batch imports (CSV upload, JSON import, bulk-provision) — {file:line} | Reason: {why}
 ```
 
-Use ✅ if a fire-and-forget `syncToVVibe` call exists; ❌ otherwise (explain why — e.g. "system has no deletion feature" or "endpoint is missing sync, needs to be added"). If a hook is missing and should exist, **add it** before continuing.
+Use ✅ if a fire-and-forget `syncToVVibe` call exists; ❌ otherwise (explain why — e.g. "app has no deletion feature, hook not needed", "app has no email-change UI, hook not needed", or "endpoint is missing sync, needs to be added"). If a hook is missing **and the app actually supports that lifecycle event**, add it before continuing. If the app genuinely doesn't have that event (no restore feature, no admin import), the ❌ with reason is the correct answer — don't invent code paths.
 
 ### 6b — Next steps & done
 
@@ -261,3 +277,6 @@ Then explain: after the initial sync, **no manual action is needed for daily use
 - **Calling the app's own HTTP API from the backfill.** Use the framework's Local API / ORM, not `fetch('/api/users')`.
 - **Two copies of the sync helper.** Keep one shared module; import from both registration handler and one-time script.
 - **Mixing `signup_ref_code` with later syncs.** First-write-wins. Pass on registration only; later syncs leave it `undefined`.
+- **Email change as a single sync.** Re-syncing with the new email creates a duplicate VVibe member; the old row stays orphaned with stale subscription state. Always delete-then-create (see Email change hook in §4).
+- **Forgetting admin import hooks.** The per-user lifecycle hooks (afterCreate, afterSave) don't fire on bulk SQL inserts or framework-level seed scripts. Add a hook at the end of the admin import handler explicitly.
+- **Trying to sync VVibe-owned data.** Subscription status, hosted-checkout payments, email open/click events — VVibe maintains these. Syncing them creates conflicts and noise. See "What does NOT need syncing" above.
