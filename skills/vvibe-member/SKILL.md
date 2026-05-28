@@ -23,7 +23,7 @@ mutually exclusive:
 
 - **outbound-sync** — your app → VVibe (push your users so creators see them)
 - **query-read** — your app → VVibe (read back members, stats, sync logs)
-- **inbound-webhook** — VVibe → your app (get notified when VVibe-side state changes) *(planned, not available yet)*
+- **inbound-webhook** — VVibe → your app (get notified when VVibe-side state changes)
 
 A cross-cutting concern that hangs off `outbound-sync`:
 
@@ -82,8 +82,7 @@ modes:
     load: references/query-read.md
 
   inbound-webhook:
-    status: planned
-    available: false
+    status: available
     when: >
       VVibe-side state changes (subscription created/canceled, payout
       completed, waitlist signup on VVibe-hosted page) should push to the
@@ -95,18 +94,7 @@ modes:
       - "VVibe → my app webhook"
       - "realtime member state from VVibe"
     requires: [has_server_runtime, has_public_https_endpoint, has_api_key_local]
-    fallback: >
-      Not built yet. Be honest: VVibe → app push is on the roadmap, not
-      shipping today. Pick the closest workaround based on the user's
-      use case:
-        (a) Events ORIGINATE in VVibe (e.g. checkout on the hosted page,
-            email click): the only stopgap is to poll query-read on a
-            short interval. Flag clearly that this is a stopgap, not a
-            solution — pulls are not realtime and add request load.
-        (b) Events ORIGINATE in the vibe coder's app: outbound-sync
-            already covers it.
-      Do NOT generate webhook receiver code. Offer to revisit when
-      inbound-webhook ships.
+    load: references/inbound-webhook.md
 
   attribution-utm:
     status: available
@@ -139,12 +127,11 @@ recipes:
 
   production-launch:
     description: >
-      Production-ready integration — outbound sync + marketing attribution.
-      Pick this for "set up properly", "production integration",
-      "launch-ready". (Not truly bidirectional — inbound-webhook is
-      planned but not yet available.)
+      Production-ready integration — outbound sync + marketing attribution +
+      realtime inbound events. Pick this for "set up properly",
+      "production integration", "launch-ready", "full bidirectional".
     aliases: [full-bidirectional]
-    load_in_order: [outbound-sync, attribution-utm]
+    load_in_order: [outbound-sync, attribution-utm, inbound-webhook]
 
   reverse-only:
     description: "VVibe hosts the user list; the app only reads."
@@ -190,9 +177,6 @@ disambiguators:
     ask: null
     map:
       "*": inbound-webhook
-    note: >
-      No question. Inbound-webhook is not available — surface the
-      fallback message from §3 and offer outbound-sync as a workaround.
 ```
 
 ## 6. Cross-cutting facts (apply to ALL modes)
