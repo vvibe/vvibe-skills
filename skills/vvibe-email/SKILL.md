@@ -1,301 +1,260 @@
 ---
 name: vvibe-email
-version: 0.2.0
-description: Help VVibe creators run follower-email campaigns end-to-end — create a draft, save and iterate on subject + HTML body, send it via Vibe MCP, read post-send analytics — and wire up where the invitation email's CTA redirects (VVibe-hosted waitlist, self-hosted /waitlist/[slug], or directly into the creator's existing register flow). Trigger when the user mentions invitation emails, follower outreach campaigns, sending an email blast to followers, drafting an email campaign, waitlist signup landing page, app base URL, embedding a waitlist CTA, skipping the waitlist when a member system already exists, or asks how the registration email link works / where it lands.
+version: 0.3.0
+manifest_version: 1
+description: Help VVibe creators wire invitation-email integration end-to-end — where the email CTA lands (VVibe-hosted, self-hosted waitlist, or direct register), how to send campaigns via Vibe MCP, and how to manage system + follower-flow email templates. Trigger when the user mentions invitation emails, follower outreach campaigns, sending an email blast, drafting an email campaign, waitlist signup landing page, app base URL, embedding a waitlist CTA, skipping the waitlist when a member system already exists, or asks where the registration email link lands.
+
 ---
 
-# VVibe Invitation Email Integration
+# VVibe Email Skill — Routing
 
-Use this skill to help a human user wire up the registration link from VVibe invitation emails to the right landing page.
+This file is a router. It decides **which** email integration the human user
+needs, then directs you to a single deep-dive in `references/`.
 
-## Concept
+When you load this skill: read this whole file, run the capability checks in
+§2, pick a mode using §3 / §4, then **Read the matching references/*.md**.
+Do not read every reference upfront.
 
-When a follower clicks the CTA in a VVibe invitation email, the request always hits `https://vvibe.ai/r/{referralCode}` first — that endpoint is the central click tracker (rate limit, click-event log, attribution). VVibe then 302-redirects to a landing page; three modes pick where:
+## 1. What this skill does
 
-| Mode | Landing URL | `creatorSubscriptionConfig` |
+The skill covers four independent concerns. Pick any combination — they are
+NOT mutually exclusive:
+
+- **hosted-cta** — embed VVibe's hosted waitlist URL as a button/link. Zero infra.
+- **self-hosted-waitlist** — host `/waitlist/[slug]` on your own domain. Brand control.
+- **direct-register** — skip the waitlist; invitation clicks land on your app's existing register page.
+- **mcp-campaign** — author + send invitation campaigns via the Vibe MCP tools. Independent of where clicks land.
+
+The first three are mutually exclusive *as the click destination* (one
+merchant has one destination per moment), but they're swappable — a
+creator may start with hosted-cta and migrate to direct-register later.
+
+**Click tracking is universal.** Every invitation-email click goes through
+`https://vvibe.ai/r/{referralCode}` first for tracking + rate-limit + log,
+then 302-redirects to the destination based on which mode is configured.
+Pointing the email CTA directly at the creator's domain bypasses this and
+loses click analytics.
+
+**Out of scope for this skill.** Inbound webhooks (click / open / signup
+event callbacks to the creator's app) are NOT covered here — that's the
+vvibe-member skill's `inbound-webhook` mode (planned, not yet shipping).
+This skill is outbound email only: where the CTA lands, how to send
+campaigns, and which templates fire on what triggers.
+
+## 2. Capability checklist (run BEFORE asking the user anything)
+
+Detect from the project. Don't ask if you can find out.
+
+| Capability | How to detect | Used by |
 |---|---|---|
-| **A. Hosted waitlist** (default) | `https://vvibe.ai/waitlist/{creatorSlug}` | `appBaseUrl` empty |
-| **B. Self-hosted waitlist** | `https://{appBaseUrl}/waitlist/{creatorSlug}` | `appBaseUrl` set, `inviteRedirectPath` empty |
-| **C. Direct register** | `https://{appBaseUrl}{inviteRedirectPath}` | both set (e.g. `inviteRedirectPath: "/signup"`) |
+| `has_server_runtime` | Server framework (Next.js with API routes, Express, FastAPI, Rails). Static-only sites fail this. | self-hosted-waitlist, direct-register |
+| `has_public_https_endpoint` | Deployed (Vercel / Fly / Render) OR known prod domain. Localhost-only ⇒ false. | self-hosted-waitlist, direct-register |
+| `has_signup_flow` | Discoverable registration handler (route file or auth-provider hook). | direct-register |
+| `has_api_key_local` | `VVIBE_API_KEY` in `.env*` or framework env. | all three click destinations + REST fallbacks |
+| `outbound_sync_wired` | Grep for `POST /api/members/sync` or `syncToVVibe` helper. See vvibe-member skill. | direct-register (required), self-hosted-waitlist (recommended) |
+| `vibe_mcp_connected` | `vibe_*` tools registered on this session. | mcp-campaign only |
 
-`?ref` / `utm_source=invitation` / `utm_campaign` / `utm_content` are appended in all three modes — attribution survives. Toggling propagates within ~60 seconds (VVibe's per-process cache TTL) and applies to every email already in flight.
+After detection, tell the user briefly what you found.
 
-**Mode C trade-off:** recipients bypass the VVibe waitlist. To get the new follower into the creator's user list and stamp the `signedUp` funnel stage, the register flow must call `syncToVVibe` (see `vvibe-member`) with `signupRefCode` set. Without that call, the creator never sees the user and the campaign analytics' `signedUp` and `converted` both stay at 0 — `converted` only stamps for recipients whose `signedUp` has already been recorded.
+**If detection is impossible** (closed-source repo, thin context, agent
+can't run filesystem operations): name the capability you couldn't verify
+and ask the user a single yes/no question per missing capability. Default
+to assuming missing rather than present — better to over-route to
+quickstart than to generate code against a backend that doesn't exist.
 
-## Email Types Reference
+## 3. Modes
 
-VVibe ships two distinct email categories:
+```yaml
+modes:
+  hosted-cta:
+    status: available
+    when: >
+      Fastest possible launch. No backend work. Creator embeds the URL
+      anywhere — app, social bio, email signature. VVibe hosts the
+      waitlist page.
+    triggers:
+      - "embed VVibe waitlist CTA"
+      - "hosted waitlist"
+      - "fastest setup for invitation emails"
+      - "I don't have a backend"
+    requires: []
+    load: references/hosted-cta.md
 
-### 1. Built-in system emails (3)
+  self-hosted-waitlist:
+    status: available
+    when: >
+      Brand consistency matters. Creator hosts the waitlist page on their
+      own domain at `/waitlist/[slug]`. Full UI control. Click tracking
+      and attribution still go through VVibe.
+    triggers:
+      - "self-hosted waitlist"
+      - "waitlist page on my own domain"
+      - "branded waitlist"
+      - "app base URL"
+    requires: [has_server_runtime, has_public_https_endpoint, has_api_key_local]
+    load: references/self-hosted-waitlist.md
 
-Auto-fired on subscription-lifecycle events. One shared template per merchant — the creator edits subject/body or toggles `enabled` via `vibe_update_template`.
+  direct-register:
+    status: available
+    when: >
+      The vibe coder's app already has a register / signup flow. Skip
+      the waitlist entirely — invitation clicks land directly on the
+      existing signup page. **Most common choice for any production app
+      that already has user accounts.**
+    triggers:
+      - "skip the waitlist"
+      - "land on my existing register page"
+      - "I already have user signup"
+      - "inviteRedirectPath"
+      - "direct register"
+    requires: [has_server_runtime, has_signup_flow, has_api_key_local, outbound_sync_wired]
+    wired_check: >
+      `outbound_sync_wired` = grep for `syncToVVibe` or `POST /api/members/sync`
+      in the project. If absent, route to vvibe-member skill outbound-sync
+      mode FIRST — direct-register cannot stamp campaign analytics without it.
+    load: references/direct-register.md
 
-| Template type | Triggered by | Common reason to disable |
-|---|---|---|
-| `welcome_free` | `POST /members/sync` upserts a user with no active subscription | The vibe coder's app already sends its own welcome email |
-| `welcome_paid` | Payment callback (status `completed`), or sync that adds an active subscription | The vibe coder customizes the upgrade email in their own product |
-| `subscription_canceled` | `POST /subscriptions/{id}/cancel`, or self-service portal cancel | The vibe coder wants control over cancellation timing/copy |
-
-Disable from the dashboard or via REST:
-```bash
-curl -X PUT https://vvibe.ai/api/email/templates/welcome_free \
-  -H "Authorization: Bearer ${VVIBE_API_KEY}" \
-  -H "Content-Type: application/json" \
-  -d '{ "enabled": false }'
+  mcp-campaign:
+    status: available
+    when: >
+      Author and send invitation campaigns via the Vibe MCP tools.
+      Independent of where clicks land — works alongside any of A/B/C.
+      Requires the agent to be connected to the creator's Vibe MCP.
+    triggers:
+      - "send an invitation campaign"
+      - "draft an email blast"
+      - "campaign analytics"
+      - "send invitation emails"
+    requires: [vibe_mcp_connected]
+    fallback: >
+      If MCP isn't connected: invitation campaigns can only be created
+      via the dashboard UI today. There is no REST equivalent to
+      `vibe_send_campaign`. Direct the creator to vvibe.ai/dashboard
+      and offer to revisit when MCP is wired.
+    load: references/sending-campaigns.md
 ```
-Disabling takes effect immediately for new triggers; already-enqueued outbox rows still send.
 
-> **Avoiding double emails.** If the vibe coder has their own welcome / upgrade / cancellation flow, disable the matching template *before* wiring `syncToVVibe` (see `vvibe-member`) or any payment-callback handler. Otherwise the first bulk sync sends a VVibe `welcome_free` to every existing user, and every successful checkout sends a `welcome_paid` on top of the vibe coder's own message.
+## 4. Recipes (common multi-mode combos)
 
-### 2. Follower-flow emails
+```yaml
+recipes:
+  quickstart:
+    description: "Zero-backend launch — hosted CTA only."
+    load_in_order: [hosted-cta]
 
-Tied to the invitation / waitlist loop. Body source differs:
+  branded:
+    description: "Self-hosted waitlist on the creator's domain. Optionally pair with mcp-campaign for sending."
+    load_in_order: [self-hosted-waitlist]
+    optional: [mcp-campaign]
 
-| Template type | When it sends | Where the body comes from | Mode |
-|---|---|---|---|
-| `follower_invitation` | When `vibe_send_campaign` dispatches a campaign | **Per-campaign** — saved on the campaign record by `vibe_create_campaign` / `vibe_update_campaign`. A `follower_invitation` template also exists in `vibe_list_templates`, but it's only used to seed the very first "Invitation" campaign at brand onboarding — editing it later has no effect on subsequent campaigns. | A / B / C |
-| `waitlist_onboarding` | When a follower POSTs to `/api/waitlist/{slug}` after clicking an invitation | Per-merchant template (editable via `vibe_update_template`, like the system emails above) | A / B only — Mode C skips this endpoint |
+  existing-app:
+    description: >
+      Recommended for any app that already has user accounts.
+      Direct-register lands invitation clicks on the existing signup
+      page; outbound-sync (vvibe-member) must be wired first so
+      campaign analytics' signedUp count populates.
+    prerequisite: [vvibe-member: outbound-sync]
+    load_in_order: [direct-register]
+    optional: [mcp-campaign]
 
-## API Host
+  production-launch:
+    description: "Direct-register click destination + MCP campaign authoring + analytics."
+    prerequisite: [vvibe-member: outbound-sync]
+    load_in_order: [direct-register, mcp-campaign]
+```
 
-`https://vvibe.ai` (default; overridable via the `VVIBE_API_HOST` environment variable).
+Recipe defaults — match the user's phrase first, then fall back by
+capability:
 
-When generating code that calls the VVibe API, prefer this pattern over hardcoding the URL:
+- "set up invitation emails properly" → `existing-app` if `has_signup_flow`, else `branded` if `has_server_runtime`, else `quickstart`.
+- "production launch" / "everything wired" / phrase enumerating BOTH a click destination AND campaign sending → `production-launch`.
+- "fastest" / "no backend" / "I just want to share a link" → `quickstart`.
+
+Always name the recipe back to the user before running it.
+
+## 5. Disambiguators
+
+```yaml
+disambiguators:
+  - signal: ["invitation emails", "where does the email link land", "set up email", "wire invitation emails"]
+    scope: >
+      This question is ONLY about the click destination (A/B/C are mutually
+      exclusive). Campaign sending (mcp-campaign) is on a separate axis —
+      do NOT mix it in here. If the user also wants to send campaigns, ask
+      about that separately after the destination is settled, or use the
+      `production-launch` recipe.
+    ask: >
+      VVibe sends invitation emails on behalf of creators. The CTA in those
+      emails goes through VVibe for click tracking, then redirects to a
+      landing page. You have three options:
+
+      - **A. Hosted waitlist (fastest launch)** — VVibe hosts the page. No backend code.
+      - **B. Self-hosted waitlist (brand consistency)** — host `/waitlist/[creatorSlug]` on your own domain.
+      - **C. Direct register (skip the waitlist)** — recommended if your app already has signup. Clicks land directly on `/signup` (or wherever).
+
+      Which fits your setup?
+    map:
+      "A|hosted": hosted-cta
+      "B|self-hosted|brand": self-hosted-waitlist
+      "C|direct|existing": direct-register
+    tiebreaker: >
+      If the project clearly has has_signup_flow = true, mention C first
+      in the prompt and explain "you almost certainly want C". Don't ask
+      blindly when capability detection already favors a mode.
+```
+
+**Tiebreaker rule.** If the user's phrase matches a §3 trigger
+directly (e.g. "set up direct register"), route there and skip §5.
+
+## 6. Cross-cutting facts (apply to ALL modes)
+
+**API host.** `https://vvibe.ai` by default; overridable via
+`VVIBE_API_HOST`. Generated code reads it:
 
 ```ts
 const VVIBE_API_HOST = process.env.VVIBE_API_HOST || 'https://vvibe.ai'
 ```
 
-Note: invitation-email click tracking (`/r/{code}`) and the hosted waitlist page live on the same host, so the override applies to those too. See `PROVIDER.md` at the repo root.
+The override applies to click tracking (`/r/{code}`), the hosted waitlist
+page, and all REST endpoints. See `PROVIDER.md` for the contract.
 
-## Authentication
+**Authentication.** Bearer token:
 
-VVibe Creator Subscription API Key (`pcs_live_*` / `pcs_test_*`). The same key auths every VVibe API surface (member sync, email campaigns, sentry reporting).
-
-## Workflow
-
-### Step 1 — Choose Mode
-
-Before writing any code, **ask the human user which mode they want** and wait for an explicit answer. If the project already has a register / signup flow, surface Mode C — they almost certainly want it.
-
-> VVibe sends invitation emails on behalf of creators. The CTA in those emails goes through VVibe for click tracking, then redirects somewhere on the recipient side. You have three options:
->
-> - **A. Hosted waitlist (fastest launch)** — Use VVibe's hosted waitlist page. No server-side work. Best when you don't have a brand reason to host it yourself.
-> - **B. Self-hosted waitlist (brand consistency)** — Host `/waitlist/[creatorSlug]` on your own domain. Full control over UI / copy. Requires implementing the page and registering your `appBaseUrl` with VVibe.
-> - **C. Direct register (skip the waitlist)** — Recommended when your app already has a member system. Clicks land directly on your existing register / signup path (e.g. `/signup`). Requires `appBaseUrl` + `inviteRedirectPath`. You'll need to call `syncToVVibe` after signup so campaign analytics' `signedUp` count populates.
->
-> Which would you like? You can switch later.
-
-Jump to *Mode A — Hosted CTA*, *Mode B — Self-hosted Waitlist*, or *Mode C — Direct Register* based on the answer.
-
----
-
-### Mode A — Hosted CTA
-
-See `references/hosted-cta.md` for full snippets.
-
-What to do:
-
-1. **Confirm `appBaseUrl` is empty** (it is by default). If the merchant previously enabled Mode B, clear it:
-   - **Vibe MCP (preferred):** call `vibe_update_brand` with `{ "appBaseUrl": "" }` — no API key needed.
-   - **REST fallback:** `PUT /api/store-config` with `{ "appBaseUrl": "" }`.
-2. **Find the creator's slug** — `GET /api/store-config` returns the merchant config. The slug also appears in the VVibe Dashboard.
-3. **Embed the CTA URL** in the vibe coder's app, email signature, social bio, etc.:
-   ```
-   https://vvibe.ai/waitlist/{creatorSlug}
-   ```
-4. **No server-side implementation needed.** VVibe serves the page, accepts the signup form, and stores the waitlist row.
-
-That's it for Mode A. The creator can start sending invitation emails immediately — every click lands on VVibe's hosted page.
-
----
-
-### Mode B — Self-hosted Waitlist
-
-See `references/self-hosted-waitlist.md` for complete code templates (Next.js, React SPA, plain HTML).
-
-#### Step B1 — Register `appBaseUrl`
-
-**Vibe MCP (preferred):** call `vibe_update_brand` with `{ "appBaseUrl": "https://your-app.example.com" }` — no `VVIBE_API_KEY` needed.
-
-**REST fallback:**
-```bash
-curl -X PUT https://vvibe.ai/api/store-config \
-  -H "Authorization: Bearer ${VVIBE_API_KEY}" \
-  -H "Content-Type: application/json" \
-  -d '{ "appBaseUrl": "https://your-app.example.com" }'
+```http
+Authorization: Bearer ${VVIBE_API_KEY}
 ```
 
-Constraints (enforced by VVibe):
-- Must be HTTPS
-- Max 255 characters
-- Trailing slashes are stripped automatically
-- Empty string clears the field (= switches back to Mode A)
+Same `pcs_live_*` / `pcs_test_*` key as vvibe-member and vvibe-sentry.
+Public endpoints (`GET /api/waitlist/{slug}`, `POST /api/waitlist/{slug}`)
+need no auth. MCP tools use the Vibe MCP Bearer token, not the API key.
 
-#### Step B2 — Implement `/waitlist/[creatorSlug]`
+**Email types.** VVibe ships built-in system emails and follower-flow
+emails. See `references/email-types.md` for the catalog, when to
+disable, and how to avoid double-emails when the creator's app sends
+its own welcome flow.
 
-The path **must** be `/waitlist/{creatorSlug}` — VVibe's redirect target is hard-coded. Anything else and the user hits a 404.
+**Localhost is not a valid `appBaseUrl`.** For local dev of self-hosted
+or direct-register modes, use ngrok / Cloudflare Tunnel. VVibe enforces
+HTTPS on `appBaseUrl`.
 
-The page receives query params from VVibe's redirect — preserve them when posting back:
+## 7. Output preferences (apply to ALL modes)
 
-| Param | Purpose |
-|---|---|
-| `ref` | Referral code, must be passed back to attribute the signup |
-| `utm_source` | Always `invitation` |
-| `utm_campaign` | Campaign id (optional) |
-| `utm_content` | Outbox id, identifies the specific recipient (optional) |
+- Prefer code snippets over architecture explanations.
+- Use the vibe coder's existing framework and language.
+- For hosted-cta, prefer one short paragraph + the CTA URL. No code.
+- For self-hosted-waitlist, lean on the framework templates in the reference.
+- For direct-register, focus on `inviteRedirectPath` config + the post-signup `syncToVVibe` call.
+- Keep secrets out of chat — write `.env` instructions instead.
+- Always confirm the chosen mode before configuration calls (especially
+  `vibe_update_brand` / `PUT /api/store-config`) — switching modes is
+  visible to every recipient already in flight.
 
-The page must call two VVibe endpoints:
+## 8. Reference documents
 
-- `GET https://vvibe.ai/api/waitlist/{creatorSlug}` — returns `{ data: { creator: { slug, merchantName }, count } }`. Use it to render the headline (`Join {merchantName}'s waitlist`) and signup count.
-- `POST https://vvibe.ai/api/waitlist/{creatorSlug}` — body `{ email, name?, source?, ref? }`. Returns `{ data: { joined, alreadyOnList, creator } }`.
-
-Both endpoints are public (no API key needed). The POST is rate-limited per IP (5/hour per creator) and per creator (200/hour total) — show the user a "try again shortly" message on `429`.
-
-#### Step B3 — Wire to user sync (optional but recommended)
-
-The signup is a new user from your perspective. After the POST succeeds, fire-and-forget a `syncToVVibe([{ email, name, status: 'active' }])` call so the creator can see the new follower in the VVibe Dashboard. See [vvibe-member/SKILL.md Step 5](../vvibe-member/SKILL.md) for the helper.
-
-```ts
-// after POST /api/waitlist succeeds
-syncToVVibe([{ email, name }]).catch((err) =>
-  console.error('[VVibe Sync]', err)
-)
-```
-
-#### Step B4 — Verify
-
-1. From the creator's dashboard, send a test invitation email to your own inbox.
-2. Click the CTA link in the email.
-3. The browser should redirect through `vvibe.ai/r/...` and land on `https://your-app.example.com/waitlist/{slug}?ref=...&utm_source=invitation&...`.
-4. Submit the form; check the VVibe Dashboard's waitlist tab to confirm the row.
-5. If `syncToVVibe` is wired, the user should also appear in the Dashboard's user list.
-
----
-
-### Mode C — Direct Register
-
-Use when the project already has its own register / signup flow.
-
-#### Step C1 — Set `appBaseUrl` and `inviteRedirectPath`
-
-**Vibe MCP (preferred):** call `vibe_update_brand` with both fields:
-```
-{ "appBaseUrl": "https://your-app.example.com", "inviteRedirectPath": "/signup" }
-```
-
-**REST fallback:**
-```bash
-curl -X PUT https://vvibe.ai/api/store-config \
-  -H "Authorization: Bearer ${VVIBE_API_KEY}" \
-  -H "Content-Type: application/json" \
-  -d '{ "appBaseUrl": "https://your-app.example.com", "inviteRedirectPath": "/signup" }'
-```
-
-`inviteRedirectPath` constraints:
-- Starts with `/`. Allowed chars: letters, digits, `-`, `_`, `/` (no `?` or `#` — VVibe appends its own query string).
-- Max 200 chars; trailing slashes stripped.
-- Empty string clears it — the merchant falls back to Mode B (or Mode A if `appBaseUrl` is also empty).
-
-#### Step C2 — Read attribution params on the register page
-
-VVibe appends:
-
-| Param | Purpose |
-|---|---|
-| `ref` | Referral code; pass back to `syncToVVibe` so the signup attributes to the campaign |
-| `utm_source` | Always `invitation` |
-| `utm_campaign` | Campaign id |
-| `utm_content` | Outbox id (per-recipient identifier) |
-
-Read these on first hit and stash them (cookie / localStorage / hidden form field) so they survive multi-step signup.
-
-#### Step C3 — Wire `syncToVVibe` after register
-
-After register completes, call `syncToVVibe` (see `vvibe-member`) with the new user's email + name + `signupRefCode` set to the URL's `utm_content` (preferred — the per-recipient outbox UUID) or `ref` as fallback.
-
-```ts
-const signupRefCode = utm_content || ref
-syncToVVibe([{ email, name, signupRefCode }]).catch((err) =>
-  console.error('[VVibe Sync]', err)
-)
-```
-
-`converted` stamps automatically when the recipient later completes a paid checkout in the vibe coder's payment integration — VVibe matches the buyer's checkout email against this campaign's import list.
-
-#### Step C4 — Verify
-
-1. Send a test invitation email from the dashboard.
-2. Click the CTA. The browser should redirect through `vvibe.ai/r/...` and land on `https://your-app.example.com{inviteRedirectPath}?ref=...&utm_source=invitation&...`.
-3. Complete signup. Confirm the new user appears in the VVibe Dashboard's user list (= `syncToVVibe` ran).
-4. A few minutes later, call `vibe_get_campaign_analytics` and check `signedUp ≥ 1`.
-
----
-
-## Sending a Campaign (Vibe MCP)
-
-Sends an invitation campaign to a follower list and reads back analytics. Independent of Mode A/B. Requires Vibe MCP connection; auth is the MCP Bearer token. See `references/sending-campaigns.md` for an end-to-end run.
-
-### Tools
-
-| Tool | Purpose |
-|---|---|
-| `vibe_list_campaigns` | List drafts, in-flight sends, and completed history. Filter by `status`. |
-| `vibe_create_campaign` | Create a draft. Takes `name` plus `subject` / `bodyHtml` / `description` / `aiContext`. |
-| `vibe_update_campaign` | Edit a draft's `name`, `description`, `aiContext`, `subject`, or `bodyHtml`. |
-| `vibe_send_campaign` | Dispatch the saved draft. Takes only `campaignId`. Returns one of five outcomes (see below). |
-| `vibe_get_campaign_analytics` | Funnel + event totals + 30-day timeseries for one campaign. |
-
-### Workflow
-
-The dashboard step order is **Email content → Recipients → Send**. The MCP flow follows the same order.
-
-1. **Check for an existing draft** with `vibe_list_campaigns`.
-2. **Draft `subject` + `bodyHtml`** with the creator. Constraints:
-   - Subject ≤ 255 chars; body is HTML, ≤ 100,000 chars.
-   - Body must include `{inviteUrl}` — the tracked invitation link the recipient clicks.
-   - Built-in placeholders: `{customerName}`, `{productName}`, `{inviteUrl}`. Any column the creator imported is exposed as `{slug}` — confirm slugs with the creator before referencing them.
-3. **Create the draft** with `vibe_create_campaign({ name, subject, bodyHtml, aiContext? })`. Subject + body are saved on the draft so the dashboard preview matches the chat.
-4. **Send the creator to import recipients** in the dashboard's **Recipients** tab (CSV / Google Sheet / paste). There is no MCP tool for import.
-5. **Revise copy** by calling `vibe_update_campaign({ campaignId, subject?, bodyHtml? })`. `vibe_send_campaign` does not accept subject/body, so revisions go here.
-6. **Confirm with the creator before sending** — read back the saved subject, a body excerpt, and the recipient count. Sending is irreversible and burns quota.
-7. **Call `vibe_send_campaign({ campaignId })`**. Switch on the `outcome`:
-
-| Outcome | Meaning | What to do |
+| File | Contains | Load when |
 |---|---|---|
-| `enqueued` | Send is in flight | Report `enqueuedCount` and `remainingQuota`. Optionally call `vibe_get_campaign_analytics` after a few minutes. |
-| `campaign_not_found` | Wrong id, or belongs to another merchant | Recheck `vibe_list_campaigns`. |
-| `no_recipients` | Recipients tab is empty for this campaign | Send the creator back to import. |
-| `missing_content` | Draft has no saved subject or body | Call `vibe_update_campaign` with the missing fields, then retry. |
-| `quota_exceeded` | Recipients > remaining quota | Response includes `remainingQuota` and `needed`. Tell the creator the shortfall and point at **Email → Credits** to top up. |
-
-8. **Read analytics** with `vibe_get_campaign_analytics(campaignId)` after a few minutes. The funnel: `imported → enqueued → delivered → opened → clicked → bounced → complained → signedUp → converted`. `signedUp` stamps when the recipient submits the waitlist form (Mode A/B) or when `syncToVVibe` runs in Mode C — both paths require the per-recipient `outboxId` (URL `utm_content`) to pin the right row; campaign-level refcodes alone don't pin. `converted` stamps when the recipient later completes a paid checkout in the vibe coder's payment integration and the checkout email matches the imported email on a row that already has `signedUp` set.
-
-### Guardrails for sending
-
-- Body must include `{inviteUrl}`.
-- Read the recipient count back to the creator before sending — a stale draft can mass-email the wrong list.
-- `quota_exceeded` requires a top-up before retrying.
-
----
-
-## Guardrails
-
-- `appBaseUrl` must be HTTPS. `localhost` cannot be used in production — for local dev use ngrok / Cloudflare Tunnel.
-- Click tracking always runs through `vvibe.ai/r/{code}`. Pointing the email CTA directly at the creator's domain loses click tracking and rate limiting.
-- Mode B: include the `ref` query param in the POST body to `/api/waitlist/{slug}` — the waitlist row inherits it as `referralCode`, which is how VVibe links the signup back to the original campaign. The waitlist endpoint ignores `utm_*` (they're for the creator's own analytics if they want them).
-- Mode C: call `syncToVVibe` after a successful register, otherwise the new follower never appears in the creator's user list on the dashboard.
-
-## Output Preferences
-
-- Always confirm A vs B vs C with the user before doing setup work. If the project already has a register flow, surface C first.
-- For Mode A, prefer one short paragraph + the CTA URL. No code templates needed.
-- For Mode B, lean on `references/self-hosted-waitlist.md` instead of inlining all the code.
-- For Mode C, no new page is needed — focus on the `inviteRedirectPath` config and the `syncToVVibe` wiring.
-- Keep secrets (API keys) out of chat — write `.env` instructions instead.
-
-## Reference Documents
-
-- `references/hosted-cta.md` — Mode A snippets and CTA placement examples.
-- `references/self-hosted-waitlist.md` — Mode B implementation templates for Next.js, React SPA, and plain HTML.
-- `references/sending-campaigns.md` — End-to-end campaign send via Vibe MCP, with body templates and outcome handling.
+| `references/hosted-cta.md` | Mode A: CTA URL template, placement examples (HTML / React / email signature). | mode = hosted-cta |
+| `references/self-hosted-waitlist.md` | Mode B: full implementation contract + templates for Next.js, React SPA, and plain HTML. | mode = self-hosted-waitlist |
+| `references/direct-register.md` | Mode C: `inviteRedirectPath` configuration, attribution params, post-signup `syncToVVibe` wiring. | mode = direct-register |
+| `references/sending-campaigns.md` | MCP campaign tools: list / create / update / send / analytics, with body templates and outcome handling. | mode = mcp-campaign |
+| `references/email-types.md` | Reference: system vs follower-flow email categories, disable/edit flow, avoiding double-emails. | shared reference; load on demand when discussing welcome / cancellation emails or disabling templates. |
