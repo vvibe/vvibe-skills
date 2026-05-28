@@ -190,7 +190,7 @@ disambiguators:
 
       - **A. Hosted waitlist (fastest launch)** — VVibe hosts the page. No backend code.
       - **B. Self-hosted waitlist (brand consistency)** — host `/waitlist/[creatorSlug]` on your own domain.
-      - **C. Direct register (skip the waitlist)** — recommended if your app already has signup. Clicks land directly on `/signup` (or wherever).
+      - **C. Direct register (skip the waitlist)** — recommended if your app already has signup. Clicks land directly on `/signup` (or wherever). Requires `appBaseUrl` + `inviteRedirectPath`, and you'll need to call `syncToVVibe` after signup so campaign analytics' `signedUp` count populates.
 
       Which fits your setup?
     map:
