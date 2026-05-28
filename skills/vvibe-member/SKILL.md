@@ -209,7 +209,7 @@ repo root for the backend compatibility contract.
 
 **Authentication.** Bearer token in `Authorization` header:
 
-```
+```http
 Authorization: Bearer ${VVIBE_API_KEY}
 ```
 

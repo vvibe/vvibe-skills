@@ -110,15 +110,16 @@ async function onUserSignup(newUser: User, req: Request) {
   }
 
   // Send to VVibe in the Sync payload's metadata field.
-  await syncToVVibe({
+  // Fire-and-forget — never block signup on VVibe; helper takes an array.
+  syncToVVibe([{
     email: newUser.email,
-    externalUserId: newUser.id,
+    id: newUser.id,
     // ... existing fields ...
     metadata: {
       // ... existing metadata ...
       attribution,  // null if nothing captured
     },
-  })
+  }]).catch(err => console.error('[VVibe Sync]', err))
 }
 ```
 
