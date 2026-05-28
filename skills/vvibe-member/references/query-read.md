@@ -176,10 +176,12 @@ renders each entry's `errors[]`.
    and **50** for `/api/members/sync-logs`. Going higher is silently capped
    or returns 400.
 5. **`/api/members/{userId}` takes VVibe's internal uuid, not your
-   `external_user_id`.** To look up by your own id, either (a) call
-   `GET /api/members?search=<email-or-name>` and pick the row, or (b) store
-   the VVibe `id` back into your DB at sync time (the sync response returns
-   it) for a direct lookup later.
+   `external_user_id`.** Sync responses do **not** include per-user ids
+   (only aggregate counts — see `./api-contract.md`). To look up by your
+   own id, either (a) call `GET /api/members?search=<email>` (email is
+   the dedup key, so this is reliable), or (b) after the first sync,
+   fetch the user via list/search to retrieve the VVibe `id`, then
+   store the mapping in your DB for direct lookups later.
 6. **Firebase JWT path needs `profileId`.** Every JWT-authed request must
    carry `?profileId=<uuid>` or it returns 401 even with a valid token.
 

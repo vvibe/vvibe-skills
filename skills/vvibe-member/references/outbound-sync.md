@@ -86,10 +86,12 @@ async function syncToVVibe(users: Array<{
   signupRefCode?: string;     // → signup_ref_code (only on initial registration sync)
 }>) {
   const BATCH_SIZE = 100
+  const MAX_RETRIES_PER_BATCH = 5
   const results = { synced: 0, created: 0, updated: 0, errors: [] as any[] }
 
   for (let i = 0; i < users.length; i += BATCH_SIZE) {
     const batch = users.slice(i, i + BATCH_SIZE)
+    let attempts = 0
     const payload = batch.map(user => ({
       email: user.email,
       external_user_id: user.id != null ? String(user.id) : undefined,
@@ -117,6 +119,11 @@ async function syncToVVibe(users: Array<{
       )
 
       if (res.status === 429) {
+        attempts++
+        if (attempts >= MAX_RETRIES_PER_BATCH) {
+          results.errors.push({ batch: i / BATCH_SIZE + 1, reason: '429 — gave up after max retries' })
+          continue // move on to next batch instead of looping forever
+        }
         const retryAfter = parseInt(res.headers.get('Retry-After') || '5', 10)
         await new Promise(r => setTimeout(r, retryAfter * 1000))
         i -= BATCH_SIZE // retry this batch
@@ -166,7 +173,7 @@ await syncToVVibe([userData])
 
 - **User registration** — after successful signup, sync the new user. **If the form or URL carried a referral / promo parameter (e.g. `?ref=EARLY2026`, `?code=`, `?promo=`, `?coupon=`), pass it as `signup_ref_code`.** Recorded regardless of whether a matching discount exists — checkout application is the payment integration's job. **First-write-wins**: later syncs with a different code are dropped with `errors: [{ reason: 'signup_ref_code_already_recorded' }]`.
 - **Profile update** — after successful save, sync updated fields.
-- **Login** — call sync in the framework's auth hook (Payload `afterLogin`, NextAuth `events.signIn`, Supabase auth webhooks, Django/Flask-Login `user_logged_in`) with `last_login_at: new Date().toISOString()` — no need to persist in the creator's DB.
+- **Login** — call sync in the framework's auth hook (Payload `afterLogin`, NextAuth `events.signIn`, Supabase auth webhooks, Django/Flask-Login `user_logged_in`) and pass `lastLoginAt: new Date()` to the helper — it's typed `Date | null` and the helper handles ISO conversion. No need to persist in the creator's DB.
 - **Account deletion** — sync with `status: "deleted"` to remove from VVibe.
 - **Waitlist signup** — if the merchant uses `vvibe-email` in self-hosted mode (Mode B), after POST to `/api/waitlist` succeeds call `syncToVVibe([{ email, name, status: 'active' }])` fire-and-forget.
 
