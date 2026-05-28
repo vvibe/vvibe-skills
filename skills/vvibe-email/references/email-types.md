@@ -16,12 +16,12 @@ Disable from the dashboard, via the Vibe MCP `vibe_update_template` tool (prefer
 
 ```bash
 # 1. GET current template
-curl -s https://vvibe.ai/api/email/templates/welcome_free \
+curl -s "${VVIBE_API_HOST:-https://vvibe.ai}/api/email/templates/welcome_free" \
   -H "Authorization: Bearer ${VVIBE_API_KEY}" > /tmp/welcome_free.json
 
 # 2. Set enabled=false (using jq), then PUT the full payload
 jq '.data | .enabled = false' /tmp/welcome_free.json | curl -X PUT \
-  https://vvibe.ai/api/email/templates/welcome_free \
+  "${VVIBE_API_HOST:-https://vvibe.ai}/api/email/templates/welcome_free" \
   -H "Authorization: Bearer ${VVIBE_API_KEY}" \
   -H "Content-Type: application/json" \
   -d @-
