@@ -85,4 +85,25 @@ VVibe's invitation-email flow uses `?utm_source=invitation` already; pick anythi
 - You want to fire your own analytics events on the signup
 - You want post-signup redirect to a specific page in your product
 
-See `self-hosted-waitlist.md` for the migration path.
+If any of these apply, switch to the self-hosted-waitlist mode.
+
+## Switching back from Mode B or C
+
+If the merchant previously enabled a self-hosted mode, clear `appBaseUrl` (and `inviteRedirectPath` if set) before relying on the hosted CTA — otherwise click redirects continue routing to the old self-hosted destination.
+
+**Vibe MCP (preferred — no API key needed):**
+
+```
+vibe_update_brand({ "appBaseUrl": "", "inviteRedirectPath": "" })
+```
+
+**REST fallback:**
+
+```bash
+curl -X PUT https://vvibe.ai/api/store-config \
+  -H "Authorization: Bearer ${VVIBE_API_KEY}" \
+  -H "Content-Type: application/json" \
+  -d '{ "appBaseUrl": "", "inviteRedirectPath": "" }'
+```
+
+Propagates within ~60 seconds (VVibe's per-process cache TTL) and applies to every email already in flight — including recipients whose emails were sent before the switch.

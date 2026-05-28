@@ -311,7 +311,7 @@ syncToVVibe([{ email, name, status: 'active' }]).catch((err) =>
 )
 ```
 
-`syncToVVibe` lives in your codebase if you've already integrated `vvibe-member`. If not, install that skill (`npx skills add vvibe/vvibe-skills --skill vvibe-member`) and follow its Step 4 to generate the helper.
+`syncToVVibe` lives in your codebase if you've already integrated `vvibe-member`. If not, install that skill (`npx skills add vvibe/vvibe-skills --skill vvibe-member`) to generate the helper.
 
 ## Common Mistakes
 

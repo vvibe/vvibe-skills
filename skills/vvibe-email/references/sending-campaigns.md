@@ -1,6 +1,6 @@
 # Sending a Campaign via Vibe MCP
 
-Companion to the **Sending a Campaign (Vibe MCP)** section in SKILL.md. End-to-end run with body templates and concrete outcome handling.
+End-to-end run with body templates and concrete outcome handling.
 
 ## Prerequisites
 
