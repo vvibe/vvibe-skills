@@ -28,7 +28,7 @@ Do **not** pick a default. Ask both questions and wait for an answer.
 
 Template (use verbatim):
 
-```
+```text
 Two things before I start:
 ① Which project should I scan? (e.g. ~/my-store)
 ② Which standard?
@@ -54,7 +54,7 @@ The orchestrator emits both a human-readable Markdown summary and a machine-read
 
 Call the MCP tool with the truncated payload (top 50 findings):
 
-```
+```js
 vibe_report_health_check({
   scanId,
   score,
@@ -75,7 +75,7 @@ Always pre-sort findings by severity (CRITICAL → WARNING → INFO) and slice t
 
 The MCP tool returns `{ reportUrl, scanId }` (the same shape the REST endpoint returns under `data`). Present the URL plus the Layer 1 plain-language summary to the user, e.g.:
 
-```
+```text
 🟡 Scan complete — 1 critical, 4 warnings.
 Dashboard: https://vvibe.ai/dashboard/sentry-scans/scn_...
 Score: 73/100 (needs attention)

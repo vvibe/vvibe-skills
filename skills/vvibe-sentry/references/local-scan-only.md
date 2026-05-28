@@ -28,7 +28,7 @@ Do **not** pick a default. Ask both questions and wait for an answer.
 
 Template (use verbatim):
 
-```
+```text
 Two things before I start:
 ① Which project should I scan? (e.g. ~/my-store)
 ② Which standard?
@@ -56,7 +56,7 @@ Always lead with Layer 1. Only proceed to Layer 2 if the user picked Pre-launch 
 
 #### Layer 1 — Plain-language summary (use this format verbatim)
 
-```
+```text
 🟢 / 🟡 / 🔴  Status: <pass | needs attention | not ready>
 Score: <0-100>
 

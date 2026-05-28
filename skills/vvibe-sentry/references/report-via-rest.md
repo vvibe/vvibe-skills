@@ -29,7 +29,7 @@ Do **not** pick a default. Ask both questions and wait for an answer.
 
 Template (use verbatim):
 
-```
+```text
 Two things before I start:
 ① Which project should I scan? (e.g. ~/my-store)
 ② Which standard?

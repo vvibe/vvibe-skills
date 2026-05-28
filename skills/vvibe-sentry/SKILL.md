@@ -185,7 +185,7 @@ between standards is the **block-or-not threshold** the creator picked.
 | 🔧 Routine | CRITICAL + WARNING | yes |
 | 🏆 Gold | all (incl. INFO) | yes |
 | 📄 Report only | n/a | **no** |
-| ⏰ Weekly auto | n/a — schedules recurring scan; see `references/ci-setup-guide.md` |
+| ⏰ Weekly auto | n/a (schedules instead) | see `references/ci-setup-guide.md` |
 
 All non-scheduled standards run the same 4 layers; the standard only changes
 the pass/fail line and whether Layer 2 (fix workflow) is offered. **Advanced
@@ -221,7 +221,7 @@ to the user — not to second-guess by `which gitleaks` / `docker ps`.
 users have no idea what "SECRETS" or "DEPS" means until you explain it. Use
 this template verbatim:
 
-```
+```text
 VVibe Sentry runs four layers of checks against your codebase:
 
 🔐 Secrets       — did anything sensitive get committed to git? (gitleaks)
