@@ -93,14 +93,14 @@ If the merchant previously enabled a self-hosted mode, clear `appBaseUrl` (and `
 
 **Vibe MCP (preferred — no API key needed):**
 
-```
+```txt
 vibe_update_brand({ "appBaseUrl": "", "inviteRedirectPath": "" })
 ```
 
 **REST fallback:**
 
 ```bash
-curl -X PUT https://vvibe.ai/api/store-config \
+curl -X PUT "${VVIBE_API_HOST:-https://vvibe.ai}/api/store-config" \
   -H "Authorization: Bearer ${VVIBE_API_KEY}" \
   -H "Content-Type: application/json" \
   -d '{ "appBaseUrl": "", "inviteRedirectPath": "" }'

@@ -29,14 +29,14 @@ recipients whose `signedUp` has already been recorded.
 
 **Vibe MCP (preferred):** call `vibe_update_brand` with both fields:
 
-```
+```json
 { "appBaseUrl": "https://your-app.example.com", "inviteRedirectPath": "/signup" }
 ```
 
 **REST fallback:**
 
 ```bash
-curl -X PUT https://vvibe.ai/api/store-config \
+curl -X PUT "${VVIBE_API_HOST:-https://vvibe.ai}/api/store-config" \
   -H "Authorization: Bearer ${VVIBE_API_KEY}" \
   -H "Content-Type: application/json" \
   -d '{ "appBaseUrl": "https://your-app.example.com", "inviteRedirectPath": "/signup" }'
