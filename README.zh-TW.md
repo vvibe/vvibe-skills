@@ -2,7 +2,7 @@
 
 # VVibe Skills
 
-[VVibe](https://vvibe.ai) 創作者專用的 AI Agent Skill 集合。透過 AI Agent 把 VVibe 服務 — 分析、會員同步、邀請信、部署前安全稽核 — 整合到任何專案中。
+[VVibe](https://vvibe.ai) 創作者專用的 AI Agent Skill 集合。透過 AI Agent 把 VVibe 服務 — 分析、會員同步、邀請信、部署前安全稽核、產品知識庫建構 — 整合到任何專案中。
 
 ## 安裝
 
@@ -32,6 +32,7 @@ npx skills update vvibe-analytics
 | **vvibe-member** | 用戶同步至 VVibe — 全量遷移、增量同步、Dashboard 查看 | `用戶同步`、`member sync`、`用戶管理` |
 | **vvibe-sentry** | 部署前的程式碼安全稽核 — 串接 gitleaks、osv-scanner、semgrep 加上 VVibe 整合檢查，結果回報至 Vibe 儀表板 | `sentry 掃描`、`安全稽核`、`部署前檢查`、`機密外洩`、`依賴 CVE` |
 | **vvibe-email** | 將 Invitation Email 註冊連結導向 VVibe 託管 CTA（零設定）或 vibe coder 自架的 waitlist 落地頁 | `Invitation Email`、`Waitlist 落地頁`、`app base URL` |
+| **vvibe-kb-builder** | 建立或更新創作者在 VVibe 上的「產品腦」—— 從 repo、公開網站或文件抽取結構化產品事實，再透過 `vibe_set_product_kb` 寫回。其他會產出文案的 skill（email、SEO、轉換優化）下筆前都會先讀這份。 | `產品腦`、`product KB`、`知識庫建構器`、`告訴 VVibe 你的產品` |
 
 ## VVibe Analytics Integration
 
@@ -120,6 +121,28 @@ npx skills add vvibe/vvibe-skills --skill vvibe-email
 - 「我想把 waitlist 落地頁放在自己網站上」
 - 「在 Hero 區塊放一個 VVibe waitlist CTA」
 - 「設定 invitation email 的 app base URL」
+
+## VVibe 產品知識庫建構
+
+```bash
+npx skills add vvibe/vvibe-skills --skill vvibe-kb-builder
+```
+
+幫創作者建立或更新 VVibe 上的「產品腦」—— 結構化的 agent-owned 文件，其他會產出文案的 skill（email、SEO、轉換優化）下筆前都會先讀這份。下游 skill 因此不必每次都重新推導產品是什麼。
+
+- 三種來源類型（可疊加）：GitHub repo、公開網站、文件集（PDF / markdown / 截圖）
+- 兩種模式：`build`（沒有現有 KB，首次建立）與 `refresh`（與現有 KB 做欄位級 diff，產出 `change_log`）
+- 嚴格紀律：**EXTRACT verbatim → INFER 並標註 confidence → 不准 fabricate**（沒有 source signal 的欄位留 `null` 並寫進 `missing_fields[]`）
+- 永不捏造客戶名或數據；偵測法務地雷（CAN-SPAM / FTC / 醫療 / 金融）並 verbatim 記錄到 `legal_compliance.forbidden_claims`，讓下游 skill 自動避開
+
+**前置條件：** 連上 VVibe MCP 或設定 `VVIBE_API_KEY`（`pcs_live_*` / `pcs_test_*`）；至少一種來源（repo / URL / 文件集）。
+
+**Skill 觸發條件：**
+- 「在 VVibe 上建立我的產品腦」
+- 「跑一次 product knowledge base builder」
+- 「告訴 VVibe 我的產品在做什麼」
+- 「重新整理產品腦」
+- 「產品有變動，更新 KB」
 
 ## 串接到自己的 Server
 
