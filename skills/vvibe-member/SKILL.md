@@ -230,6 +230,8 @@ before the user agrees.
 |---|---|---|
 | `references/outbound-sync.md` | Schema mapping, sync helper, incremental hooks, initial backfill, sync-specific guardrails. | mode = outbound-sync |
 | `references/query-read.md` | List members, get one, stats, sync logs. Read-only walkthrough. | mode = query-read |
+| `references/inbound-webhook.md` | Webhook registration, signature verification flow, framework receiver templates (Next.js / Express / FastAPI), retry + response semantics. | mode = inbound-webhook |
 | `references/attribution-utm.md` | Cookie + middleware + signup snapshot. Hangs off outbound-sync. | mode = attribution-utm |
+| `references/_shared/webhook-signature-verify.md` | Signing canonical reference. Wire format + 5-step verification + test vectors. | loaded by inbound-webhook.md; flat reference data. |
 | `references/api-contract.md` | Authoritative wire spec for all 5 endpoints. | reference data — link to it from other refs, don't read end-to-end. |
 | `scripts/sync_user.mjs` | Runnable single-user sync helper. | optional starter template for outbound-sync. |

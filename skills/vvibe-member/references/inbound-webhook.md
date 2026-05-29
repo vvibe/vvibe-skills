@@ -211,7 +211,7 @@ app.post(
 ### FastAPI
 
 ```python
-import hmac, hashlib, time
+import hmac, hashlib, json, os, time
 from fastapi import FastAPI, Request, Response, HTTPException
 
 app = FastAPI()
@@ -299,7 +299,7 @@ After attempt 6 fails, the delivery is marked `failed` and not retried. Receiver
 
 Review the codebase and present this per-step checklist:
 
-```
+```md
 ## VVibe Webhook Receiver Checklist
 ✅ / ❌ Webhook registered via POST /api/webhooks — secret stored in VVIBE_WEBHOOK_SECRET
 ✅ / ❌ Receiver route exists at the registered URL — {file:line}
@@ -327,7 +327,7 @@ Pick the simplest workable test: send a real waitlist signup (or have VVibe repl
 Tell the user the integration is complete, then present these action items:
 
 1. **Set environment variables** in production / staging:
-   ```
+   ```dotenv
    VVIBE_API_HOST=https://vvibe.ai
    VVIBE_API_KEY=pcs_live_xxxxxxxxxxxxxxxxxxxxxxxx
    VVIBE_WEBHOOK_SECRET=whsec_live_xxxxxxxxxxxxxxxxxxxxxxxx
