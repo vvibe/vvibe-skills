@@ -72,6 +72,13 @@ Notes:
   `source: "human-edit-inferred"`). Build mode rarely fills this —
   leave empty unless the source explicitly includes "approved by
   Creator" or a style-guide page.
+- `brand_voice.examples[].captured_at` — when the snippet comes from
+  a real approval / human-edit event with a known timestamp, use
+  that. When the snippet is lifted from current source code or a
+  current website pass (build mode's common case), use the Builder
+  run's extraction timestamp. Refresh mode keeps the existing
+  `captured_at` for snippets it preserves; only new entries get the
+  fresh-run timestamp.
 - `socials[].platform`: lowercase platform key (`"twitter"`,
   `"linkedin"`, `"instagram"`, `"github"`, …). Both handle and url
   may be null if only one is on the page.
@@ -125,6 +132,23 @@ If there's no pricing page at all, leave `tiers: []` and add
 `"pricing"` to `missing_fields[]` (the section root, not each tier).
 A freemium / open-source product may have `model: "free"` and zero
 tiers — that's still valid.
+
+**Multi-currency / regional pricing.** Some products publish parallel
+price tables for different markets (e.g. Portaly: TWD for Asia, USD
+for the English market). `currency` and `billing_period` are scalar
+fields, not per-tier matrices — the v1 convention is:
+
+- Set top-level `currency` to the product's **primary** currency (the
+  one shown to the largest audience or first in the pricing page).
+- Append the secondary market's name to its tier names
+  (`"Premium (English market) — Monthly"`).
+- Use `features_included` on the secondary tiers to capture the
+  secondary currency's absolute prices when they don't follow a flat
+  conversion from the primary tier (often the case — markets get
+  custom pricing, not FX-converted prices).
+
+Downstream skills that need to draft regional copy read the tier
+name to decide which market the row belongs to.
 
 ## features[]
 
@@ -215,13 +239,26 @@ before drafting.
 ```jsonc
 {
   "legal_compliance": {
-    "region": "string | null",                 // "US", "EU", "TW", … or comma-separated
+    "region": "string | null",                 // "US", "EU", "TW", … or comma-separated (e.g. "TW, EEA, UK")
     "forbidden_claims": ["string"],            // verbatim phrases — see extraction-discipline.md §5
     "gdpr_required": "boolean",
     "can_spam_required": "boolean"
   }
 }
 ```
+
+Region examples — what to write when the source mentions multiple
+jurisdictions explicitly:
+
+- Single market: `"TW"`, `"US"`, `"JP"`.
+- Multiple jurisdictions named in one privacy policy: `"TW, EEA, UK"`
+  (Taiwan HQ + named EEA-resident and UK-resident rights). Use the
+  short forms used in the policy itself — don't expand `EEA` to
+  `European Economic Area` if the source says `EEA`.
+- When the policy is regulation-flavoured rather than territory-named
+  (`"GDPR-aligned"`, `"CCPA-compliant"`): still record the territory
+  the regulation implies, not the regulation's acronym
+  (GDPR → `"EU"` / `"EEA"`; CCPA → `"US-CA"`).
 
 `forbidden_claims` is the field downstream prose-generating skills
 hard-reject against. Lift each phrase verbatim from compliance memos
@@ -253,6 +290,14 @@ A flat array of dotted paths the Builder couldn't extract.
 Rules:
 - Path syntax mirrors JSON dot-notation. Arrays use the section root
   (`"pricing.tiers"`, not `"pricing.tiers[0]"`).
+- **`[*]` wildcard for "every entry has the same gap".** When every
+  item in an array carries a null leaf — e.g. eighteen testimonials
+  where none of them quote an outcome metric — use a single
+  `"cases[*].result"` entry rather than indexing per row. This stays
+  cheap to read for downstream skills and keeps the list short.
+  Per-index entries (`"cases[3].result"`) are reserved for the rare
+  case where one specific row needs follow-up but its siblings are
+  complete.
 - Include every field the Builder considered and left empty. The
   point of this list is to tell downstream skills "ask the creator
   before drafting against this".
