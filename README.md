@@ -2,7 +2,7 @@ English | [繁體中文](./README.zh-TW.md)
 
 # VVibe Skills
 
-AI agent skills for [VVibe](https://vvibe.ai) creators. Integrate VVibe services — analytics, member sync, invitation email, pre-deploy security scanning — into any project with your AI coding agent.
+AI agent skills for [VVibe](https://vvibe.ai) creators. Integrate VVibe services — analytics, member sync, invitation email, pre-deploy security scanning, product-knowledge-base extraction — into any project with your AI coding agent.
 
 ## Installation
 
@@ -32,6 +32,7 @@ npx skills update vvibe-analytics
 | **vvibe-member** | User sync to VVibe — migration, incremental sync, and dashboard viewing | `user sync`, `member sync`, `user management` |
 | **vvibe-sentry** | Pre-deploy codebase security audit — orchestrates gitleaks, osv-scanner, semgrep, plus VVibe-integration checks. Reports back to the dashboard. | `VVibe sentry scan`, `security audit`, `pre-deploy check`, `secret leak`, `dependency CVE` |
 | **vvibe-email** | Wire invitation-email registration links to either a VVibe-hosted CTA (zero setup) or a self-hosted waitlist landing page on the vibe coder's own domain | `invitation email`, `waitlist landing page`, `app base URL` |
+| **vvibe-kb-builder** | Build or refresh the creator's Product Knowledge Base on VVibe — extract structured product facts from a repo, public site, or document set, then write via `vibe_set_product_kb`. Every prose-generating skill (email, SEO, conversion) reads this KB before drafting. | `product brain`, `product KB`, `knowledge base builder`, `teach VVibe about my product` |
 
 ## VVibe Analytics Integration
 
@@ -120,6 +121,28 @@ Helps vibe coders wire the registration link inside VVibe invitation emails to t
 - "Set up a VVibe waitlist landing page on my own site"
 - "Embed a VVibe waitlist CTA in my hero section"
 - "Configure the app base URL for invitation emails"
+
+## VVibe Product Knowledge Base Builder
+
+```bash
+npx skills add vvibe/vvibe-skills --skill vvibe-kb-builder
+```
+
+Builds or refreshes the creator's Product Knowledge Base on VVibe — the structured agent-owned document that every prose-generating skill (email, SEO, conversion) reads before drafting. Stops downstream skills from re-deriving the creator's product on every action.
+
+- Three source types (additive): github repo, public website, document set (PDFs / markdown / screenshots)
+- Two modes: `build` (first-time, no existing KB) and `refresh` (diff against existing, emit `change_log`)
+- Hard discipline: EXTRACT verbatim → INFER with confidence flag → NO FABRICATION (null + `missing_fields[]`)
+- Never invents customer names or metrics; detects forbidden claims (CAN-SPAM / FTC / medical / financial) and records them for downstream skills to avoid
+
+**Prerequisites:** A VVibe MCP connection OR a `VVIBE_API_KEY` (`pcs_live_*` / `pcs_test_*`); at least one source (repo / URL / document set).
+
+**Skill triggers:**
+- "Set up my product brain on VVibe"
+- "Build the product knowledge base"
+- "Teach VVibe about my product"
+- "Refresh the product KB"
+- "Product changed, sync the KB"
 
 ## Using a Different Backend
 

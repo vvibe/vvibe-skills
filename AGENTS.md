@@ -4,7 +4,7 @@ This file provides guidance to AI coding agents (Claude Code, Cursor, Copilot, e
 
 ## Repository Overview
 
-A collection of skills for AI coding agents to help VVibe creators integrate analytics, member management, invitation email, and pre-deploy security scanning. Skills are packaged instructions, reference docs, and example scripts that extend an agent's capabilities.
+A collection of skills for AI coding agents to help VVibe creators integrate analytics, member management, invitation email, pre-deploy security scanning, and product-knowledge-base extraction. Skills are packaged instructions, reference docs, and example scripts that extend an agent's capabilities.
 
 **This is not an application project** — no build system, no npm dependencies, no tests. Content is documentation-driven skill definitions, reference materials, and copy-ready example code.
 
@@ -28,6 +28,10 @@ skills/
     SKILL.md                  # Skill definition (entry point)
     references/               # Health-check contract, CI setup, fix explanations, common pitfalls
     scripts/                  # report.mjs (orchestrator) + check_vvibe_integration.mjs + gitleaks-rules.toml
+  vvibe-kb-builder/         # Product Knowledge Base builder (writes via vibe_set_product_kb MCP)
+    SKILL.md                  # Skill definition (entry point)
+    references/               # Extraction discipline, KB schema, build / refresh modes
+    references/sources/       # Per-source guides (github_repo / website_url / document_set)
 ```
 
 ## Skill Architecture
@@ -55,6 +59,15 @@ SKILL.md is the entry point when an agent loads a skill. References are loaded o
 - Batch limit: max 100 users per sync call
 - Sync calls must be fire-and-forget — never block the main business flow
 - Deletion: sync with `status: "deleted"` removes the user (no separate DELETE endpoint)
+
+**KB Builder Skill:**
+- Writes the merchant's Product Knowledge Base via the `vibe_set_product_kb` MCP tool (or REST fallback to `PUT /api/product-brain/kb`)
+- Two modes: `build` (first-time, no existing KB) and `refresh` (diff against existing, emit `change_log`)
+- Three source types, additive: `github_repo`, `website_url`, `document_set`
+- Three-layer extraction discipline: EXTRACT verbatim → INFER with confidence flag → NO FABRICATION (null + `missing_fields[]`)
+- Hard prohibitions: never invent customer names / metrics; detect & list forbidden claims (CAN-SPAM / FTC / medical / financial) in `legal_compliance.forbidden_claims`
+- Token budget v1: 80k input / 16k output
+- Every prose-generating skill (email, SEO, conversion) reads the KB before drafting — this is the upstream feeder
 
 **Sentry Skill:**
 - Four layers: `SECRETS` (gitleaks), `DEPS` (osv-scanner + npm audit), `SAST` (semgrep w/ OWASP / JS / TS rule packs), `VVIBE` (sentry-internal integration checks)
