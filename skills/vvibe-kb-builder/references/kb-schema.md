@@ -15,7 +15,7 @@ extract leaves the field as `null` (or `[]` for arrays) and lands in
 ```jsonc
 {
   "meta": {
-    "schema_version": 1,
+    "schema_version": 2,
     "_confidence": {
       "company": "high" | "medium" | "low",
       "product": "high" | "medium" | "low",
@@ -29,8 +29,18 @@ extract leaves the field as `null` (or `[]` for arrays) and lands in
 }
 ```
 
-`schema_version` is `1` until the document shape itself changes. Bump
-only when a future version of this skill ships with a new shape.
+`schema_version` is the document-shape version. Current value: `2`. The
+v2 shape is **additive over v1** — every v2 field has a default, so a
+v1 KB document parses cleanly as v2 (the new fields fill in empty). On
+the next write, the document carries `schema_version: 2`. You do not
+need to migrate old data; just always emit `2` from this skill.
+
+v2 added five fields beyond v1 (search this doc for `v2` to find them):
+`company.author`, `growth_context.reader_pain_points`,
+`growth_context.preferred_terms`, `growth_context.faq_bank`,
+`growth_context.trusted_facts`. They exist because long-form prose
+skills (blog, SEO copy) need them — extracting them well at build
+time saves the creator from filling them by hand later.
 
 `_confidence` is per-section, not per-field. Set the level based on
 how much of the section came verbatim (high) vs. inferred (medium)
@@ -60,7 +70,16 @@ The creator's company / project as an identity.
     },
     "socials": [
       { "platform": "string", "handle": "string | null", "url": "string | null" }
-    ]
+    ],
+    "author": {                                  // v2
+      "name": "string | null",
+      "bio": "string | null",                    // 1–3 sentence biography
+      "avatar_url": "string | null",             // must be a valid URL when set
+      "links": [
+        { "label": "string", "url": "string" }   // valid URL required
+      ],
+      "show_byline": true                        // default true; creator-controllable
+    }
   }
 }
 ```
@@ -82,6 +101,17 @@ Notes:
 - `socials[].platform`: lowercase platform key (`"twitter"`,
   `"linkedin"`, `"instagram"`, `"github"`, …). Both handle and url
   may be null if only one is on the page.
+- **`author` (v2)** is the byline identity prose skills attribute
+  posts to. EXTRACT from About / Team / author bio surfaces — never
+  invent a name. Empty author object is correct when the site has no
+  dedicated author surface; mark `"company"` low confidence and add
+  `"company.author.name"` to `missing_fields[]` in that case.
+- `author.links` is an array of `{label, url}` pairs — what the
+  byline should render (LinkedIn, personal site, X). Lift labels
+  verbatim from the site (don't translate "LinkedIn" → "領英").
+- `author.show_byline` defaults `true`. Only set `false` when the
+  source explicitly says author boxes are suppressed for the brand
+  (rare — usually a style-guide page).
 
 ## product
 
@@ -216,7 +246,13 @@ Marketing / growth knobs that downstream growth skills consume.
     "seo_focus_keywords": ["string"],
     "brand_assets": {                          // free-form — logo urls, color hex, ogimage, …
       "key": "value"
-    }
+    },
+    "reader_pain_points": "string | null",     // v2 — what frustrations the ICP hits before the product
+    "preferred_terms": ["string"],             // v2 — brand-preferred vocabulary
+    "faq_bank": [                              // v2 — verbatim Q&A pairs from existing FAQ surfaces
+      { "question": "string", "answer": "string" }
+    ],
+    "trusted_facts": ["string"]                // v2 — short factual statements long-form prose should anchor on
   }
 }
 ```
@@ -230,6 +266,42 @@ not this skill's job.
 `"logo_url"`, `"color_primary"`, `"color_accent"`, `"og_image"`,
 `"favicon"`. Don't make up keys the schema doesn't strictly require
 — but anything you find verbatim in source is fair game.
+
+### v2 — what to extract into the new growth_context fields
+
+**`reader_pain_points`** — mirror `icp_persona`'s shape: one
+descriptive sentence/paragraph naming the concrete frustrations the
+ICP runs into before adopting the product. Sources: hero "the
+problem" sections, landing-page pain-point lists, "tired of X?"
+copy, podcast intros. EXTRACT verbatim phrasing when the source is
+explicit; INFER (medium confidence) when you're stitching it from
+testimonials. Null is correct when no source signal exists.
+
+**`preferred_terms`** — vocabulary the brand prefers, especially
+locale-specific phrasing or proper-noun spelling that prose should
+not paraphrase. EXTRACT from style-guide pages, "how we say things"
+sections, repeated terminology across the corpus. Common examples
+for a TW Traditional-Chinese brand: `["影片", "部落格", "後台", "使用者"]`
+where the Mainland synonyms would be wrong. Distinct from
+`legal_compliance.forbidden_claims` — preferred_terms is positive
+("use these"); forbidden_claims is hard-reject ("never say these").
+
+**`faq_bank`** — Q&A pairs lifted verbatim from existing FAQ pages,
+help-center entries, knowledge-base articles. **Both `question` and
+`answer` are required strings** — a question with no answer is a
+gap, not an FAQ entry; record those by listing
+`"growth_context.faq_bank"` in `missing_fields[]` instead. Don't
+synthesise Q&A pairs from prose — if the source isn't already
+question-shaped, leave the array empty.
+
+**`trusted_facts`** — short factual statements (one sentence each)
+the brand explicitly stands behind and wants prose to anchor on.
+Sources: trust pages, security/compliance pages, "our promise" copy,
+footer disclaimers. EXTRACT verbatim only; never INFER. Examples:
+`["All testimonials are verified before publication."]`,
+`["We never auto-publish — every article ships as a draft."]`. If
+nothing in the source explicitly stands as a verifiable brand claim,
+leave the array empty.
 
 ## legal_compliance
 

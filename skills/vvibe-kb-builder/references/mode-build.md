@@ -51,7 +51,7 @@ Sections to fill in this order (each depends only on what came before):
 3. `pricing` — how it's sold. Often a single page; extract every tier.
 4. `features[]` — what the product does. Stable `id` slugs (see schema).
 5. `cases[]` — empty by default. Only fill from explicit case-study pages.
-6. `growth_context` — `icp_persona` is the only field that's worth INFER-ing on build; the rest typically land in `missing_fields[]`.
+6. `growth_context` — `icp_persona` and `reader_pain_points` are the two fields worth INFER-ing on build (both are one-sentence descriptors of who the brand serves and what hurts before adoption). `preferred_terms` is EXTRACT-only (lift from style-guide / repeated terminology). `faq_bank` is EXTRACT-only from real FAQ surfaces. `trusted_facts` is EXTRACT-only from trust / promise / compliance pages. Everything not extractable lands in `missing_fields[]`.
 7. `legal_compliance` — `forbidden_claims` from any compliance memo or marketing-disclaimer block; `region` from privacy policy if present.
 
 ### 4. Validate the assembled payload locally

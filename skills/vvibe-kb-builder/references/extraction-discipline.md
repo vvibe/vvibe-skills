@@ -82,11 +82,16 @@ order of authority:
 |---|---|
 | `company.name` / `company.one_liner` | website > `package.json` description > README headline |
 | `company.brand_voice.*` | document_set (style guide if present) > emails the creator has actually sent > marketing copy on website |
+| `company.author.*` (v2) | About / Team / author bio page > `package.json` `author` field > git commit-history primary author > nothing |
 | `product.*` | website (canonical marketing copy) > docs (`docs/`, `README.md`) > inline component copy in github_repo |
 | `pricing.*` | website pricing page > a `pricing.md` / `pricing.json` in the repo > nothing |
 | `features[]` | docs (`docs/features/*`, README "Features" section) > website "Features" page > component copy |
 | `cases[]` | website case-study pages (verbatim) > customer-testimonial blocks > nothing — see §4 |
 | `growth_context.*` | document_set (creator's own positioning doc) > website (who-it's-for copy) > marketing emails |
+| `growth_context.faq_bank` (v2) | dedicated FAQ / help-center page (verbatim Q&A) > docs FAQ section > nothing — never synthesise from prose |
+| `growth_context.trusted_facts` (v2) | trust / security / compliance page > "our promise" copy > footer disclaimers > nothing — extract verbatim only |
+| `growth_context.preferred_terms` (v2) | style-guide page > repeated terminology across the corpus > nothing |
+| `growth_context.reader_pain_points` (v2) | website hero "the problem" copy > pain-point list on landing page > podcast / about intro > inference from testimonials |
 | `legal_compliance.*` | document_set (legal docs) > `compliance.md` / `terms.md` in repo > website footer pages |
 
 If the website says X and the repo says Y, the website wins —
