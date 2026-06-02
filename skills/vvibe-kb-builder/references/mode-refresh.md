@@ -87,10 +87,16 @@ silently keeping or dropping.
   inside a matched feature become separate `change_log` entries
   with paths like `"features[id=auto-resume].description"`.
 - `cases[]` — match by `customer_name`.
+- `growth_context.faq_bank[]` (v2) — match by `question` (normalised:
+  trim + collapse whitespace; case-sensitive). Per-entry diffs use
+  paths like `"growth_context.faq_bank[question=Is the article auto-published?].answer"`.
+- `company.author.links[]` (v2) — match by `url`. Label changes
+  produce paths like `"company.author.links[url=https://linkedin.com/in/x].label"`.
 - Plain string arrays (`differentiators`, `integrations`,
-  `primary_channels`, `seo_focus_keywords`) diff as sets — added /
-  removed entries become `change_log` entries with paths like
-  `"product.differentiators"` and the full before/after array.
+  `primary_channels`, `seo_focus_keywords`, `preferred_terms`,
+  `trusted_facts`) diff as sets — added / removed entries become
+  `change_log` entries with paths like `"product.differentiators"`
+  and the full before/after array.
 
 ### 5. Build the `change_log[]`
 
