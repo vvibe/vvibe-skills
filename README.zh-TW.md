@@ -33,6 +33,7 @@ npx skills update vvibe-analytics
 | **vvibe-sentry** | 部署前的程式碼安全稽核 — 串接 gitleaks、osv-scanner、semgrep 加上 VVibe 整合檢查，結果回報至 Vibe 儀表板 | `sentry 掃描`、`安全稽核`、`部署前檢查`、`機密外洩`、`依賴 CVE` |
 | **vvibe-email** | 將 Invitation Email 註冊連結導向 VVibe 託管 CTA（零設定）或 vibe coder 自架的 waitlist 落地頁 | `Invitation Email`、`Waitlist 落地頁`、`app base URL` |
 | **vvibe-kb-builder** | 建立或更新創作者在 VVibe 上的「產品腦」—— 從 repo、公開網站或文件抽取結構化產品事實，再透過 `vibe_set_product_kb` 寫回。其他會產出文案的 skill（email、SEO、轉換優化）下筆前都會先讀這份。 | `產品腦`、`product KB`、`知識庫建構器`、`告訴 VVibe 你的產品` |
+| **vvibe-blog-writer** | 從創作者的「產品腦」起草 SEO 部落格文章，並推送到他們的 CMS（WordPress）成為**草稿**——絕不自動發佈。下筆前讀取品牌語氣、FAQ、受眾與禁用語句，確保文章貼合品牌且避開法務地雷。 | `寫一篇部落格`、`起草文章`、`SEO 文章`、`發佈到 WordPress` |
 
 ## VVibe Analytics Integration
 
@@ -143,6 +144,27 @@ npx skills add vvibe/vvibe-skills --skill vvibe-kb-builder
 - 「告訴 VVibe 我的產品在做什麼」
 - 「重新整理產品腦」
 - 「產品有變動，更新 KB」
+
+## VVibe 部落格寫手
+
+```bash
+npx skills add vvibe/vvibe-skills --skill vvibe-blog-writer
+```
+
+從創作者的「產品腦」起草 SEO 部落格文章，並推送到他們的 CMS（WordPress）成為**草稿**——由創作者在自己的 CMS 檢視後發佈。VVibe 是 headless 的大腦與 CMS 連接器；伺服器端強制執行生成規格與寫作規則，agent 負責編排。
+
+- 下筆前讀取「產品腦」的品牌語氣、受眾、FAQ 與 `forbidden_claims`，確保文章貼合品牌、避開法務地雷（絕不重新推導產品）
+- 四種固定文章方向：產品理念、產品功能、相關用戶引流、教學與問題解決
+- 流程：brief → 3 個 SEO 標題候選 + 大綱 → 完整草稿（answer-first 結構、FAQ、JSON-LD），全部可編輯；每次編輯都記錄為 revision
+- WordPress 發佈走 application password；**只建立草稿**、絕不自動發佈；僅限公開 HTTPS 並有 SSRF 防護
+
+**前置條件：** 連上 VVibe MCP 或設定 `VVIBE_API_KEY`（`pcs_live_*` / `pcs_test_*`）；先有「產品腦」（請先跑 **vvibe-kb-builder**）；部署需由 operator 設定 LLM provider 才能起草；發佈需要 WordPress application password。
+
+**Skill 觸發條件：**
+- 「幫我寫一篇關於 X 的部落格」
+- 「起草一篇 SEO 文章」
+- 「產品有變動，重做這篇」
+- 「連接我的 WordPress / 發佈這篇」
 
 ## 串接到自己的 Server
 
