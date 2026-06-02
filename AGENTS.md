@@ -32,6 +32,9 @@ skills/
     SKILL.md                  # Skill definition (entry point)
     references/               # Extraction discipline, KB schema, build / refresh modes
     references/sources/       # Per-source guides (github_repo / website_url / document_set)
+  vvibe-blog-writer/        # SEO blog drafting from the KB → CMS draft (WordPress)
+    SKILL.md                  # Skill definition (entry point / router)
+    references/               # flow, publishing (WordPress), api (MCP + REST)
 ```
 
 ## Skill Architecture
@@ -68,6 +71,16 @@ SKILL.md is the entry point when an agent loads a skill. References are loaded o
 - Hard prohibitions: never invent customer names / metrics; detect & list forbidden claims (CAN-SPAM / FTC / medical / financial) in `legal_compliance.forbidden_claims`
 - Token budget v1: 80k input / 16k output
 - Every prose-generating skill (email, SEO, conversion) reads the KB before drafting — this is the upstream feeder
+
+**Blog Writer Skill:**
+- Drafts SEO articles from the Product KB and pushes to the creator's CMS (WordPress) as a **draft** — never auto-publishes
+- MCP tools: `vibe_create_blog_post`, `vibe_update_blog_post`, `vibe_publish_blog_post`, `vibe_list_blog_posts` (REST fallback under `/api/blog/*`)
+- Two entry points, one model: agent (MCP) and dashboard form both produce the same post; every prose edit appends a revision tagged `authored_by: 'agent' | 'human'`
+- Optimistic concurrency: edits pass `expectedVersion`; a 409 means re-read and re-apply
+- State machine: `created → brief_ready → draft_ready → cover_ready → published_draft` (`failed` is recoverable)
+- Server-enforced spec: answer-first structure, FAQ + JSON-LD, Taiwan Traditional Chinese writing rules, no fabricated stats / ranking guarantees; KB `forbidden_claims` are hard-rejected
+- Gated on an LLM provider (drafting) + `PUBLISHING_SECRET_KEK` (publishing); WordPress publishing is public-HTTPS-only with SSRF protection
+- Downstream consumer of the KB — pairs with vvibe-kb-builder (run that first)
 
 **Sentry Skill:**
 - Four layers: `SECRETS` (gitleaks), `DEPS` (osv-scanner + npm audit), `SAST` (semgrep w/ OWASP / JS / TS rule packs), `VVIBE` (sentry-internal integration checks)

@@ -33,6 +33,7 @@ npx skills update vvibe-analytics
 | **vvibe-sentry** | Pre-deploy codebase security audit — orchestrates gitleaks, osv-scanner, semgrep, plus VVibe-integration checks. Reports back to the dashboard. | `VVibe sentry scan`, `security audit`, `pre-deploy check`, `secret leak`, `dependency CVE` |
 | **vvibe-email** | Wire invitation-email registration links to either a VVibe-hosted CTA (zero setup) or a self-hosted waitlist landing page on the vibe coder's own domain | `invitation email`, `waitlist landing page`, `app base URL` |
 | **vvibe-kb-builder** | Build or refresh the creator's Product Knowledge Base on VVibe — extract structured product facts from a repo, public site, or document set, then write via `vibe_set_product_kb`. Every prose-generating skill (email, SEO, conversion) reads this KB before drafting. | `product brain`, `product KB`, `knowledge base builder`, `teach VVibe about my product` |
+| **vvibe-blog-writer** | Draft SEO blog articles from the creator's Product KB and push them to their CMS (WordPress) as a draft — never auto-published. Reads brand voice, FAQ, audience, and forbidden claims from the KB so the article is on-brand and legally safe. | `write a blog`, `draft an article`, `SEO article`, `publish to WordPress` |
 
 ## VVibe Analytics Integration
 
@@ -143,6 +144,27 @@ Builds or refreshes the creator's Product Knowledge Base on VVibe — the struct
 - "Teach VVibe about my product"
 - "Refresh the product KB"
 - "Product changed, sync the KB"
+
+## VVibe Blog Writer
+
+```bash
+npx skills add vvibe/vvibe-skills --skill vvibe-blog-writer
+```
+
+Drafts SEO blog articles from the creator's Product Knowledge Base and pushes them to their CMS (WordPress) as a **draft** — the creator reviews and publishes from their own CMS. VVibe is the headless brain + CMS connector; the server enforces the generation spec and writing rules while the agent orchestrates.
+
+- Reads the Product KB for brand voice, audience, FAQ, and `forbidden_claims` so articles are on-brand and avoid legal landmines (never re-derives the product)
+- Four fixed article directions: product philosophy, product features, related-audience inflow, tutorial & problem-solving
+- Brief → 3 SEO-title candidates + outline → full draft (answer-first structure, FAQ, JSON-LD), all editable; every edit is a tracked revision
+- WordPress publishing via application password; **draft only**, never auto-publishes; public-HTTPS-only with SSRF protection
+
+**Prerequisites:** A VVibe MCP connection OR a `VVIBE_API_KEY` (`pcs_live_*` / `pcs_test_*`); a Product KB (run **vvibe-kb-builder** first); the deployment's operator must have an LLM provider configured for drafting; a WordPress application password for publishing.
+
+**Skill triggers:**
+- "Write a blog post about X"
+- "Draft an SEO article"
+- "The product changed, redo this post"
+- "Connect my WordPress / publish this post"
 
 ## Using a Different Backend
 
