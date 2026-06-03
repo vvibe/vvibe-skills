@@ -123,7 +123,7 @@ npx skills add vvibe/vvibe-skills --skill vvibe-email
 - 「在 Hero 區塊放一個 VVibe waitlist CTA」
 - 「設定 invitation email 的 app base URL」
 
-## VVibe 產品知識庫建構
+## VVibe 產品腦
 
 ```bash
 npx skills add vvibe/vvibe-skills --skill vvibe-product-brain
@@ -132,7 +132,7 @@ npx skills add vvibe/vvibe-skills --skill vvibe-product-brain
 幫創作者建立或更新 VVibe 上的「產品腦」—— 結構化的 agent-owned 文件，其他會產出文案的 skill（email、SEO、轉換優化）下筆前都會先讀這份。下游 skill 因此不必每次都重新推導產品是什麼。
 
 - 三種來源類型（可疊加）：GitHub repo、公開網站、文件集（PDF / markdown / 截圖）
-- 兩種模式：`build`（沒有現有 KB，首次建立）與 `refresh`（與現有 KB 做欄位級 diff，產出 `change_log`）
+- 兩種模式：`build`（沒有現有產品腦，首次建立）與 `refresh`（與現有產品腦做欄位級 diff，產出 `change_log`）
 - 嚴格紀律：**EXTRACT verbatim → INFER 並標註 confidence → 不准 fabricate**（沒有 source signal 的欄位留 `null` 並寫進 `missing_fields[]`）
 - 永不捏造客戶名或數據；偵測法務地雷（CAN-SPAM / FTC / 醫療 / 金融）並 verbatim 記錄到 `legal_compliance.forbidden_claims`，讓下游 skill 自動避開
 

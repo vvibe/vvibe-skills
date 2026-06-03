@@ -102,9 +102,10 @@ modes:
     when: >
       `kb_exists` is true. The skill fetches the existing Product
       Brain, re-extracts from current source, diffs at the field level,
-      and ships only the changed fields plus a `change_log[]`. Triggered
-      after meaningful product changes — new pricing, new feature,
-      audience pivot, brand voice update.
+      and writes the merged full `kb_data` plus a `change_log[]`
+      listing only the changed fields. Triggered after meaningful
+      product changes — new pricing, new feature, audience pivot,
+      brand voice update.
     triggers:
       - "refresh product brain"
       - "update product brain"
@@ -242,7 +243,7 @@ for this skill.
 | `references/extraction-discipline.md` | EXTRACT / INFER / no-FABRICATION rules with per-section examples; source-precedence rules; forbidden-claims taxonomy. | every run, before extracting anything |
 | `references/kb-schema.md` | Authoritative shape of the eight Product Brain sections — field names, nullability, what good extraction looks like per field. | every run, as you fill each section |
 | `references/mode-build.md` | First-time build workflow: walk sources, fill sections, finalise `missing_fields[]`, call `vibe_set_product_kb`. | mode = build |
-| `references/mode-refresh.md` | Refresh workflow: fetch existing Product Brain, re-extract, field-level diff, construct `change_log[]`, write only the changed fields. | mode = refresh |
+| `references/mode-refresh.md` | Refresh workflow: fetch existing Product Brain, re-extract, field-level diff, construct `change_log[]`, then write the merged full `kb_data` while preserving unchanged fields. | mode = refresh |
 | `references/sources/github-repo.md` | Where to look in a codebase — `README.md`, `package.json`, route handlers, env example, marketing copy in components, existing email drafts. | source = github_repo |
 | `references/sources/website.md` | Crawl order (sitemap → robots → fallback), what each page type usually yields, parsing tips. | source = website_url |
 | `references/sources/document-set.md` | Reading PDFs / markdown / screenshots — what each typical document type contributes to which Product Brain section. | source = document_set |

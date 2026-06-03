@@ -63,7 +63,7 @@ SKILL.md is the entry point when an agent loads a skill. References are loaded o
 - Sync calls must be fire-and-forget — never block the main business flow
 - Deletion: sync with `status: "deleted"` removes the user (no separate DELETE endpoint)
 
-**Product Brain skill Skill:**
+**Product Brain Skill:**
 - Writes the merchant's Product Brain via the `vibe_set_product_kb` MCP tool (or REST fallback to `PUT /api/product-brain/kb`)
 - Two modes: `build` (first-time, no existing Product Brain) and `refresh` (diff against existing, emit `change_log`)
 - Three source types, additive: `github_repo`, `website_url`, `document_set`

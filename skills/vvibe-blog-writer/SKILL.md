@@ -35,8 +35,8 @@ ranking guarantees) — you orchestrate, the server drafts.
 
 ### Out of scope
 - Building / refreshing the Product Brain itself — that's `vvibe-product-brain`. If the
-  KB is empty, route the user there first (a blog drafted with no brand
-  context is generic).
+  Product Brain is empty, route the user there first (a blog drafted with
+  no brand context is generic).
 - Auto-publishing. v1 only ever creates a CMS **draft**. Never tell the
   creator the post is live.
 - Inventing customers, statistics, or ranking promises. The KB's
