@@ -2,7 +2,7 @@
 name: vvibe-blog-writer
 version: 0.1.0
 manifest_version: 1
-description: Draft SEO blog articles for a VVibe creator from their Product Knowledge Base and push them to their CMS (WordPress) as a draft — never auto-published. Reads the KB for brand voice, forbidden claims, FAQ, and audience so the article matches the brand and avoids legal landmines. Trigger when the user asks to write / draft / generate a blog post or article, "write a blog about X", "draft an SEO article", refresh or publish a post, or connect a WordPress site for publishing.
+description: Draft SEO blog articles for a VVibe creator from their Product Brain and push them to their CMS (WordPress) as a draft — never auto-published. Reads the Product Brain for brand voice, forbidden claims, FAQ, and audience so the article matches the brand and avoids legal landmines. Trigger when the user asks to write / draft / generate a blog post or article, "write a blog about X", "draft an SEO article", refresh or publish a post, or connect a WordPress site for publishing.
 ---
 
 # VVibe Blog Writer Skill — Routing
@@ -18,7 +18,7 @@ reference up front.
 
 Turn a topic into a publish-ready SEO article for a VVibe creator:
 
-1. Read the creator's **Product Knowledge Base** (`vibe_get_product_kb`)
+1. Read the creator's **Product Brain** (`vibe_get_product_kb`)
    so the article uses their real brand voice, audience, FAQ, and
    forbidden claims — never re-derive the product.
 2. Create a blog post from a brief (topic + one of four fixed
@@ -34,9 +34,9 @@ Traditional Chinese, answer-first structure, no fabricated stats, no
 ranking guarantees) — you orchestrate, the server drafts.
 
 ### Out of scope
-- Building / refreshing the KB itself — that's `vvibe-kb-builder`. If the
-  KB is empty, route the user there first (a blog drafted with no brand
-  context is generic).
+- Building / refreshing the Product Brain itself — that's `vvibe-product-brain`. If the
+  Product Brain is empty, route the user there first (a blog drafted with
+  no brand context is generic).
 - Auto-publishing. v1 only ever creates a CMS **draft**. Never tell the
   creator the post is live.
 - Inventing customers, statistics, or ranking promises. The KB's
@@ -48,11 +48,11 @@ ranking guarantees) — you orchestrate, the server drafts.
 | Capability | How to detect | If missing |
 |---|---|---|
 | VVibe connection | MCP tools `vibe_*` available, OR `VVIBE_API_KEY` (`pcs_live_*` / `pcs_test_*`) set | Stop; have the user connect VVibe (daemon or MCP) or set the key |
-| Product KB exists | `vibe_get_product_kb` returns non-null `data` | Route to `vvibe-kb-builder` first, then come back |
+| Product Brain exists | `vibe_get_product_kb` returns non-null `data` | Route to `vvibe-product-brain` first, then come back |
 | AI drafting enabled | a generate call returns content (not a 422 "connect an AI provider") | Tell the creator their VVibe operator must enable an LLM provider; manual writing still works in the dashboard |
 | Publishing configured | the creator has a connected publishing site, or can add one | Only needed at the publish step — see `references/publishing.md` |
 
-Detect, don't interrogate: check the KB and tool availability yourself
+Detect, don't interrogate: check the Product Brain and tool availability yourself
 before asking the creator for anything.
 
 ## 3. The flow — pick where the user is
@@ -88,7 +88,7 @@ another session) edited it under you; re-read and re-apply.
 ## 5. The four fixed directions
 
 Every post starts from one of these (the creator picks; you suggest based
-on the KB). Keep the first choice general — it's a content *type*, not a
+on the Product Brain). Keep the first choice general — it's a content *type*, not a
 specific feature:
 
 - **product_philosophy** — the thinking / values behind the product.

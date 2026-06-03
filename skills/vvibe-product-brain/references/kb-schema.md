@@ -1,6 +1,6 @@
 # KB schema — eight sections + meta
 
-This is the authoritative shape of the Product Knowledge Base
+This is the authoritative shape of the Product Brain
 document. The Builder fills this shape and passes it to
 `vibe_set_product_kb` as `kb_data`. Field names are snake_case
 because downstream prose-generating skills key off them in their
@@ -94,7 +94,7 @@ Notes:
 - `brand_voice.examples[].captured_at` — when the snippet comes from
   a real approval / human-edit event with a known timestamp, use
   that. When the snippet is lifted from current source code or a
-  current website pass (build mode's common case), use the Builder
+  current website pass (build mode's common case), use this skill
   run's extraction timestamp. Refresh mode keeps the existing
   `captured_at` for snippets it preserves; only new entries get the
   fresh-run timestamp.
@@ -231,7 +231,7 @@ inventing customers.**
 ```
 
 `published: false` is reserved for cases the creator has shared with
-the Builder via `document_set` but hasn't put on their public site
+this skill via `document_set` but hasn't put on their public site
 yet. Default to `true` only when the case is already public.
 
 ## growth_context
@@ -348,7 +348,7 @@ campaigns — most US-based creators ship `true` here.
 
 ## missing_fields[]
 
-A flat array of dotted paths the Builder couldn't extract.
+A flat array of dotted paths this skill couldn't extract.
 
 ```json
 [
@@ -370,7 +370,7 @@ Rules:
   Per-index entries (`"cases[3].result"`) are reserved for the rare
   case where one specific row needs follow-up but its siblings are
   complete.
-- Include every field the Builder considered and left empty. The
+- Include every field this skill considered and left empty. The
   point of this list is to tell downstream skills "ask the creator
   before drafting against this".
 - Don't list fields that are legitimately optional and absent

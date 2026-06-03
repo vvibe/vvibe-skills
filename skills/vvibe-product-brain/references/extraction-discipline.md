@@ -1,8 +1,8 @@
 # Extraction discipline
 
-Behavioural contract for the Builder. **Read this before extracting
-anything.** Every section of the KB has to obey these rules — they're
-what stops the Builder from producing a confident-looking document
+Behavioural contract for this skill. **Read this before extracting
+anything.** Every section of the Product Brain has to obey these rules — they're
+what stops this skill from producing a confident-looking document
 full of fabricated facts.
 
 ## 1. The three layers, in priority order
@@ -57,10 +57,10 @@ Examples that ALWAYS go in `missing_fields[]` when source is silent:
 - `pricing.tiers` if no pricing page exists
 - `cases[]` — until the source explicitly names a customer (see §4)
 - `company.brand_voice.examples` — until the creator has approved
-  drafts the Builder can lift from
+  drafts this skill can lift from
 - `legal_compliance.region` if no jurisdiction is mentioned
 
-Setting `_confidence.<section> = "low"` is allowed when the Builder
+Setting `_confidence.<section> = "low"` is allowed when this skill
 managed to fill **some** fields by INFER but most went to
 `missing_fields[]` — useful for downstream skills to know they should
 ask the creator before drafting against this section.
@@ -148,7 +148,7 @@ that re-use these phrases — that's the entire point of recording
 them. Don't paraphrase; the matching is exact-string.
 
 If the creator's existing marketing already contains these claims
-(common — most early-stage marketing has at least one), the Builder
+(common — most early-stage marketing has at least one), this skill
 isn't telling the creator to fix them. It's telling downstream
 agents to stop reinforcing them.
 

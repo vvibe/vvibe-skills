@@ -4,12 +4,12 @@ The creator hands the agent files directly — pasted markdown,
 uploaded PDFs, screenshots, exported PDFs of slide decks, Notion
 exports, the Word doc of a brand-voice style guide. Use this when:
 
-- The repo and the website don't contain the material the Builder
+- The repo and the website don't contain the material this skill
   needs (most early-stage projects have great product copy but no
   brand-voice doc; a creator with a years-old company often has the
   brand-voice doc in Notion or Drive, not the repo).
 - The creator has explicit "this is how we talk" material they want
-  the Builder to honour over what it would infer from sent emails.
+  this skill to honour over what it would infer from sent emails.
 - Legal / compliance is governed by a private document set
   (NDA-bound disclaimers, internal review notes) that doesn't ship
   on the public site.

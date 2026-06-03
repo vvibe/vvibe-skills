@@ -28,11 +28,11 @@ skills/
     SKILL.md                  # Skill definition (entry point)
     references/               # Health-check contract, CI setup, fix explanations, common pitfalls
     scripts/                  # report.mjs (orchestrator) + check_vvibe_integration.mjs + gitleaks-rules.toml
-  vvibe-kb-builder/         # Product Knowledge Base builder (writes via vibe_set_product_kb MCP)
+  vvibe-product-brain/         # Product Brain builder (writes via vibe_set_product_kb MCP)
     SKILL.md                  # Skill definition (entry point)
     references/               # Extraction discipline, KB schema, build / refresh modes
     references/sources/       # Per-source guides (github_repo / website_url / document_set)
-  vvibe-blog-writer/        # SEO blog drafting from the KB → CMS draft (WordPress)
+  vvibe-blog-writer/        # SEO blog drafting from the Product Brain → CMS draft (WordPress)
     SKILL.md                  # Skill definition (entry point / router)
     references/               # flow, publishing (WordPress), api (MCP + REST)
 ```
@@ -63,24 +63,24 @@ SKILL.md is the entry point when an agent loads a skill. References are loaded o
 - Sync calls must be fire-and-forget — never block the main business flow
 - Deletion: sync with `status: "deleted"` removes the user (no separate DELETE endpoint)
 
-**KB Builder Skill:**
-- Writes the merchant's Product Knowledge Base via the `vibe_set_product_kb` MCP tool (or REST fallback to `PUT /api/product-brain/kb`)
-- Two modes: `build` (first-time, no existing KB) and `refresh` (diff against existing, emit `change_log`)
+**Product Brain Skill:**
+- Writes the merchant's Product Brain via the `vibe_set_product_kb` MCP tool (or REST fallback to `PUT /api/product-brain/kb`)
+- Two modes: `build` (first-time, no existing Product Brain) and `refresh` (diff against existing, emit `change_log`)
 - Three source types, additive: `github_repo`, `website_url`, `document_set`
 - Three-layer extraction discipline: EXTRACT verbatim → INFER with confidence flag → NO FABRICATION (null + `missing_fields[]`)
 - Hard prohibitions: never invent customer names / metrics; detect & list forbidden claims (CAN-SPAM / FTC / medical / financial) in `legal_compliance.forbidden_claims`
 - Token budget v1: 80k input / 16k output
-- Every prose-generating skill (email, SEO, conversion) reads the KB before drafting — this is the upstream feeder
+- Every prose-generating skill (email, SEO, conversion) reads the Product Brain before drafting — this is the upstream feeder
 
 **Blog Writer Skill:**
-- Drafts SEO articles from the Product KB and pushes to the creator's CMS (WordPress) as a **draft** — never auto-publishes
+- Drafts SEO articles from the Product Brain and pushes to the creator's CMS (WordPress) as a **draft** — never auto-publishes
 - MCP tools: `vibe_create_blog_post`, `vibe_update_blog_post`, `vibe_publish_blog_post`, `vibe_list_blog_posts` (REST fallback under `/api/blog/*`)
 - Two entry points, one model: agent (MCP) and dashboard form both produce the same post; every prose edit appends a revision tagged `authored_by: 'agent' | 'human'`
 - Optimistic concurrency: edits pass `expectedVersion`; a 409 means re-read and re-apply
 - State machine: `created → brief_ready → draft_ready → cover_ready → published_draft` (`failed` is recoverable)
 - Server-enforced spec: answer-first structure, FAQ + JSON-LD, Taiwan Traditional Chinese writing rules, no fabricated stats / ranking guarantees; KB `forbidden_claims` are hard-rejected
 - Gated on an LLM provider (drafting) + `PUBLISHING_SECRET_KEK` (publishing); WordPress publishing is public-HTTPS-only with SSRF protection
-- Downstream consumer of the KB — pairs with vvibe-kb-builder (run that first)
+- Downstream consumer of the Product Brain — pairs with vvibe-product-brain (run that first)
 
 **Sentry Skill:**
 - Four layers: `SECRETS` (gitleaks), `DEPS` (osv-scanner + npm audit), `SAST` (semgrep w/ OWASP / JS / TS rule packs), `VVIBE` (sentry-internal integration checks)

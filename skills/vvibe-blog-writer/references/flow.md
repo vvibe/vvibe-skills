@@ -11,18 +11,18 @@ Always start with `vibe_get_product_kb`. Use it to:
 - pre-fill tone from `company.brand_voice`,
 - know the `forbidden_claims` you must never write toward.
 
-If `data` is null, stop and route the creator to **vvibe-kb-builder** —
+If `data` is null, stop and route the creator to **vvibe-product-brain** —
 a blog drafted with no brand context is generic and off-voice.
 
 ## 2. Agree the brief
 
 Confirm with the creator, in plain language:
 - **topic** (what the article is about),
-- **fixed direction** (one of the four — suggest based on the KB),
+- **fixed direction** (one of the four — suggest based on the Product Brain),
 - optional **target keyword**, **tone** override, **length**
   (`short` | `medium` | `long`, default `medium`).
 
-Don't over-interrogate — propose a brief from the KB and let them adjust.
+Don't over-interrogate — propose a brief from the Product Brain and let them adjust.
 
 ## 3. Create the post
 
@@ -63,7 +63,7 @@ draft the creator has been editing — offer the change.
 
 ## 6. Re-generate after a product change
 
-If the product changed, refresh the KB first (vvibe-kb-builder), then
+If the product changed, refresh the Product Brain first (vvibe-product-brain), then
 re-run generate on a post that isn't published yet. Generation can re-run
 from `brief_ready` or `draft_ready`; it won't touch a `published_draft`.
 
