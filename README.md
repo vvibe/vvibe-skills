@@ -32,8 +32,8 @@ npx skills update vvibe-analytics
 | **vvibe-member** | User sync to VVibe — migration, incremental sync, and dashboard viewing | `user sync`, `member sync`, `user management` |
 | **vvibe-sentry** | Pre-deploy codebase security audit — orchestrates gitleaks, osv-scanner, semgrep, plus VVibe-integration checks. Reports back to the dashboard. | `VVibe sentry scan`, `security audit`, `pre-deploy check`, `secret leak`, `dependency CVE` |
 | **vvibe-email** | Wire invitation-email registration links to either a VVibe-hosted CTA (zero setup) or a self-hosted waitlist landing page on the vibe coder's own domain | `invitation email`, `waitlist landing page`, `app base URL` |
-| **vvibe-kb-builder** | Build or refresh the creator's Product Knowledge Base on VVibe — extract structured product facts from a repo, public site, or document set, then write via `vibe_set_product_kb`. Every prose-generating skill (email, SEO, conversion) reads this KB before drafting. | `product brain`, `product KB`, `knowledge base builder`, `teach VVibe about my product` |
-| **vvibe-blog-writer** | Draft SEO blog articles from the creator's Product KB and push them to their CMS (WordPress) as a draft — never auto-published. Reads brand voice, FAQ, audience, and forbidden claims from the KB so the article is on-brand and legally safe. | `write a blog`, `draft an article`, `SEO article`, `publish to WordPress` |
+| **vvibe-product-brain** | Build or refresh the creator's Product Brain on VVibe — extract structured product facts from a repo, public site, or document set, then write via `vibe_set_product_kb`. Every prose-generating skill (email, SEO, conversion) reads this Product Brain before drafting. | `product brain`, `Product Brain`, `knowledge base builder`, `teach VVibe about my product` |
+| **vvibe-blog-writer** | Draft SEO blog articles from the creator's Product Brain and push them to their CMS (WordPress) as a draft — never auto-published. Reads brand voice, FAQ, audience, and forbidden claims from the Product Brain so the article is on-brand and legally safe. | `write a blog`, `draft an article`, `SEO article`, `publish to WordPress` |
 
 ## VVibe Analytics Integration
 
@@ -123,16 +123,16 @@ Helps vibe coders wire the registration link inside VVibe invitation emails to t
 - "Embed a VVibe waitlist CTA in my hero section"
 - "Configure the app base URL for invitation emails"
 
-## VVibe Product Knowledge Base Builder
+## VVibe Product Brain Builder
 
 ```bash
-npx skills add vvibe/vvibe-skills --skill vvibe-kb-builder
+npx skills add vvibe/vvibe-skills --skill vvibe-product-brain
 ```
 
-Builds or refreshes the creator's Product Knowledge Base on VVibe — the structured agent-owned document that every prose-generating skill (email, SEO, conversion) reads before drafting. Stops downstream skills from re-deriving the creator's product on every action.
+Builds or refreshes the creator's Product Brain on VVibe — the structured agent-owned document that every prose-generating skill (email, SEO, conversion) reads before drafting. Stops downstream skills from re-deriving the creator's product on every action.
 
 - Three source types (additive): github repo, public website, document set (PDFs / markdown / screenshots)
-- Two modes: `build` (first-time, no existing KB) and `refresh` (diff against existing, emit `change_log`)
+- Two modes: `build` (first-time, no existing Product Brain) and `refresh` (diff against existing, emit `change_log`)
 - Hard discipline: EXTRACT verbatim → INFER with confidence flag → NO FABRICATION (null + `missing_fields[]`)
 - Never invents customer names or metrics; detects forbidden claims (CAN-SPAM / FTC / medical / financial) and records them for downstream skills to avoid
 
@@ -142,8 +142,8 @@ Builds or refreshes the creator's Product Knowledge Base on VVibe — the struct
 - "Set up my product brain on VVibe"
 - "Build the product knowledge base"
 - "Teach VVibe about my product"
-- "Refresh the product KB"
-- "Product changed, sync the KB"
+- "Refresh the Product Brain"
+- "Product changed, sync the Product Brain"
 
 ## VVibe Blog Writer
 
@@ -151,14 +151,14 @@ Builds or refreshes the creator's Product Knowledge Base on VVibe — the struct
 npx skills add vvibe/vvibe-skills --skill vvibe-blog-writer
 ```
 
-Drafts SEO blog articles from the creator's Product Knowledge Base and pushes them to their CMS (WordPress) as a **draft** — the creator reviews and publishes from their own CMS. VVibe is the headless brain + CMS connector; the server enforces the generation spec and writing rules while the agent orchestrates.
+Drafts SEO blog articles from the creator's Product Brain and pushes them to their CMS (WordPress) as a **draft** — the creator reviews and publishes from their own CMS. VVibe is the headless brain + CMS connector; the server enforces the generation spec and writing rules while the agent orchestrates.
 
-- Reads the Product KB for brand voice, audience, FAQ, and `forbidden_claims` so articles are on-brand and avoid legal landmines (never re-derives the product)
+- Reads the Product Brain for brand voice, audience, FAQ, and `forbidden_claims` so articles are on-brand and avoid legal landmines (never re-derives the product)
 - Four fixed article directions: product philosophy, product features, related-audience inflow, tutorial & problem-solving
 - Brief → 3 SEO-title candidates + outline → full draft (answer-first structure, FAQ, JSON-LD), all editable; every edit is a tracked revision
 - WordPress publishing via application password; **draft only**, never auto-publishes; public-HTTPS-only with SSRF protection
 
-**Prerequisites:** A VVibe MCP connection OR a `VVIBE_API_KEY` (`pcs_live_*` / `pcs_test_*`); a Product KB (run **vvibe-kb-builder** first); the deployment's operator must have an LLM provider configured for drafting; a WordPress application password for publishing.
+**Prerequisites:** A VVibe MCP connection OR a `VVIBE_API_KEY` (`pcs_live_*` / `pcs_test_*`); a Product Brain (run **vvibe-product-brain** first); the deployment's operator must have an LLM provider configured for drafting; a WordPress application password for publishing.
 
 **Skill triggers:**
 - "Write a blog post about X"

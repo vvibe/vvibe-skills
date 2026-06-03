@@ -1,16 +1,16 @@
 # Mode: refresh
 
-Incremental update. An existing KB is on file (`vibe_get_product_kb`
+Incremental update. An existing Product Brain is on file (`vibe_get_product_kb`
 returned `data` with a non-null body). The creator's product has
 changed — new pricing tier, a feature pivot, an audience shift, a
-fresh round of compliance review — and they want the KB to catch up
+fresh round of compliance review — and they want the Product Brain to catch up
 without wiping what's already correct.
 
 Read this in addition to `extraction-discipline.md` and `kb-schema.md`.
 
 ## Workflow
 
-### 1. Fetch the existing KB
+### 1. Fetch the existing Product Brain
 
 ```jsonc
 // MCP
@@ -77,7 +77,7 @@ fact is wrong — the source page might just have moved or been
 restyled. The exception is `forbidden_claims` and `cases[]`: if a
 re-read of the source no longer contains a previously-recorded item,
 ask the human ("This case study about X is no longer on your
-/customers page — should I drop it from the KB?") rather than
+/customers page — should I drop it from the Product Brain?") rather than
 silently keeping or dropping.
 
 **Array fields** (`differentiators`, `features[]`, `cases[]`,

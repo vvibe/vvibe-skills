@@ -10,7 +10,7 @@ in `extraction-discipline.md`; schema shape lives in `kb-schema.md`.
 
 ## Order of operations
 
-Read these files in order. Most repos give 80% of the KB signal in
+Read these files in order. Most repos give 80% of the Product Brain signal in
 the first 4–5 you find.
 
 ### 1. `README.md` (always read first)

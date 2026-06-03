@@ -1,6 +1,6 @@
 # Mode: build
 
-First-time extraction. There's no existing KB — `vibe_get_product_kb`
+First-time extraction. There's no existing Product Brain — `vibe_get_product_kb`
 returned `data: null`, or the creator explicitly said "start from
 scratch". The Builder reads the available sources, fills every
 section it can confidently extract, leaves the rest in
@@ -31,7 +31,7 @@ Load only the source-reference files you'll actually use:
 - `sources/document-set.md` — when the user pasted / uploaded files
 
 For each source, walk it in the order that reference recommends.
-Don't try to read everything — most projects have 80% of the KB
+Don't try to read everything — most projects have 80% of the Product Brain
 signal in 5–10 files / pages.
 
 ### 3. Fill the sections

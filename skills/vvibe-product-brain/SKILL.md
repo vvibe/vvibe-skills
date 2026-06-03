@@ -1,13 +1,13 @@
 ---
-name: vvibe-kb-builder
+name: vvibe-product-brain
 version: 0.1.0
 manifest_version: 1
-description: Build or refresh a creator's Product Knowledge Base (KB) on VVibe — extract structured product facts from a github repo, public website, or document set, then write the result via the `vibe_set_product_kb` MCP tool. The KB is read by every prose-generating skill (email, SEO, conversion) before drafting, so this skill is the upstream feeder for everything else. Trigger when the user mentions building / refreshing the product brain, product KB, knowledge base, "teach VVibe about my product", or asks the agent to set up the brain so other skills have context.
+description: Build or refresh a creator's Product Brain on VVibe — extract structured product facts from a github repo, public website, or document set, then write the result via the `vibe_set_product_kb` MCP tool. The Product Brain is read by every prose-generating skill (email, SEO, conversion) before drafting, so this skill is the upstream feeder for everything else. Trigger when the user mentions building / refreshing the product brain, knowledge base, "teach VVibe about my product", or asks the agent to set up the brain so other skills have context.
 ---
 
-# VVibe KB Builder Skill — Routing
+# VVibe Product Brain Skill — Routing
 
-This file is a router. It decides **which** Builder workflow the human user
+This file is a router. It decides **which** workflow the human user
 needs, then directs you to a single deep-dive in `references/`. Do not put
 extraction detail here — keep it in the referenced files.
 
@@ -17,23 +17,23 @@ references/*.md files**. Do not read every reference file upfront.
 
 ## 1. What this skill does
 
-Populate the creator's Product Knowledge Base on VVibe — a structured,
+Populate the creator's Product Brain on VVibe — a structured,
 agent-owned document covering eight sections: `company`, `product`,
 `pricing`, `features`, `cases`, `growth_context`, `legal_compliance`,
 plus a `meta` envelope with per-section confidence. Every other
 prose-generating skill (email, SEO, conversion, future social) reads the
-KB at task start so they don't re-derive the creator's product on every
-action.
+Product Brain at task start so they don't re-derive the creator's product
+on every action.
 
 Two modes — pick exactly one:
 
-- **build** — there's no KB yet (first-time creators). Extract from
-  scratch, fill what you can, leave the rest in `missing_fields[]`. No
-  `change_log` on this path.
-- **refresh** — KB already exists. Fetch via `vibe_get_product_kb`,
-  re-extract from current source, diff against the existing document,
-  and produce a `change_log[]`. Only update fields where source signal
-  has actually changed.
+- **build** — there's no Product Brain yet (first-time creators). Extract
+  from scratch, fill what you can, leave the rest in `missing_fields[]`.
+  No `change_log` on this path.
+- **refresh** — Product Brain already exists. Fetch via
+  `vibe_get_product_kb`, re-extract from current source, diff against
+  the existing document, and produce a `change_log[]`. Only update
+  fields where source signal has actually changed.
 
 Three source types, orthogonal to mode — pick one (or more) of:
 
@@ -45,10 +45,13 @@ Three source types, orthogonal to mode — pick one (or more) of:
   (PDFs, markdown, screenshots).
 
 Out of scope:
-- Rewriting prose **from** the KB (that's the consumer skills' job).
-- Editing the KB section-by-section through chat — the dashboard read
-  view at `/dashboard/product-brain` is intentionally read-only; this
-  skill is the only write path.
+- Rewriting prose **from** the Brain (that's the consumer skills' job).
+- Editing the Brain section-by-section through chat — the dashboard
+  view at `/dashboard/product-brain` is the audit + monitor surface;
+  this skill is the primary write path. (Creators can inline-edit a
+  small allowlist of prose-shaped fields from the dashboard; those
+  paths are tracked in `meta._human_edits[]` so refresh mode skips
+  overwriting them. See `references/mode-refresh.md`.)
 - Inventing customer names, metrics, or testimonials — see §6
   Extraction discipline.
 
@@ -79,12 +82,14 @@ modes:
   build:
     status: available
     when: >
-      `kb_exists` is false — no KB has been written yet. This is the
-      default for first-time creators. The Builder extracts everything
-      it can from source, populates `missing_fields[]` for anything it
-      can't confidently extract, and calls `vibe_set_product_kb` once.
+      `kb_exists` is false — no Product Brain has been written yet.
+      This is the default for first-time creators. The skill extracts
+      everything it can from source, populates `missing_fields[]` for
+      anything it can't confidently extract, and calls
+      `vibe_set_product_kb` once.
     triggers:
       - "set up product brain"
+      - "build product brain"
       - "build product KB"
       - "teach VVibe about my product"
       - "create the knowledge base"
@@ -95,16 +100,19 @@ modes:
   refresh:
     status: available
     when: >
-      `kb_exists` is true. The Builder fetches the existing KB,
-      re-extracts from current source, diffs at the field level, and
-      ships only the changed fields plus a `change_log[]`. Triggered
+      `kb_exists` is true. The skill fetches the existing Product
+      Brain, re-extracts from current source, diffs at the field level,
+      and ships only the changed fields plus a `change_log[]`. Triggered
       after meaningful product changes — new pricing, new feature,
       audience pivot, brand voice update.
     triggers:
       - "refresh product brain"
+      - "update product brain"
       - "update product KB"
       - "re-run KB builder"
+      - "re-run product brain"
       - "product changed, sync the KB"
+      - "product changed, sync the brain"
     requires: [vibe_mcp_connected OR has_api_key_local, has_source, kb_exists]
     load: references/mode-refresh.md
 ```
@@ -115,7 +123,7 @@ has_document_set`. At least one must be true; the more the better
 
 ## 4. Sources
 
-Pick one or more — sources are additive. The Builder fans extraction
+Pick one or more — sources are additive. This skill fans extraction
 across them and merges per the section-precedence rules in
 `references/extraction-discipline.md` §3.
 
@@ -147,7 +155,7 @@ Use these only when the human's phrase genuinely maps to >1 mode AND
 capability detection didn't narrow it down.
 
 **Tiebreaker rule.** If `kb_exists` is false, route to `build` and
-skip the disambiguator — `refresh` requires an existing KB.
+skip the disambiguator — `refresh` requires an existing Product Brain.
 
 ```yaml
 disambiguators:
@@ -162,7 +170,7 @@ disambiguators:
 
 ## 6. Cross-cutting facts (apply to ALL modes — read before extracting)
 
-**Extraction discipline.** The Builder operates in three layers — in
+**Extraction discipline.** This skill operates in three layers — in
 strict priority order:
 
 1. **EXTRACT** — lift wording verbatim from source whenever possible.
@@ -213,15 +221,15 @@ shape from `references/kb-schema.md`. No partial writes from this
 skill — section-level writes exist on the API
 (`PATCH /api/product-brain/kb/sections/[section]`) but are reserved
 for hand-edits the creator might run from the dashboard later, not
-for the Builder.
+for this skill.
 
 ## 7. Output preferences
 
 - Tell the human upfront how many sections you expect to fill vs.
   leave in `missing_fields[]`, based on what you've seen in source.
 - When you write, **echo a one-paragraph summary** of what landed in
-  the KB and what stayed missing — the creator reads this in chat;
-  the structured data lives in the dashboard.
+  the Product Brain and what stayed missing — the creator reads this
+  in chat; the structured data lives in the dashboard.
 - For `refresh` mode, **show the change_log** in chat before writing
   so the creator can spot anything that looks off.
 - Sync calls are fire-and-forget for the MCP tool itself; the agent
@@ -232,9 +240,9 @@ for the Builder.
 | File | Contains | Load when |
 |---|---|---|
 | `references/extraction-discipline.md` | EXTRACT / INFER / no-FABRICATION rules with per-section examples; source-precedence rules; forbidden-claims taxonomy. | every run, before extracting anything |
-| `references/kb-schema.md` | Authoritative shape of the eight KB sections — field names, nullability, what good extraction looks like per field. | every run, as you fill each section |
+| `references/kb-schema.md` | Authoritative shape of the eight Product Brain sections — field names, nullability, what good extraction looks like per field. | every run, as you fill each section |
 | `references/mode-build.md` | First-time build workflow: walk sources, fill sections, finalise `missing_fields[]`, call `vibe_set_product_kb`. | mode = build |
-| `references/mode-refresh.md` | Refresh workflow: fetch existing KB, re-extract, field-level diff, construct `change_log[]`, write only the changed fields. | mode = refresh |
+| `references/mode-refresh.md` | Refresh workflow: fetch existing Product Brain, re-extract, field-level diff, construct `change_log[]`, write only the changed fields. | mode = refresh |
 | `references/sources/github-repo.md` | Where to look in a codebase — `README.md`, `package.json`, route handlers, env example, marketing copy in components, existing email drafts. | source = github_repo |
 | `references/sources/website.md` | Crawl order (sitemap → robots → fallback), what each page type usually yields, parsing tips. | source = website_url |
-| `references/sources/document-set.md` | Reading PDFs / markdown / screenshots — what each typical document type contributes to which KB section. | source = document_set |
+| `references/sources/document-set.md` | Reading PDFs / markdown / screenshots — what each typical document type contributes to which Product Brain section. | source = document_set |

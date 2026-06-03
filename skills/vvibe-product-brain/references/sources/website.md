@@ -181,7 +181,7 @@ features/product page for `features[]`.
 - `/admin`, `/internal` — accidentally public, never useful.
 - File downloads (PDFs linked from the site) — those are
   `document_set` material; the human should explicitly pass them.
-- `/api/*` JSON endpoints — irrelevant to the KB.
+- `/api/*` JSON endpoints — irrelevant to the Product Brain.
 
 ## Worked example
 
