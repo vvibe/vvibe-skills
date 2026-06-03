@@ -15,7 +15,7 @@ extract leaves the field as `null` (or `[]` for arrays) and lands in
 ```jsonc
 {
   "meta": {
-    "schema_version": 2,
+    "schema_version": 3,
     "_confidence": {
       "company": "high" | "medium" | "low",
       "product": "high" | "medium" | "low",
@@ -24,23 +24,35 @@ extract leaves the field as `null` (or `[]` for arrays) and lands in
       "cases": "high" | "medium" | "low",
       "growth_context": "high" | "medium" | "low",
       "legal_compliance": "high" | "medium" | "low"
-    }
+    },
+    "_human_edits": ["company.brand_voice.tone", "growth_context.faq_bank[2].answer"]
   }
 }
 ```
 
-`schema_version` is the document-shape version. Current value: `2`. The
-v2 shape is **additive over v1** — every v2 field has a default, so a
-v1 KB document parses cleanly as v2 (the new fields fill in empty). On
-the next write, the document carries `schema_version: 2`. You do not
-need to migrate old data; just always emit `2` from this skill.
+`schema_version` is the document-shape version. Current value: `3`. The
+v3 shape is **additive over v1 / v2** — every newer field has a default,
+so older documents parse cleanly into v3 (missing fields fill in empty).
+On the next write, the document carries `schema_version: 3`. You do not
+need to migrate old data; just always emit `3` from this skill.
 
-v2 added five fields beyond v1 (search this doc for `v2` to find them):
-`company.author`, `growth_context.reader_pain_points`,
+v2 added five fields beyond v1: `company.author`,
+`growth_context.reader_pain_points`,
 `growth_context.preferred_terms`, `growth_context.faq_bank`,
 `growth_context.trusted_facts`. They exist because long-form prose
 skills (blog, SEO copy) need them — extracting them well at build
 time saves the creator from filling them by hand later.
+
+v3 added one field: `meta._human_edits[]`. The dashboard inline-edit
+surface (gated on `NEXT_PUBLIC_PRODUCT_BRAIN_INLINE_EDIT=1` in the
+host build) lets creators directly edit a small allowlist of
+prose-shaped string leaves — typo fixes, brand-voice rewordings, FAQ
+answer tweaks. When they do, the path goes into `_human_edits[]`.
+**This skill in refresh mode MUST honour the array**: for any path
+listed there, restore the value from the previous document instead of
+overwriting with the new extraction, and emit a `change_log` entry
+tagged `skipped: 'human_edit'`. See `mode-refresh.md` §4.5. Default
+empty `[]` on v1 / v2 documents.
 
 `_confidence` is per-section, not per-field. Set the level based on
 how much of the section came verbatim (high) vs. inferred (medium)
@@ -385,7 +397,9 @@ Rules:
     {
       "path": "string",                        // dotted path of the changed field
       "before": "any",                         // previous value (null if newly added)
-      "after": "any"                           // new value (null if removed)
+      "after": "any",                          // new value (null if removed)
+      "authored_by": "agent" | "human",        // v3 optional — who wrote this entry
+      "skipped": "human_edit"                  // v3 optional — present when path is in _human_edits and the agent restored the previous value instead of overwriting
     }
   ]
 }
@@ -394,3 +408,16 @@ Rules:
 Build mode writes `change_log: null` or omits the field entirely.
 Refresh mode populates it — see `mode-refresh.md` for diff
 construction.
+
+**v3 — `authored_by`.** Optional; default-emit `"agent"` for entries
+this skill writes. Dashboard inline-edits write `"human"`. Older
+documents pre-v3 omit the field; readers treat absent as `"agent"`.
+
+**v3 — `skipped`.** Present only when the agent would have written a
+new value but the path is in `meta._human_edits[]`. In that case set
+`before` AND `after` both to the previous (human) value, and set
+`skipped: "human_edit"`. This is how the creator's "Recent changes"
+view surfaces "the agent would have suggested X but kept yours". The
+agent's own proposed value is intentionally NOT recorded in `after`
+in v3 — adding that becomes a v4 concern when the UI is ready to
+render "accept agent suggestion / keep mine".
