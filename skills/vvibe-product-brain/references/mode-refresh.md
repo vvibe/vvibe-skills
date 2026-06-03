@@ -117,6 +117,7 @@ inline-edit surface).
      "path": "company.brand_voice.tone",
      "before": "warm, plain, encouraging",
      "after":  "warm, plain, encouraging",
+     "authored_by": "agent",
      "skipped": "human_edit"
    }
    ```
