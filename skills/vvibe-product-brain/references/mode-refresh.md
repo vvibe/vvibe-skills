@@ -98,6 +98,64 @@ silently keeping or dropping.
   `change_log` entries with paths like `"product.differentiators"`
   and the full before/after array.
 
+### 4.5. Honour `meta._human_edits[]`
+
+Before assembling the change_log, walk `existing.data.kbData.meta._human_edits`
+(an array of dotted paths the creator manually edited from the dashboard
+inline-edit surface).
+
+**For each path in `_human_edits`:**
+
+1. If your new candidate document has a different value at that path
+   than the existing document — **revert your candidate to the
+   existing value.** The creator deliberately edited it; the agent
+   does not overwrite.
+2. Emit a `change_log` entry with `skipped: "human_edit"`:
+
+   ```json
+   {
+     "path": "company.brand_voice.tone",
+     "before": "warm, plain, encouraging",
+     "after":  "warm, plain, encouraging",
+     "skipped": "human_edit"
+   }
+   ```
+
+   `before` and `after` are both set to the existing (human) value.
+   The agent's own proposed value is intentionally NOT recorded in
+   v3 — a future v4 will add an `agent_suggested` field for an
+   "accept agent suggestion / keep mine" UI; for now the dashboard
+   just renders these entries as "kept your edit".
+3. If the candidate matches the existing value at that path (the
+   agent's re-extraction happened to land on the same words),
+   produce no `change_log` entry. No-op.
+
+**`_human_edits` itself is preserved across writes.** Never reset
+the array to `[]` from this skill — that's the dashboard's job, via
+its own "Let the agent manage this again" affordance. When you call
+`vibe_set_product_kb`, set `meta._human_edits` in `kb_data` to the
+exact same array you read from `existing.data.kbData.meta._human_edits`.
+
+**For paths NOT in `_human_edits`:** apply the normal diff rules
+from §4 — extract → preserve over silence → overwrite when source
+genuinely changed.
+
+**FAQ array stable-id matching.** `_human_edits` paths use the
+index-pinned form `growth_context.faq_bank[2].answer`. Combine with
+the question-match rule from §4: if the question at the human-edited
+index has shifted (the agent's new extraction lists faqs in a
+different order, or removed an earlier one), find the entry whose
+**question** matches the previous value at that index — that's the
+entry to preserve, regardless of its new index. If the question text
+itself was human-edited (path `growth_context.faq_bank[2].question`),
+match by the previous question text and preserve both Q and A.
+
+**If the human-edited path no longer exists in any reasonable
+extraction** (e.g. a case the creator hand-described that the agent
+can't find on the public site this time) — keep the existing entry
+as-is and emit `skipped: "human_edit"`. Don't silently drop human
+edits because the source page rearranged.
+
 ### 5. Build the `change_log[]`
 
 Each entry has the shape from `kb-schema.md` §change_log:
@@ -106,9 +164,15 @@ Each entry has the shape from `kb-schema.md` §change_log:
 {
   "path": "pricing.tiers[1].price",
   "before": 29,
-  "after": 49
+  "after": 49,
+  "authored_by": "agent"
 }
 ```
+
+Always emit `authored_by: "agent"` from this skill (v3+). The
+`skipped: "human_edit"` entries from §4.5 also carry
+`authored_by: "agent"` — the agent wrote the change_log entry, even
+though the underlying value came from a human edit.
 
 Keep the array tight — one entry per genuinely changed field. Don't
 list noop bumps (e.g. trailing whitespace differences,
@@ -140,6 +204,10 @@ description regression). Format like:
 > - `growth_context.primary_channels`: added "Reddit r/SaaS"
 > - `legal_compliance.forbidden_claims`: removed "guaranteed 10× ROI" (no longer in your marketing copy)
 > - `company.brand_voice.tone`: was null, now "calm, direct, encouraging" (inferred from your last 4 sent emails)
+>
+> Kept (you edited these from the dashboard, so I'm not overwriting):
+> - `growth_context.faq_bank[2].answer` (your hand-written wording)
+> - `product.target_audience` (you tightened this last week)
 >
 > 2 fields newly missing: `growth_context.icp_persona` (your /for-developers page was deleted), `pricing.tiers[1].features_included` (the bullet list is gone from /pricing).
 >

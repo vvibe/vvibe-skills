@@ -1,6 +1,6 @@
 ---
 name: vvibe-product-brain
-version: 0.1.0
+version: 0.2.0
 manifest_version: 1
 description: Build or refresh a creator's Product Brain on VVibe — extract structured product facts from a github repo, public website, or document set, then write the result via the `vibe_set_product_kb` MCP tool. The Product Brain is read by every prose-generating skill (email, SEO, conversion) before drafting, so this skill is the upstream feeder for everything else. Trigger when the user mentions building / refreshing the product brain, knowledge base, "teach VVibe about my product", or asks the agent to set up the brain so other skills have context.
 ---
