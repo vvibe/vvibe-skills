@@ -1,8 +1,8 @@
 ---
 name: vvibe-blog-writer
-version: 0.1.0
+version: 0.2.0
 manifest_version: 1
-description: Draft SEO blog articles for a VVibe creator from their Product Brain and push them to their CMS (WordPress) as a draft — never auto-published. Reads the Product Brain for brand voice, forbidden claims, FAQ, and audience so the article matches the brand and avoids legal landmines. Trigger when the user asks to write / draft / generate a blog post or article, "write a blog about X", "draft an SEO article", refresh or publish a post, or connect a WordPress site for publishing.
+description: Draft SEO blog articles for a VVibe creator from their Product Brain, then publish them either to the creator's own VVibe headless blog (no external CMS, no setup) or as a draft to their WordPress. Reads the Product Brain for brand voice, forbidden claims, FAQ, and audience so the article matches the brand and avoids legal landmines. Trigger when the user asks to write / draft / generate a blog post or article, "write a blog about X", "draft an SEO article", refresh, publish or unpublish a post, or connect a WordPress site for publishing.
 ---
 
 # VVibe Blog Writer Skill — Routing
@@ -25,8 +25,12 @@ Turn a topic into a publish-ready SEO article for a VVibe creator:
    directions), generate a brief (3 SEO-title candidates + outline),
    let the creator pick/adjust, then generate the full draft.
 3. The creator edits the prose in the dashboard; you can also refine it.
-4. Connect the creator's CMS (WordPress) and push the article as a
-   **draft** — the creator hits Publish in their own CMS.
+4. Publish to one of two destinations:
+   - **VVibe blog (built-in, headless)** — no external CMS, no
+     credentials. The post goes live on the creator's VVibe content API;
+     their site (built with the `vvibe-blog-render` skill) renders it.
+   - **The creator's WordPress** — push the article as a **draft**; the
+     creator hits Publish in their own CMS.
 
 VVibe is the headless CMS + brain; this skill is how the agent operates
 it. The server enforces the generation spec and writing rules (Taiwan
@@ -62,7 +66,7 @@ Read `references/flow.md` for the full step-by-step. Quick map:
 - **"write/draft a blog about X"** → create + generate (flow.md §1–§4)
 - **"change the title / outline / section"** → edit the draft (flow.md §5)
 - **"the product changed, redo this post"** → re-generate (flow.md §6)
-- **"connect my WordPress" / "publish this"** → `references/publishing.md`
+- **"publish this" / "put it on my blog" / "connect my WordPress" / "take it down"** → `references/publishing.md` (VVibe blog or WordPress; publish + unpublish)
 - **"what posts do I have?"** → list (flow.md §7)
 
 ## 4. Tools (MCP) and the REST fallback
@@ -77,8 +81,9 @@ same operations are plain HTTPS calls. Both are documented in
 | Create a post from a brief | `vibe_create_blog_post` | `POST /api/blog/posts` |
 | Generate brief + draft | (via create options / generate) | `POST /api/blog/posts/{id}/generate` |
 | Edit prose (title/body/outline/meta) | `vibe_update_blog_post` | `PATCH /api/blog/posts/{id}` |
-| Publish as CMS draft | `vibe_publish_blog_post` | `POST /api/blog/posts/{id}/publish` |
-| Connect / test a publishing site | (dashboard) | `POST /api/blog/sites`, `POST /api/blog/sites/{id}/test` |
+| Publish (VVibe blog `target:'native'`, or CMS draft) | `vibe_publish_blog_post` | `POST /api/blog/posts/{id}/publish` |
+| Unpublish from the VVibe blog | (dashboard) | `POST /api/blog/posts/{id}/unpublish` |
+| Connect / test a WordPress site | (dashboard) | `POST /api/blog/sites`, `POST /api/blog/sites/{id}/test` |
 
 Edits made through `PATCH` / `vibe_update_blog_post` are recorded as
 revisions; the post's `version` increments on every write. When you edit,
@@ -99,8 +104,14 @@ specific feature:
 
 ## 6. Hard rules (server-enforced; don't fight them)
 
-- **Draft only.** Publishing creates a WordPress *draft*. The creator
-  publishes from their CMS. Never claim a post is live.
+- **Two destinations, different finality.** Publishing to the creator's
+  **VVibe blog** (`target: 'native'`) makes the post live on their content
+  API immediately (`status: published`); it appears on their site once
+  that site — built with the `vvibe-blog-render` skill — next pulls or
+  rebuilds, so don't promise it's visible to readers until their site is
+  set up. Publishing to **WordPress** only ever creates a *draft*
+  (`published_draft`); the creator hits Publish there. Never claim a
+  WordPress post is live.
 - **No fabrication.** No invented customers, statistics, or sources. No
   ranking / revenue guarantees. The KB's `forbidden_claims` are rejected
   server-side.
