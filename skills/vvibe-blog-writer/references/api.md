@@ -55,11 +55,30 @@ no merchant id in the payloads.
 → `{ data: BlogPost }` with `version` incremented. `409` on a version
 mismatch (re-read and re-apply). Each edit appends a revision.
 
-### Publish (CMS draft)
-- MCP: `vibe_publish_blog_post`
-- REST: `POST /api/blog/posts/{id}/publish` → `{ data: BlogPost }` at
-  `status: "published_draft"` with `remotePostUrl`. `422` with a
-  plain-language reason on a provider failure (post moves to `failed`).
+### Publish
+- MCP: `vibe_publish_blog_post` (pass `target: "native"` for the VVibe blog)
+- REST: `POST /api/blog/posts/{id}/publish`, body picks the destination:
+  - **VVibe blog (native):** `{ "target": "native" }` (optional
+    `expectedVersion`) → `{ data: BlogPost }` at `status: "published"`.
+    Served from `GET /api/blog/public/{merchantSlug}[/{postSlug}]`. No
+    site/credentials. First native publish auto-enables the public blog.
+  - **WordPress (draft):** `{ "publishingSiteId" }` (or rely on the post's
+    attached site) → `status: "published_draft"` with `remotePostUrl`.
+    `422` + plain reason on a provider failure (post moves to `failed`).
+  - `target: "native"` **and** a `publishingSiteId` together → `400`
+    (ambiguous). `409` if `expectedVersion` is stale.
+
+### Unpublish (VVibe blog only)
+- REST: `POST /api/blog/posts/{id}/unpublish` (optional `expectedVersion`)
+  → `{ data: BlogPost }` at `status: "cover_ready"`. `422` if the post
+  isn't natively published (a WordPress draft is removed in WordPress).
+
+### Public content API (read-only, unauthenticated)
+- `GET /api/blog/public/{merchantSlug}` → `{ blog, posts[], nextCursor }`
+  (`?cursor=&limit=`). `GET /api/blog/public/{merchantSlug}/{postSlug}` →
+  `{ post }`. CORS-open; supports `ETag` / `If-None-Match`. 404 if the
+  slug is unknown or the creator's blog is disabled. This is what a
+  consumer site (the `vvibe-blog-render` skill) reads.
 
 ## Publishing sites
 
@@ -86,7 +105,9 @@ URL isn't a public HTTPS host.
 fixedDirection, outline[], bodyHtml, metaTitle, metaDescription, slug,
 excerpt, coverImageUrl, schemaJsonld, specVersion, llmProvider, llmModel,
 version, publishingSiteId, remotePostId, remotePostUrl, errorMessage,
-createdAt, updatedAt`.
+publishedAt, createdAt, updatedAt`.
 
 `status`: `created → brief_ready → draft_ready → cover_ready →
-published_draft`; `failed` is recoverable (fix + retry).
+{ published_draft | published }`; `failed` is recoverable (fix + retry).
+`published_draft` = draft pushed to WordPress; `published` = live on the
+VVibe blog (native), with `publishedAt` set.
