@@ -33,7 +33,8 @@ npx skills update vvibe-analytics
 | **vvibe-sentry** | 部署前的程式碼安全稽核 — 串接 gitleaks、osv-scanner、semgrep 加上 VVibe 整合檢查，結果回報至 Vibe 儀表板 | `sentry 掃描`、`安全稽核`、`部署前檢查`、`機密外洩`、`依賴 CVE` |
 | **vvibe-email** | 將 Invitation Email 註冊連結導向 VVibe 託管 CTA（零設定）或 vibe coder 自架的 waitlist 落地頁 | `Invitation Email`、`Waitlist 落地頁`、`app base URL` |
 | **vvibe-product-brain** | 建立或更新創作者在 VVibe 上的「產品腦」—— 從 repo、公開網站或文件抽取結構化產品事實，再透過 `vibe_set_product_kb` 寫回。其他會產出文案的 skill（email、SEO、轉換優化）下筆前都會先讀這份。 | `產品腦`、`Product Brain`、`知識庫建構器`、`告訴 VVibe 你的產品` |
-| **vvibe-blog-writer** | 從創作者的「產品腦」起草 SEO 部落格文章，並推送到他們的 CMS（WordPress）成為**草稿**——絕不自動發佈。下筆前讀取品牌語氣、FAQ、受眾與禁用語句，確保文章貼合品牌且避開法務地雷。 | `寫一篇部落格`、`起草文章`、`SEO 文章`、`發佈到 WordPress` |
+| **vvibe-blog-writer** | 從創作者的「產品腦」起草 SEO 部落格文章，接著發佈到創作者自己的 VVibe headless 部落格（免設定）或推送為 WordPress 草稿。下筆前讀取品牌語氣、FAQ、受眾與禁用語句，確保文章貼合品牌且避開法務地雷。 | `寫一篇部落格`、`起草文章`、`SEO 文章`、`發佈我的部落格`、`發佈到 WordPress` |
+| **vvibe-blog-render** | 在創作者自己的 app 裡，讀取 VVibe 內容 API 打造部落格前台——文章列表頁與內文頁、VVibe 已產生的 SEO（meta 與 JSON-LD）、重新驗證快取，外加在創作者網域上輸出 RSS 與 sitemap。headless VVibe 部落格的「head」。 | `顯示我的 vvibe 部落格`、`渲染我的文章`、`部落格前台`、`把我的網站接上 vvibe` |
 
 ## VVibe Analytics Integration
 
@@ -151,20 +152,41 @@ npx skills add vvibe/vvibe-skills --skill vvibe-product-brain
 npx skills add vvibe/vvibe-skills --skill vvibe-blog-writer
 ```
 
-從創作者的「產品腦」起草 SEO 部落格文章，並推送到他們的 CMS（WordPress）成為**草稿**——由創作者在自己的 CMS 檢視後發佈。VVibe 是 headless 的大腦與 CMS 連接器；伺服器端強制執行生成規格與寫作規則，agent 負責編排。
+從創作者的「產品腦」起草 SEO 部落格文章，接著發佈到兩種目的地之一：創作者自己的 **VVibe headless 部落格**（免外部 CMS、免設定），或 **WordPress 草稿**（由創作者在自己的 CMS 檢視後發佈）。VVibe 是 headless 的大腦與內容 API；伺服器端強制執行生成規格與寫作規則，agent 負責編排。
 
 - 下筆前讀取「產品腦」的品牌語氣、受眾、FAQ 與 `forbidden_claims`，確保文章貼合品牌、避開法務地雷（絕不重新推導產品）
 - 四種固定文章方向：產品理念、產品功能、相關用戶引流、教學與問題解決
 - 流程：brief → 3 個 SEO 標題候選 + 大綱 → 完整草稿（answer-first 結構、FAQ、JSON-LD），全部可編輯；每次編輯都記錄為 revision
-- WordPress 發佈走 application password；**只建立草稿**、絕不自動發佈；僅限公開 HTTPS 並有 SSRF 防護
+- **VVibe 部落格**發佈（`target: native`）：免憑證、立即上架到內容 API，再搭配 **vvibe-blog-render** 顯示。**WordPress** 發佈：**只建立草稿**、絕不自動發佈；僅限公開 HTTPS 並有 SSRF 防護
 
-**前置條件：** 連上 VVibe MCP 或設定 `VVIBE_API_KEY`（`pcs_live_*` / `pcs_test_*`）；先有「產品腦」（請先跑 **vvibe-product-brain**）；部署需由 operator 設定 LLM provider 才能起草；發佈需要 WordPress application password。
+**前置條件：** 連上 VVibe MCP 或設定 `VVIBE_API_KEY`（`pcs_live_*` / `pcs_test_*`）；先有「產品腦」（請先跑 **vvibe-product-brain**）；部署需由 operator 設定 LLM provider 才能起草。WordPress 發佈另需 application password（VVibe 部落格路徑則完全不需要）。
 
 **Skill 觸發條件：**
 - 「幫我寫一篇關於 X 的部落格」
 - 「起草一篇 SEO 文章」
 - 「產品有變動，重做這篇」
-- 「連接我的 WordPress / 發佈這篇」
+- 「發佈到我的 VVibe 部落格 / 連接我的 WordPress / 發佈這篇」
+
+## VVibe 部落格前台（Render）
+
+```bash
+npx skills add vvibe/vvibe-skills --skill vvibe-blog-render
+```
+
+在創作者**自己的 app** 裡打造部落格前台，讓發佈到 VVibe 部落格的文章真正顯示給讀者看。VVibe 是 headless 的——它用公開 API 提供內容，但自己不渲染任何頁面；這個 skill 就是那個「head」。
+
+- 產生內容 API 的 typed client，並 scaffold 部落格**列表頁**與**內文頁**（主推 Next.js App Router；附 Astro / Nuxt / SvelteKit / 靜態網站做法）
+- 帶上 VVibe 已產生的 SEO——`metaTitle` / `metaDescription` 與 `schemaJsonld`（安全注入；為 null 時略過）
+- 串接**重新驗證**（ISR / 定時重建，靠 API 的 `ETag` / `Last-Modified`），並在創作者自己的網域輸出 **RSS feed 與 `sitemap.xml`**——連結才指得到實際渲染的頁面
+- **唯讀**：無憑證、無寫入工具，只對公開、CORS 開放的內容 API 做 `GET`
+
+**前置條件：** 創作者自己的 app/網站 repo（任何框架）；VVibe 部署主機 + 他們的 merchant slug；至少一篇已發佈到 VVibe 部落格的文章（請先用 **vvibe-blog-writer** 以 `target: native` 發佈，這也會啟用公開部落格）。
+
+**Skill 觸發條件：**
+- 「把我的 VVibe 部落格顯示在我的網站上」
+- 「渲染我的文章 / 設定部落格前台」
+- 「新增一個讀取我 VVibe 文章的部落格頁」
+- 「我網站上的新文章沒出現」
 
 ## 串接到自己的 Server
 

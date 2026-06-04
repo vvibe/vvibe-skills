@@ -33,7 +33,8 @@ npx skills update vvibe-analytics
 | **vvibe-sentry** | Pre-deploy codebase security audit — orchestrates gitleaks, osv-scanner, semgrep, plus VVibe-integration checks. Reports back to the dashboard. | `VVibe sentry scan`, `security audit`, `pre-deploy check`, `secret leak`, `dependency CVE` |
 | **vvibe-email** | Wire invitation-email registration links to either a VVibe-hosted CTA (zero setup) or a self-hosted waitlist landing page on the vibe coder's own domain | `invitation email`, `waitlist landing page`, `app base URL` |
 | **vvibe-product-brain** | Build or refresh the creator's Product Brain on VVibe — extract structured product facts from a repo, public site, or document set, then write via `vibe_set_product_kb`. Every prose-generating skill (email, SEO, conversion) reads this Product Brain before drafting. | `product brain`, `Product Brain`, `knowledge base builder`, `teach VVibe about my product` |
-| **vvibe-blog-writer** | Draft SEO blog articles from the creator's Product Brain and push them to their CMS (WordPress) as a draft — never auto-published. Reads brand voice, FAQ, audience, and forbidden claims from the Product Brain so the article is on-brand and legally safe. | `write a blog`, `draft an article`, `SEO article`, `publish to WordPress` |
+| **vvibe-blog-writer** | Draft SEO blog articles from the creator's Product Brain, then publish to the creator's own VVibe headless blog (no setup) or as a WordPress draft. Reads brand voice, FAQ, audience, and forbidden claims so articles are on-brand and legally safe. | `write a blog`, `draft an article`, `SEO article`, `publish my blog`, `publish to WordPress` |
+| **vvibe-blog-render** | Build the blog frontend in the creator's OWN app from the VVibe content API — index + post pages, the SEO VVibe already generated (meta + JSON-LD), revalidation, plus RSS + sitemap. The "head" for the headless VVibe blog. | `show my vvibe blog`, `render my articles`, `blog frontend`, `connect my site to vvibe` |
 
 ## VVibe Analytics Integration
 
@@ -151,20 +152,41 @@ Builds or refreshes the creator's Product Brain on VVibe — the structured agen
 npx skills add vvibe/vvibe-skills --skill vvibe-blog-writer
 ```
 
-Drafts SEO blog articles from the creator's Product Brain and pushes them to their CMS (WordPress) as a **draft** — the creator reviews and publishes from their own CMS. VVibe is the headless brain + CMS connector; the server enforces the generation spec and writing rules while the agent orchestrates.
+Drafts SEO blog articles from the creator's Product Brain, then publishes them to one of two destinations: the creator's own **VVibe headless blog** (no external CMS, no setup) or a **WordPress draft** (the creator reviews and publishes from their own CMS). VVibe is the headless brain + content API; the server enforces the generation spec and writing rules while the agent orchestrates.
 
 - Reads the Product Brain for brand voice, audience, FAQ, and `forbidden_claims` so articles are on-brand and avoid legal landmines (never re-derives the product)
 - Four fixed article directions: product philosophy, product features, related-audience inflow, tutorial & problem-solving
 - Brief → 3 SEO-title candidates + outline → full draft (answer-first structure, FAQ, JSON-LD), all editable; every edit is a tracked revision
-- WordPress publishing via application password; **draft only**, never auto-publishes; public-HTTPS-only with SSRF protection
+- **VVibe blog** publish (`target: native`): goes live on the content API instantly, no credentials; pair with **vvibe-blog-render** to display it. **WordPress** publish: **draft only**, never auto-publishes; public-HTTPS-only with SSRF protection
 
-**Prerequisites:** A VVibe MCP connection OR a `VVIBE_API_KEY` (`pcs_live_*` / `pcs_test_*`); a Product Brain (run **vvibe-product-brain** first); the deployment's operator must have an LLM provider configured for drafting; a WordPress application password for publishing.
+**Prerequisites:** A VVibe MCP connection OR a `VVIBE_API_KEY` (`pcs_live_*` / `pcs_test_*`); a Product Brain (run **vvibe-product-brain** first); the deployment's operator must have an LLM provider configured for drafting. WordPress publishing additionally needs an application password (the VVibe-blog path needs none).
 
 **Skill triggers:**
 - "Write a blog post about X"
 - "Draft an SEO article"
 - "The product changed, redo this post"
-- "Connect my WordPress / publish this post"
+- "Publish to my VVibe blog / connect my WordPress / publish this post"
+
+## VVibe Blog Render
+
+```bash
+npx skills add vvibe/vvibe-skills --skill vvibe-blog-render
+```
+
+Builds the **blog frontend in the creator's own app** so their VVibe-published articles are actually displayed to readers. VVibe is headless — it serves content through a public API but renders nothing itself; this skill is the "head".
+
+- Generates a typed client for the public content API + scaffolds blog **index** and **post** routes (Next.js App Router primary; Astro / Nuxt / SvelteKit / static notes included)
+- Carries through the SEO VVibe already generated — `metaTitle` / `metaDescription` and the `schemaJsonld` graph (injected safely; omitted when null)
+- Wires **revalidation** (ISR / timed rebuild via the API's `ETag` / `Last-Modified`) and emits an **RSS feed + `sitemap.xml`** at the creator's own domain, where the links resolve
+- **Read-only**: no credentials, no write tools — it only `GET`s the public, CORS-open content API
+
+**Prerequisites:** The creator's own app/site repo (any framework); the VVibe deployment host + their merchant slug; at least one post published to the VVibe blog (run **vvibe-blog-writer** with `target: native` first — that also enables the public blog).
+
+**Skill triggers:**
+- "Show my VVibe blog on my site"
+- "Render my articles / set up the blog frontend"
+- "Add a blog page that reads my VVibe posts"
+- "New posts aren't showing on my site"
 
 ## Using a Different Backend
 
