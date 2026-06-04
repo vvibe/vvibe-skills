@@ -32,9 +32,12 @@ skills/
     SKILL.md                  # Skill definition (entry point)
     references/               # Extraction discipline, KB schema, build / refresh modes
     references/sources/       # Per-source guides (github_repo / website_url / document_set)
-  vvibe-blog-writer/        # SEO blog drafting from the Product Brain → CMS draft (WordPress)
+  vvibe-blog-writer/        # SEO blog drafting from the Product Brain → VVibe blog (native) or WordPress draft
     SKILL.md                  # Skill definition (entry point / router)
-    references/               # flow, publishing (WordPress), api (MCP + REST)
+    references/               # flow, publishing (VVibe-native + WordPress), api (MCP + REST)
+  vvibe-blog-render/        # Frontend for the headless VVibe blog — renders the content API in the creator's own app
+    SKILL.md                  # Skill definition (entry point / router)
+    references/               # content-api (the read contract), rendering (routes, SEO, revalidation, RSS/sitemap)
 ```
 
 ## Skill Architecture
@@ -73,14 +76,21 @@ SKILL.md is the entry point when an agent loads a skill. References are loaded o
 - Every prose-generating skill (email, SEO, conversion) reads the Product Brain before drafting — this is the upstream feeder
 
 **Blog Writer Skill:**
-- Drafts SEO articles from the Product Brain and pushes to the creator's CMS (WordPress) as a **draft** — never auto-publishes
+- Drafts SEO articles from the Product Brain, then publishes to the creator's **VVibe blog** (native, `target:'native'`) or pushes a **WordPress draft** — WordPress never auto-publishes
 - MCP tools: `vibe_create_blog_post`, `vibe_update_blog_post`, `vibe_publish_blog_post`, `vibe_list_blog_posts` (REST fallback under `/api/blog/*`)
 - Two entry points, one model: agent (MCP) and dashboard form both produce the same post; every prose edit appends a revision tagged `authored_by: 'agent' | 'human'`
 - Optimistic concurrency: edits pass `expectedVersion`; a 409 means re-read and re-apply
-- State machine: `created → brief_ready → draft_ready → cover_ready → published_draft` (`failed` is recoverable)
+- State machine: `created → brief_ready → draft_ready → cover_ready → { published_draft (WordPress) | published (VVibe blog) }` (`failed` is recoverable)
 - Server-enforced spec: answer-first structure, FAQ + JSON-LD, Taiwan Traditional Chinese writing rules, no fabricated stats / ranking guarantees; KB `forbidden_claims` are hard-rejected
-- Gated on an LLM provider (drafting) + `PUBLISHING_SECRET_KEK` (publishing); WordPress publishing is public-HTTPS-only with SSRF protection
+- Gated on an LLM provider (drafting); **WordPress** publishing needs `PUBLISHING_SECRET_KEK` + is public-HTTPS-only with SSRF protection; **VVibe-blog** (native) publishing needs neither
 - Downstream consumer of the Product Brain — pairs with vvibe-product-brain (run that first)
+
+**Blog Render Skill:**
+- The "head" for the headless VVibe blog: builds the blog frontend in the creator's OWN app from the public content API (`/api/blog/public/{slug}[/{postSlug}]`)
+- Read-only + public — no credentials, no MCP write tools, no `PUBLISHING_SECRET_KEK`; just CORS-open `GET`s a reader's browser could also make
+- Scaffolds index + post routes, carries through VVibe's `metaTitle`/`metaDescription` + `schemaJsonld` (injected safely; omitted when null), wires ISR revalidation (`ETag`/`Last-Modified`), and emits RSS + `sitemap.xml` at the creator's domain
+- RSS / sitemap live HERE, not in VVibe — their links must point at the creator's rendered pages, which only the creator's app knows
+- Downstream of vvibe-blog-writer's native publish — pairs with it (publish first, then render)
 
 **Sentry Skill:**
 - Four layers: `SECRETS` (gitleaks), `DEPS` (osv-scanner + npm audit), `SAST` (semgrep w/ OWASP / JS / TS rule packs), `VVIBE` (sentry-internal integration checks)
