@@ -7,15 +7,23 @@
  */
 
 import { readdir, readFile, stat } from 'node:fs/promises'
-import { join, relative } from 'node:path'
+import { dirname, join, relative, resolve, sep } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 const SKIP_DIRS = new Set(['node_modules', '.git', 'dist', 'build', '.next', 'coverage', '.turbo'])
 const SCAN_EXT = /\.(m?[jt]sx?|cjs|cts)$/i
+
+// Exclude the scanner's own source tree from scanning. Rule definitions
+// literally contain the patterns they detect, so without this guard a
+// self-scan reports the regex source as a finding.
+const SELF_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 
 /** Detect candidate files (anything that mentions VVibe). */
 async function findVVibeFiles(root) {
   const matches = []
   async function walk(dir) {
+    const resolvedDir = resolve(dir)
+    if (resolvedDir === SELF_ROOT || resolvedDir.startsWith(SELF_ROOT + sep)) return
     let entries
     try {
       entries = await readdir(dir, { withFileTypes: true })
@@ -137,10 +145,10 @@ function checkEmailUnsubscribeRespected(file, content, rel) {
  * Common pitfall when forwarding signup events to GA4.
  */
 function checkAnalyticsPiiHygiene(file, content, rel) {
-  if (!/(?:gtag|dataLayer\.push|trackEvent|vvibe\s*\.\s*track)/.test(content)) return []
+  if (!/(?:gtag|dataLayer\.push|trackEvent|vvibe\s*\.\s*track)\s*\(/.test(content)) return []
   const findings = []
   // crude: events with `email:` or `phone:` properties near a gtag/dataLayer call
-  const re = /(gtag|dataLayer\.push|trackEvent|vvibe\.track)[^;]{0,400}\b(email|phone|phone_number)\s*:/g
+  const re = /(gtag|dataLayer\.push|trackEvent|vvibe\.track)\s*\([^;]{0,400}\b(email|phone|phone_number)\s*:/g
   let m
   while ((m = re.exec(content))) {
     findings.push(
