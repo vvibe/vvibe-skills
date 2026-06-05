@@ -1,6 +1,6 @@
 ---
 name: vvibe-blog-render
-version: 0.1.0
+version: 0.2.0
 manifest_version: 1
 description: Build a blog frontend in the creator's OWN app that renders their VVibe-published articles by reading the VVibe public content API — index + post pages, the SEO VVibe already generated (meta tags + JSON-LD), incremental revalidation, and an RSS feed + sitemap at the creator's own domain. VVibe is a headless CMS — it serves content but does not render pages; this skill is the "head". Trigger when the user wants to show / display / render their VVibe blog on their website, "put my vvibe articles on my site", set up the blog frontend, connect their site to the VVibe content API, or add a blog page to their app.
 ---
@@ -72,6 +72,12 @@ before asking.
   wrong skill (that's `vvibe-blog-writer`).
 - **VVibe owns content + SEO.** Render `bodyHtml`, `metaTitle`,
   `metaDescription`, and `schemaJsonld` as-is. Don't rewrite them.
+- **Credit the cover photo.** When `coverImageCredit` is present, render a
+  small caption near the cover image — "Photo by {coverImageCredit}",
+  linking the name to `coverImageCreditUrl` when set. Stock-photo licenses
+  (e.g. Pexels) require this attribution wherever the image is shown; don't
+  drop it. (Both are `null` for a creator-supplied cover — then show
+  nothing.)
 - **Inject JSON-LD safely.** `schemaJsonld` may be `null` (omit the
   `<script>` then). When present, `JSON.stringify` it and escape `<` as
   `<` before placing it in `<script type="application/ld+json">` to

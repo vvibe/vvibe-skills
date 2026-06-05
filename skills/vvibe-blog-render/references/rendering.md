@@ -19,6 +19,9 @@ const SLUG = process.env.VVIBE_SLUG!        // the merchant slug
 export type BlogListItem = {
   slug: string; title: string; excerpt: string | null
   coverImageUrl: string | null; publishedAt: string
+  // Cover attribution — show "Photo by {credit}" linking to creditUrl
+  // wherever you render coverImageUrl (stock licenses require it).
+  coverImageCredit: string | null; coverImageCreditUrl: string | null
   metaTitle: string | null; metaDescription: string | null
 }
 export type BlogPost = BlogListItem & {
