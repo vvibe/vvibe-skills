@@ -120,7 +120,7 @@ tone, the value prop, and any forbidden claims to avoid. Two reasons:
 
 Keep it plain-language and ≤ 4000 chars. Example:
 
-```
+```text
 Angle: early-access invite for past workshop attendees.
 Voice: warm, direct, second-person; avoid hype words ("revolutionary").
 Value prop: turn your following into paying members in an afternoon.
