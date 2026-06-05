@@ -1,6 +1,6 @@
 ---
 name: vvibe-blog-writer
-version: 0.3.1
+version: 0.4.0
 manifest_version: 1
 description: Draft SEO blog articles for a VVibe creator from their Product Brain, then publish them either to the creator's own VVibe headless blog (no external CMS, no setup) or as a draft to their WordPress. Reads the Product Brain for brand voice, forbidden claims, FAQ, and audience so the article matches the brand and avoids legal landmines. Trigger when the user asks to write / draft / generate a blog post or article, "write a blog about X", "draft an SEO article", refresh, publish or unpublish a post, or connect a WordPress site for publishing.
 ---
@@ -82,7 +82,7 @@ in `references/api.md`. There is no separate API-key surface for the blog.
 | Create a post from a brief | `vibe_create_blog_post` | `POST /api/blog/posts` |
 | Generate brief + draft | `vibe_generate_blog_post` | `POST /api/blog/posts/{id}/generate` |
 | Edit prose (title/body/outline/meta) | `vibe_update_blog_post` | `PATCH /api/blog/posts/{id}` |
-| Publish (VVibe blog `target:'native'`, or WordPress draft) | `vibe_publish_blog_post` | `POST /api/blog/posts/{id}/publish` |
+| Publish to the creator's configured destination | `vibe_publish_blog_post` (just `postId`) | `POST /api/blog/posts/{id}/publish` |
 | Unpublish from the VVibe blog | (dashboard) | `POST /api/blog/posts/{id}/unpublish` |
 | Connect / test a WordPress site | (dashboard) | `POST /api/blog/sites`, `POST /api/blog/sites/{id}/test` |
 
@@ -105,14 +105,19 @@ specific feature:
 
 ## 6. Hard rules (server-enforced; don't fight them)
 
-- **Two destinations, different finality.** Publishing to the creator's
-  **VVibe blog** (`target: 'native'`) makes the post live on their content
-  API immediately (`status: published`); it appears on their site once
-  that site — built with the `vvibe-blog-render` skill — next pulls or
-  rebuilds, so don't promise it's visible to readers until their site is
-  set up. Publishing to **WordPress** only ever creates a *draft*
-  (`published_draft`); the creator hits Publish there. Never claim a
-  WordPress post is live.
+- **Destination is set once, not per post.** Where articles publish is an
+  account-level setting (Blog → Settings); to publish, call
+  `vibe_publish_blog_post({ postId })` and the server routes accordingly —
+  don't ask the creator to choose a destination for each article. The two
+  destinations differ in finality: the **VVibe blog** makes the post live
+  on the content API immediately (`status: published`), but it appears on
+  the creator's site only once that site — built with the
+  `vvibe-blog-render` skill — next pulls or rebuilds, so don't promise it's
+  visible to readers until their site is set up; **WordPress** only ever
+  creates a *draft* (`published_draft`) that the creator publishes there —
+  never claim a WordPress post is live. (`target: 'native'` or a
+  `publishingSiteId` are per-post overrides, used only when the creator
+  explicitly wants one article to go somewhere other than their default.)
 - **No fabrication.** No invented customers, statistics, or sources. No
   ranking / revenue guarantees. The KB's `forbidden_claims` are rejected
   server-side.

@@ -64,8 +64,16 @@ no merchant id in the payloads.
 mismatch (re-read and re-apply). Each edit appends a revision.
 
 ### Publish
-- MCP: `vibe_publish_blog_post` (pass `target: "native"` for the VVibe blog)
-- REST: `POST /api/blog/posts/{id}/publish`, body picks the destination:
+- MCP: `vibe_publish_blog_post` — normally just `{ postId }`. The server
+  publishes to the creator's **configured destination** (`default_target`
+  in Blog settings). `target` / `publishingSiteId` are per-post overrides.
+- REST: `POST /api/blog/posts/{id}/publish`. With **no** `target` /
+  `publishingSiteId` in the body, it follows the account default:
+  - default **native** → publishes on the VVibe blog.
+  - default **external** → sends a draft to the merchant's connected
+    WordPress site (exactly one → used automatically; none → `422` "connect
+    one in settings"; more than one → `400`, pass a `publishingSiteId`).
+  Body fields are **overrides** for one post:
   - **VVibe blog (native):** `{ "target": "native" }` (optional
     `expectedVersion`) → `{ data: BlogPost }` at `status: "published"`.
     Served from `GET /api/blog/public/{merchantSlug}[/{postSlug}]`. No
