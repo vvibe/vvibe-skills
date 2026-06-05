@@ -1,6 +1,6 @@
 ---
 name: vvibe-blog-writer
-version: 0.2.0
+version: 0.3.0
 manifest_version: 1
 description: Draft SEO blog articles for a VVibe creator from their Product Brain, then publish them either to the creator's own VVibe headless blog (no external CMS, no setup) or as a draft to their WordPress. Reads the Product Brain for brand voice, forbidden claims, FAQ, and audience so the article matches the brand and avoids legal landmines. Trigger when the user asks to write / draft / generate a blog post or article, "write a blog about X", "draft an SEO article", refresh, publish or unpublish a post, or connect a WordPress site for publishing.
 ---
@@ -51,7 +51,7 @@ ranking guarantees) — you orchestrate, the server drafts.
 
 | Capability | How to detect | If missing |
 |---|---|---|
-| VVibe connection | MCP tools `vibe_*` available, OR `VVIBE_API_KEY` (`pcs_live_*` / `pcs_test_*`) set | Stop; have the user connect VVibe (daemon or MCP) or set the key |
+| VVibe connection | the `vibe_*` MCP tools are available (covers both a cloud MCP agent and a daemon-run agent) | Stop; have the creator connect VVibe (daemon or MCP). There is no `pcs_…` API-key path for the blog — those keys are commerce-only |
 | Product Brain exists | `vibe_get_product_kb` returns non-null `data` | Route to `vvibe-product-brain` first, then come back |
 | AI drafting enabled | a generate call returns content (not a 422 "connect an AI provider") | Tell the creator their VVibe operator must enable an LLM provider; manual writing still works in the dashboard |
 | Publishing configured | the creator has a connected publishing site, or can add one | Only needed at the publish step — see `references/publishing.md` |
@@ -69,19 +69,20 @@ Read `references/flow.md` for the full step-by-step. Quick map:
 - **"publish this" / "put it on my blog" / "connect my WordPress" / "take it down"** → `references/publishing.md` (VVibe blog or WordPress; publish + unpublish)
 - **"what posts do I have?"** → list (flow.md §7)
 
-## 4. Tools (MCP) and the REST fallback
+## 4. Tools (MCP)
 
-Primary path is the MCP tools; when the agent only has an API key, the
-same operations are plain HTTPS calls. Both are documented in
-`references/api.md`. Summary:
+Operate the blog through the `vibe_*` MCP tools — they carry your VVibe
+connection token. The REST column is the endpoint each tool wraps (what a
+daemon-run agent would call directly with the same token); full shapes are
+in `references/api.md`. There is no separate API-key surface for the blog.
 
-| Intent | MCP tool | REST |
+| Intent | MCP tool | REST it wraps |
 |---|---|---|
 | List the creator's posts | `vibe_list_blog_posts` | `GET /api/blog/posts` |
 | Create a post from a brief | `vibe_create_blog_post` | `POST /api/blog/posts` |
-| Generate brief + draft | (via create options / generate) | `POST /api/blog/posts/{id}/generate` |
+| Generate brief + draft | `vibe_generate_blog_post` | `POST /api/blog/posts/{id}/generate` |
 | Edit prose (title/body/outline/meta) | `vibe_update_blog_post` | `PATCH /api/blog/posts/{id}` |
-| Publish (VVibe blog `target:'native'`, or CMS draft) | `vibe_publish_blog_post` | `POST /api/blog/posts/{id}/publish` |
+| Publish (VVibe blog `target:'native'`, or WordPress draft) | `vibe_publish_blog_post` | `POST /api/blog/posts/{id}/publish` |
 | Unpublish from the VVibe blog | (dashboard) | `POST /api/blog/posts/{id}/unpublish` |
 | Connect / test a WordPress site | (dashboard) | `POST /api/blog/sites`, `POST /api/blog/sites/{id}/test` |
 

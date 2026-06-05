@@ -31,9 +31,9 @@ Call `vibe_create_blog_post` with the brief. It returns a post with
 
 ## 4. Generate brief → draft
 
-Trigger generation (`POST /api/blog/posts/{id}/generate`, or the create
-tool's generate option). The server runs the two-stage pipeline and the
-post lands at `status: "draft_ready"` with:
+Trigger generation with `vibe_generate_blog_post` (REST:
+`POST /api/blog/posts/{id}/generate`). The server runs the two-stage
+pipeline and the post lands at `status: "draft_ready"` with:
 - an `outline` and 3 SEO-title candidates (the first is adopted as the
   working title),
 - `body_html`, `meta_title`, `meta_description`, `slug`, `excerpt`,
