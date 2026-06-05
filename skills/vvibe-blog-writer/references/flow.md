@@ -61,6 +61,25 @@ Every edit is recorded as a revision tagged with who made it (agent vs
 human), so the brand voice improves over time. Don't silently overwrite a
 draft the creator has been editing — offer the change.
 
+### Cover image (optional, before publishing)
+
+Give the post a cover so it looks finished on the blog and in shares:
+
+1. `vibe_search_cover_images({ query })` — describe the image in English
+   (derived from the topic + Product Brain, e.g. "minimalist developer
+   workspace"). It returns `images[]` (each with `url`, `thumbUrl`, `alt`,
+   `photographer`, `sourceUrl`).
+2. Pick one and set it with `vibe_update_blog_post({ postId,
+   expectedVersion, coverImageUrl: <chosen url> })`. Pass `null` to remove.
+
+The cover is **destination-agnostic**: it renders on the VVibe blog and is
+uploaded as the WordPress **featured image** when you publish there. If
+`vibe_search_cover_images` returns `configured: false`, the deployment has
+no stock-image library set up — tell the creator and either set a public
+https image URL they provide, or skip the cover (it's optional). The
+creator can also pick a cover in the dashboard (Blog → the post → Cover
+image).
+
 ## 6. Re-generate after a product change
 
 If the product changed, refresh the Product Brain first (vvibe-product-brain), then
