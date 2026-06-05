@@ -1,25 +1,42 @@
 # Publishing a post
 
-A finished post goes to **one** of two destinations. Help the creator pick
-(if they don't say, ask — or read `creator_blog_settings.default_target`
-if you have it):
+**Destination is an account-level setting, not a per-post choice.** The
+creator picks where their articles go ONCE — in the dashboard (Blog →
+Settings → "where your articles publish", stored as
+`creator_blog_settings.default_target`). To publish, just call
+`vibe_publish_blog_post({ postId })` (REST: `POST .../publish` with only
+`expectedVersion`) — the server routes to whatever they configured. **Do
+not ask the creator to choose a destination for each article**, and don't
+pass `target`/`publishingSiteId` as a matter of course.
 
-- **VVibe blog (built-in, headless)** — default. No external CMS, no
-  credentials, no setup. The post goes live on the creator's VVibe
+The two destinations the setting selects between:
+
+- **VVibe blog (built-in, headless)** — the zero-setup default. No external
+  CMS, no credentials. The post goes live on the creator's VVibe
   **content API**; the creator's own site renders it (see the
   `vvibe-blog-render` skill). Best when the creator has (or can stand up)
   a site/app but no CMS.
 - **WordPress** — push the article as a **draft** to a site the creator
   already runs. Best when they're already on WordPress.
 
+If the creator wants to *change* where articles publish, that's a one-time
+settings change (Blog → Settings), not something to decide per post. The
+sections below cover what each destination means and the one-time
+WordPress connection; you normally won't pass `target` at all. (`target:
+"native"` / a `publishingSiteId` remain available as a per-post **override**
+when the creator explicitly asks to send one article somewhere different.)
+
 ---
 
 ## A. Publish to the VVibe blog (native)
 
-No connection step, no credentials. `POST /api/blog/posts/{id}/publish`
-with `{ target: "native" }` (optionally `expectedVersion` to reject a
-stale publish). Requirements: the post has a generated body **and a slug**
-(i.e. it's been drafted).
+No connection step, no credentials. When the VVibe blog is the creator's
+configured destination (the zero-setup default), just publish with
+`vibe_publish_blog_post({ postId })` — you only pass `target: "native"` to
+**override** a WordPress default for one post. (REST: `POST .../publish`
+with `{ expectedVersion }`, or `{ target: "native" }` to force it.)
+Requirements: the post has a generated body **and a slug** (i.e. it's been
+drafted).
 
 On success the post moves to `status: "published"` and is served,
 read-only, from the public content API:
@@ -92,11 +109,16 @@ plain reason and suggest re-checking the application password / URL.
 
 ### B3. Publish the draft
 
-`POST /api/blog/posts/{id}/publish` with `{ publishingSiteId }` (or rely
-on the post's attached site). Requirements:
+When WordPress is the creator's configured destination, just publish with
+`vibe_publish_blog_post({ postId })` (REST: `POST .../publish` with only
+`expectedVersion`) — the server sends the draft to their connected site.
+Only pass an explicit `publishingSiteId` to **override** (e.g. they have
+more than one site connected and want a specific one). Requirements:
 
 - the post has a generated body (`draft_ready`),
-- a connected publishing site for this merchant.
+- a connected publishing site for this merchant (if none, the publish
+  returns a plain-language error telling the creator to connect one in
+  Blog settings; if more than one, you must pass `publishingSiteId`).
 
 > Sending both `target: "native"` and a `publishingSiteId` is rejected
 > (400, ambiguous) — a post has one destination. Pick native **or** a site.
