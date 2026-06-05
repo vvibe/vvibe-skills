@@ -19,6 +19,8 @@ credentials and no merchant id in the payload.
       "title": "...",
       "excerpt": "...",
       "coverImageUrl": "https://… | null",
+      "coverImageCredit": "Jane Doe | null",              // photographer — show as attribution
+      "coverImageCreditUrl": "https://www.pexels.com/photo/… | null",
       "publishedAt": "2026-06-04T10:00:00.000Z",          // ISO-8601
       "metaTitle": "… | null",
       "metaDescription": "… | null"
@@ -42,6 +44,8 @@ credentials and no merchant id in the payload.
     "title": "...",
     "excerpt": "… | null",
     "coverImageUrl": "… | null",
+    "coverImageCredit": "Jane Doe | null",                // photographer — show as attribution
+    "coverImageCreditUrl": "https://www.pexels.com/photo/… | null",
     "publishedAt": "2026-06-04T10:00:00.000Z",
     "updatedAt": "2026-06-04T11:30:00.000Z",
     "metaTitle": "… | null",

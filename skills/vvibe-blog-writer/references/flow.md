@@ -70,7 +70,11 @@ Give the post a cover so it looks finished on the blog and in shares:
    workspace"). It returns `images[]` (each with `url`, `thumbUrl`, `alt`,
    `photographer`, `sourceUrl`).
 2. Pick one and set it with `vibe_update_blog_post({ postId,
-   expectedVersion, coverImageUrl: <chosen url> })`. Pass `null` to remove.
+   expectedVersion, coverImageUrl: <chosen url>, coverImageCredit:
+   <photographer>, coverImageCreditUrl: <sourceUrl> })` — pass the
+   candidate's `photographer` + `sourceUrl` so the cover is **attributed**
+   (stock licenses like Pexels require crediting the photographer; the
+   rendered blog shows "Photo by …"). Pass `coverImageUrl: null` to remove.
 
 The cover is **destination-agnostic**: it renders on the VVibe blog and is
 uploaded as the WordPress **featured image** when you publish there. If
