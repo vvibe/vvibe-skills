@@ -1,8 +1,8 @@
 ---
 name: vvibe-email
-version: 0.3.0
+version: 0.4.0
 manifest_version: 1
-description: Help VVibe creators wire invitation-email integration end-to-end — where the email CTA lands (VVibe-hosted, self-hosted waitlist, or direct register), how to send campaigns via Vibe MCP, and how to manage system + follower-flow email templates. Trigger when the user mentions invitation emails, follower outreach campaigns, sending an email blast, drafting an email campaign, waitlist signup landing page, app base URL, embedding a waitlist CTA, skipping the waitlist when a member system already exists, or asks where the registration email link lands.
+description: Help VVibe creators wire invitation-email integration end-to-end — where the email CTA lands (VVibe-hosted, self-hosted waitlist, or direct register), how to send campaigns via Vibe MCP, and how to manage system + follower-flow email templates. When drafting campaign copy, reads the creator's Product Brain (`vibe_get_product_kb`) for brand voice, value prop, audience, and forbidden claims so the email matches the brand and avoids legal landmines. Trigger when the user mentions invitation emails, follower outreach campaigns, sending an email blast, drafting an email campaign, waitlist signup landing page, app base URL, embedding a waitlist CTA, skipping the waitlist when a member system already exists, or asks where the registration email link lands.
 
 ---
 
@@ -53,6 +53,7 @@ Detect from the project. Don't ask if you can find out.
 | `has_api_key_local` | `VVIBE_API_KEY` in `.env*` or framework env. | all three click destinations + REST fallbacks |
 | `outbound_sync_wired` | Grep for `POST /api/members/sync` or `syncToVVibe` helper. See vvibe-member skill. | direct-register (required), self-hosted-waitlist (recommended) |
 | `vibe_mcp_connected` | `vibe_*` tools registered on this session. | mcp-campaign only |
+| `product_brain_exists` | `vibe_get_product_kb` returns non-null `data`. The brain tools are always registered (no skill gate), so this read works even if only the email skill is installed — building it still needs vvibe-product-brain. | mcp-campaign (drafting copy) |
 
 After detection, tell the user briefly what you found.
 
@@ -120,6 +121,9 @@ modes:
       Author and send invitation campaigns via the Vibe MCP tools.
       Independent of where clicks land — works alongside any of A/B/C.
       Requires the agent to be connected to the creator's Vibe MCP.
+      Draft the copy from the creator's Product Brain (brand voice,
+      value prop, ICP, forbidden claims) — read it FIRST; see
+      references/sending-campaigns.md.
     triggers:
       - "send an invitation campaign"
       - "draft an email blast"
@@ -256,5 +260,5 @@ HTTPS on `appBaseUrl`.
 | `references/hosted-cta.md` | Mode A: CTA URL template, placement examples (HTML / React / email signature). | mode = hosted-cta |
 | `references/self-hosted-waitlist.md` | Mode B: full implementation contract + templates for Next.js, React SPA, and plain HTML. | mode = self-hosted-waitlist |
 | `references/direct-register.md` | Mode C: `inviteRedirectPath` configuration, attribution params, post-signup `syncToVVibe` wiring. | mode = direct-register |
-| `references/sending-campaigns.md` | MCP campaign tools: list / create / update / send / analytics, with body templates and outcome handling. | mode = mcp-campaign |
+| `references/sending-campaigns.md` | Reads the Product Brain first to ground subject + body, then MCP campaign tools: list / create / update / send / analytics, with body templates and outcome handling. | mode = mcp-campaign |
 | `references/email-types.md` | Reference: system vs follower-flow email categories, disable/edit flow, avoiding double-emails. | shared reference; load on demand when discussing welcome / cancellation emails or disabling templates. |
