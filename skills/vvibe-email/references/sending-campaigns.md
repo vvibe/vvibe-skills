@@ -8,6 +8,33 @@ End-to-end run with body templates and concrete outcome handling.
 - The `email` skill is installed for that connection — without it, the campaign tools are not registered for this MCP session.
 - The creator has a working sender domain. If not, point them at **Email → Domain** in the Vibe dashboard first; that's where they verify DKIM / CNAME. Sending before the domain is verified results in delivery failures the creator will have to chase.
 
+## Read the Product Brain first
+
+Before drafting anything, call `vibe_get_product_kb`. The Product Brain is
+the creator's structured product facts; grounding the campaign in it is what
+keeps the copy on-brand instead of generic. `vibe_get_product_kb` is always
+available on an MCP session (the brain tools are not skill-gated), so this
+read works even when only the email skill is installed.
+
+Use it to:
+
+- **set the voice** — `company.brand_voice.tone` (and `avoid` list) drive
+  the greeting, hook, and CTA wording. Don't paraphrase `preferred_terms`.
+- **anchor the hook** — `product.core_value_prop` and
+  `product.differentiators` are the one-paragraph reason to act.
+- **target the angle** — `growth_context.icp_persona` and
+  `reader_pain_points` tell you which pain the invitation should open on.
+- **stay legal** — `legal_compliance.forbidden_claims` are phrases you must
+  **never** write toward (CAN-SPAM / FTC / medical / financial). Treat them
+  as hard guardrails, same as the blog skill does.
+
+**If `data` is null** (no Product Brain yet): the copy will be generic.
+Suggest the creator run **vvibe-product-brain** first — one build makes
+every future campaign sharper. They can still proceed without it; in that
+case fall back to the merchant's brand description (the minimum context the
+dashboard's "Draft with AI" already uses), but say plainly that a built
+brain produces better copy.
+
 ## Authoring contract
 
 The dashboard arranges the work as **Email content → Recipients → Send** — you author the email *first*, then attach recipients, then dispatch. The MCP tools enforce the same shape:
@@ -24,11 +51,13 @@ The dashboard arranges the work as **Email content → Recipients → Send** —
 ## Flow
 
 ```
+vibe_get_product_kb                          # brand voice, value prop, ICP, forbidden claims
+  ↓
 vibe_list_campaigns                          # find or confirm a draft
   ↓
-draft subject + bodyHtml with creator
+draft subject + bodyHtml grounded in the brain, with creator
   ↓
-vibe_create_campaign  ({ name, subject, bodyHtml, aiContext? })
+vibe_create_campaign  ({ name, subject, bodyHtml, aiContext })  # aiContext = brain-derived brief
   ↓
 [creator imports recipients in dashboard]    # not via MCP
   ↓
@@ -63,11 +92,40 @@ The body is HTML. Keep it simple — most email clients strip aggressive CSS and
 
 Rules:
 
+- **Voice and hook come from the brain.** Write the greeting + hook in
+  `company.brand_voice.tone`, lead with `product.core_value_prop`, and open
+  on a `reader_pain_points` the ICP actually feels. Don't paraphrase
+  `preferred_terms`.
+- **Never write toward `forbidden_claims`.** No invented metrics, ROI
+  numbers, or guarantees. These are hard guardrails from the brain's
+  `legal_compliance` section.
 - `{inviteUrl}` is mandatory — it's the tracked invitation link.
 - `{customerName}` falls back to a generic greeting when a row has no name.
 - Custom column slugs (e.g. `{discount_code}`, `{cohort}`) are referenced the same way. Confirm slugs with the creator — they appear in the dashboard's import preview.
 - Inline styles only. External stylesheets and `<style>` blocks are stripped or ignored by Gmail / Outlook / Apple Mail.
 - Images: use absolute HTTPS URLs (no `data:` URIs). Hosted images can be uploaded in **Email → Templates**.
+
+### Set `aiContext` from the brain
+
+When you call `vibe_create_campaign`, pass an `aiContext` distilled from the
+Product Brain — a short brief naming the campaign angle, the brand voice
+tone, the value prop, and any forbidden claims to avoid. Two reasons:
+
+1. It's the drafting context the dashboard shows the creator.
+2. It's the **bridge** to the dashboard's "Draft with AI" button: that
+   server-side regenerate currently grounds only on the merchant brand
+   description, so a brain-derived `aiContext` is how brand context reaches
+   it today. (A later change will have that path read the brain directly;
+   until then, `aiContext` carries it.)
+
+Keep it plain-language and ≤ 4000 chars. Example:
+
+```
+Angle: early-access invite for past workshop attendees.
+Voice: warm, direct, second-person; avoid hype words ("revolutionary").
+Value prop: turn your following into paying members in an afternoon.
+Avoid: income guarantees, "#1", medical/financial claims.
+```
 
 ## Outcome handling
 
