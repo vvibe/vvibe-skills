@@ -1,6 +1,6 @@
 ---
 name: vvibe-blog-writer
-version: 0.3.0
+version: 0.3.1
 manifest_version: 1
 description: Draft SEO blog articles for a VVibe creator from their Product Brain, then publish them either to the creator's own VVibe headless blog (no external CMS, no setup) or as a draft to their WordPress. Reads the Product Brain for brand voice, forbidden claims, FAQ, and audience so the article matches the brand and avoids legal landmines. Trigger when the user asks to write / draft / generate a blog post or article, "write a blog about X", "draft an SEO article", refresh, publish or unpublish a post, or connect a WordPress site for publishing.
 ---
@@ -51,7 +51,7 @@ ranking guarantees) — you orchestrate, the server drafts.
 
 | Capability | How to detect | If missing |
 |---|---|---|
-| VVibe connection | the `vibe_*` MCP tools are available (covers both a cloud MCP agent and a daemon-run agent) | Stop; have the creator connect VVibe (daemon or MCP). There is no `pcs_…` API-key path for the blog — those keys are commerce-only |
+| Blog tools available | `vibe_create_blog_post` (+ the other `vibe_*_blog_post` tools) are in your tool list | **Two different cases — don't conflate them.** If you have NO `vibe_*` tools at all → VVibe isn't connected; have the creator connect it (daemon or MCP). If you have core `vibe_*` tools (e.g. `vibe_get_product_kb`) but NOT the blog ones → you're connected but this skill isn't activated for the connection (common when you obtained the skill files outside VVibe's install flow): call `vibe_report_skill_installed({ skillId: 'blog_writer', version: '<from this file\'s frontmatter>' })`. That registers the skill for your connection and the blog tools become available on the same session (if your MCP client caches the tool list and they don't show, reconnect once). Confirm with `vibe_list_skills`, which shows `installed` per skill. There is no `pcs_…` API-key path for the blog — those keys are commerce-only. |
 | Product Brain exists | `vibe_get_product_kb` returns non-null `data` | Route to `vvibe-product-brain` first, then come back |
 | AI drafting enabled | a generate call returns content (not a 422 "connect an AI provider") | Tell the creator their VVibe operator must enable an LLM provider; manual writing still works in the dashboard |
 | Publishing configured | the creator has a connected publishing site, or can add one | Only needed at the publish step — see `references/publishing.md` |
