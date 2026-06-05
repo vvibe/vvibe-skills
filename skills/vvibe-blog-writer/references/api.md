@@ -1,9 +1,16 @@
-# Blog API — MCP tools + REST
+# Blog API — MCP tools (+ the REST they wrap)
 
-Two equivalent surfaces. Use the MCP tools when the agent is
-MCP-connected; otherwise call REST with the API key. REST base is
-`https://vvibe.ai` (override with `VVIBE_API_HOST` for self-host /
-compatible backends). REST auth: `Authorization: Bearer ${VVIBE_API_KEY}`.
+**Use the MCP `vibe_*` tools.** They are the agent surface and carry your
+VVibe connection token automatically. The REST rows below are simply the
+endpoints those tools call — listed so you know the shapes, and so a
+daemon-run agent can call them directly with the **same** connection token
+(`Authorization: Bearer <your MCP connection token>`). REST base is
+`https://vvibe.ai` (override with `VVIBE_API_HOST` for self-host).
+
+There is **no `pcs_…` API-key path for the blog.** Those keys authenticate
+only the commerce / subscription API; the blog routes accept a dashboard
+session (the creator) or your MCP connection token (you). If you have
+neither, stop and have the creator connect VVibe (daemon or MCP).
 
 All operations are scoped to the calling connection's merchant — there's
 no merchant id in the payloads.
@@ -31,6 +38,7 @@ no merchant id in the payloads.
 → `201 { data: BlogPost }` with `status: "created"`, `version: 1`.
 
 ### Generate (brief → draft)
+- MCP: `vibe_generate_blog_post` (pass `postId`)
 - REST: `POST /api/blog/posts/{id}/generate` → `{ data: BlogPost }` at
   `status: "draft_ready"`.
 - `422` `{ message }` when no LLM provider is configured (drafting off).
