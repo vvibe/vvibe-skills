@@ -168,8 +168,12 @@ Body = the JSON above with `findings` truncated to 50 entries.
 The endpoint returns the dashboard URL:
 
 ```json
-{ "data": { "scanId": "scn_...", "url": "https://vvibe.ai/dashboard/sentry-scans/scn_..." } }
+{ "data": { "reportId": "...", "score": 0, "dashboardUrl": "https://vvibe.ai/dashboard/sentry-scans" } }
 ```
+
+`dashboardUrl` points at the dashboard's scans **list page** — individual
+reports open in a modal there, keyed by `reportId`. There is no per-scan
+deep-link route; surface `dashboardUrl` to the user as-is.
 
 ## MCP path (preferred when agent is connected)
 

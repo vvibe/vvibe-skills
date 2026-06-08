@@ -1,6 +1,6 @@
 ---
 name: vvibe-sentry
-version: 0.3.0
+version: 0.3.1
 manifest_version: 1
 description: Run a pre-deploy security and reliability audit on a VVibe creator's codebase end-to-end — orchestrate gitleaks / osv-scanner / semgrep / VVibe-internal checks, present a plain-language summary, and (optionally) report results back to the VVibe dashboard via REST or the Vibe MCP. Trigger when the user mentions VVibe sentry scan, security audit, pre-deploy check, secret leak, dependency CVE, vulnerability scan, code-pattern check, wants to verify the codebase is safe to go live, or asks to push a health-check report to the VVibe dashboard.
 
