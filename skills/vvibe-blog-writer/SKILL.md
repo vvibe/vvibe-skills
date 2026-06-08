@@ -1,6 +1,6 @@
 ---
 name: vvibe-blog-writer
-version: 0.5.1
+version: 0.6.0
 manifest_version: 1
 description: Draft SEO blog articles for a VVibe creator from their Product Brain, then publish them either to the creator's own VVibe headless blog (no external CMS, no setup) or as a draft to their WordPress. Reads the Product Brain for brand voice, forbidden claims, FAQ, and audience so the article matches the brand and avoids legal landmines. Trigger when the user asks to write / draft / generate a blog post or article, "write a blog about X", "draft an SEO article", refresh, publish or unpublish a post, or connect a WordPress site for publishing.
 ---
@@ -25,9 +25,12 @@ Turn a topic into a publish-ready SEO article for a VVibe creator:
    directions), generate a brief (3 SEO-title candidates + outline),
    let the creator pick/adjust, then generate the full draft.
 3. The creator edits the prose in the dashboard; you can also refine it,
-   and give the post a cover image (search a stock library with
-   `vibe_search_cover_images`, or set a URL) — it shows on the VVibe blog
-   and becomes the WordPress featured image on publish.
+   and give the post a cover image — search a stock library
+   (`vibe_search_cover_images`), generate one with AI
+   (`vibe_generate_cover_image`), or set a URL. It shows on the VVibe blog
+   and becomes the WordPress featured image on publish. You can also set
+   WordPress **categories / tags** and ground the article in a **reference
+   source** (see §4).
 4. Publish to one of two destinations:
    - **VVibe blog (built-in, headless)** — no external CMS, no
      credentials. The post goes live on the creator's VVibe content API;
@@ -86,7 +89,11 @@ in `references/api.md`. There is no separate API-key surface for the blog.
 | Generate brief + draft | `vibe_generate_blog_post` | `POST /api/blog/posts/{id}/generate` |
 | Edit prose (title/body/outline/meta) | `vibe_update_blog_post` | `PATCH /api/blog/posts/{id}` |
 | Search stock images for a cover | `vibe_search_cover_images` | `GET /api/blog/cover/search` |
+| Generate a cover with AI | `vibe_generate_cover_image` | `POST /api/blog/cover/generate` |
 | Set the cover image | `vibe_update_blog_post` (`coverImageUrl`) | `PATCH /api/blog/posts/{id}` |
+| Set WordPress categories / tags | `vibe_create_blog_post` / `vibe_update_blog_post` (`categories`, `tags`) | `POST` / `PATCH /api/blog/posts/{id}` |
+| List a WordPress site's existing terms | `vibe_get_blog_taxonomies` | `GET /api/blog/sites/{id}/taxonomies` |
+| Ground an article in a reference source | `vibe_create_blog_post` / `vibe_update_blog_post` (`referenceUrl`, `referenceText`) | `POST` / `PATCH /api/blog/posts/{id}` |
 | Publish to the creator's configured destination | `vibe_publish_blog_post` (just `postId`) | `POST /api/blog/posts/{id}/publish` |
 | Unpublish from the VVibe blog | (dashboard) | `POST /api/blog/posts/{id}/unpublish` |
 | Connect / test a WordPress site | (dashboard) | `POST /api/blog/sites`, `POST /api/blog/sites/{id}/test` |
