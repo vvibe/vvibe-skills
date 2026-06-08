@@ -52,20 +52,26 @@ The orchestrator emits both a human-readable Markdown summary and a machine-read
 
 ### Step 4 — Call `vibe_report_health_check`
 
-Call the MCP tool with the truncated payload (top 50 findings):
+Call the MCP tool with the truncated payload (top 50 findings). The shape is the same envelope `scripts/report.mjs` produces — pass the JSON through with `findings` sliced to 50:
 
 ```js
 vibe_report_health_check({
-  scanId,
-  score,
-  blockingCount,
-  warningCount,
-  infoCount,
-  byLayer: { secrets: { critical, warning, info }, deps: ..., sast: ..., vvibe: ... },
+  schemaVersion,                   // "0.2.0" (or "0.1.0" for legacy receivers)
+  projectName,                     // optional, helps the dashboard label the scan
+  projectDir,                      // optional
+  standard,                        // "pre-launch" | "routine" | "gold" | "report-only"
+  score,                           // 0-100
+  band,                            // human label, e.g. "needs attention"
+  passes,                          // boolean
+  blockThreshold,                  // "CRITICAL" | "WARNING" | "INFO" | null
+  counts: { critical, warning, info },
+  layers: [ { layer, status, reason, counts }, ... ],
   findings: [ ... top 50 ... ],
-  ranAt
+  ranAt,
 })
 ```
+
+For the full canonical shape (including 0.2.0 additions: `relevance`, `coverage`, `github`, per-layer `runner` / `installHint`), see `health-check-contract.md`. The MCP tool accepts those extra top-level fields too — the wire contract is the same envelope.
 
 **Truncation rule.** The MCP tool accepts at most 50 findings — and so does the REST endpoint (per `health-check-contract.md:152` and `:166`: "max 50 when sent over the wire"). The dashboard renders its "Top issues" table from this top-50 array regardless of which channel delivered the payload; layer counts and coverage data come from the structured fields, so the cap doesn't distort the dashboard's numbers. **There is no "full-report-via-REST" alternative** — older docs implied REST shipped the unabridged findings list, but `scripts/report.mjs` and the contract both cap at 50 today. If a creator complains they're missing findings that show locally, surface the un-truncated JSON from `local-scan-only`-style output or from `--json` capture, not from the dashboard.
 
@@ -73,11 +79,11 @@ Always pre-sort findings by severity (CRITICAL → WARNING → INFO) and slice t
 
 ### Step 5 — Surface the dashboard URL
 
-The MCP tool returns `{ reportUrl, scanId }` (the same shape the REST endpoint returns under `data`). Present the URL plus the Layer 1 plain-language summary to the user, e.g.:
+The MCP tool returns `{ reportId, score, dashboardUrl }` (the same shape the REST endpoint returns under `data`). `dashboardUrl` is the dashboard's scans list page — the new report is the top row there and opens in a modal. Present the URL verbatim plus the Layer 1 plain-language summary to the user, e.g.:
 
 ```text
 🟡 Scan complete — 1 critical, 4 warnings.
-Dashboard: https://vvibe.ai/dashboard/sentry-scans/scn_...
+Dashboard: https://vvibe.ai/dashboard/sentry-scans
 Score: 73/100 (needs attention)
 
 Top issues to fix:

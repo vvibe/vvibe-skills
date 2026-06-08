@@ -71,10 +71,10 @@ Alternatively, `scripts/report.mjs` ships with a `--report-to-vvibe` flag that P
 A successful POST returns:
 
 ```json
-{ "data": { "scanId": "scn_...", "url": "https://vvibe.ai/dashboard/sentry-scans/scn_..." } }
+{ "data": { "reportId": "...", "score": 0, "dashboardUrl": "https://vvibe.ai/dashboard/sentry-scans" } }
 ```
 
-Show the dashboard URL **next to** the Layer 1 plain-language summary (status banner, score, per-layer counts, top 3 issues — same format as the local-scan-only mode). Don't replace the local summary with just the URL — the user wants both: the immediate verdict in chat, and the link for sharing / drill-down later.
+`dashboardUrl` is the dashboard's scans **list page** — the creator opens the new report from there (it's the top row, opens in a modal). Show `dashboardUrl` verbatim next to the Layer 1 plain-language summary (status banner, score, per-layer counts, top 3 issues — same format as the local-scan-only mode). Don't replace the local summary with just the URL — the user wants both: the immediate verdict in chat, and the link for sharing / drill-down later.
 
 If the user picked Pre-launch / Routine / Gold and there are blocking findings, proceed to the Layer 2 fix workflow as usual (see `fix-explanations.md` for per-code fix templates).
 
