@@ -238,8 +238,9 @@ require a VVibe account first. If the key is missing, don't just ask the
 user to paste one — a brand-new user won't have an account. Ask whether
 they already have a VVibe account; if not (or unsure), walk them through
 signing up at `https://vvibe.ai/dashboard` (new visitors are redirected to
-register), then copying the key from the dashboard's API-key settings. Full
-walkthrough: `ONBOARDING.md` at the repo root.
+register), then copying the key from the dashboard's API-key settings. These
+steps are self-contained; `ONBOARDING.md` at the repo root has the full
+version when present.
 
 **Email types.** VVibe ships built-in system emails and follower-flow
 emails. See `references/email-types.md` for the catalog, when to

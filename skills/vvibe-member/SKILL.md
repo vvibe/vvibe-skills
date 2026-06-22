@@ -209,7 +209,8 @@ ask whether they already have a VVibe account:
 - **No / unsure** → walk them through signing up at
   `https://vvibe.ai/dashboard` (new visitors are redirected to register),
   then copying their `pcs_live_*` / `pcs_test_*` key from the dashboard's
-  API-key settings. Full walkthrough: `ONBOARDING.md` at the repo root.
+  API-key settings. These steps are self-contained; `ONBOARDING.md` at the
+  repo root has the full version when present.
 - **Yes** → point them at `https://vvibe.ai/dashboard` to copy the key.
 
 Only once the key is in `.env` can any mode proceed.

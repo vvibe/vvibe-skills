@@ -76,10 +76,10 @@ the two. But don't just ask for a key: a brand-new user may not have a
 VVibe account at all. First ask whether they already have a VVibe
 account. If **no / unsure**, walk them through signing up at
 `https://vvibe.ai/dashboard` (new visitors are redirected to register)
-before anything else — full walkthrough in `ONBOARDING.md` at the repo
-root. Once they have an account, ask them to either connect the Vibe MCP
-server or paste their `VVIBE_API_KEY` from the dashboard's API-key
-settings.
+before anything else — these steps are self-contained, with the full
+version in `ONBOARDING.md` at the repo root when present. Once they have an
+account, ask them to either connect the Vibe MCP server or paste their
+`VVIBE_API_KEY` from the dashboard's API-key settings.
 
 ## 3. Modes
 

@@ -216,10 +216,12 @@ needs the Vibe MCP) require a VVibe account — `local-scan-only` needs none,
 so a brand-new user can always still get a report in chat. If the user
 wants their results on the dashboard but has neither a key nor an MCP
 connection, don't just ask for a key — ask whether they have a VVibe
-account. If not (or unsure), either fall back to `local-scan-only`, or walk
+account. If they don't (or are unsure) and only want results in chat, fall
+back to `local-scan-only`. If they specifically want the dashboard, walk
 them through signing up at `https://vvibe.ai/dashboard` (new visitors are
 redirected to register) and copying the key from the dashboard's API-key
-settings. Full walkthrough: `ONBOARDING.md` at the repo root.
+settings. These steps are self-contained; `ONBOARDING.md` at the repo root
+has the full version when present.
 
 **Don't pre-flight scanner availability.** The orchestrator (`report.mjs`)
 runs detection itself and picks the best available source per layer. The
