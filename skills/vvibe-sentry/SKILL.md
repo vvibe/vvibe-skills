@@ -1,6 +1,6 @@
 ---
 name: vvibe-sentry
-version: 0.3.1
+version: 0.4.0
 manifest_version: 1
 description: Run a pre-deploy security and reliability audit on a VVibe creator's codebase end-to-end — orchestrate gitleaks / osv-scanner / semgrep / VVibe-internal checks, present a plain-language summary, and (optionally) report results back to the VVibe dashboard via REST or the Vibe MCP. Trigger when the user mentions VVibe sentry scan, security audit, pre-deploy check, secret leak, dependency CVE, vulnerability scan, code-pattern check, wants to verify the codebase is safe to go live, or asks to push a health-check report to the VVibe dashboard.
 
@@ -209,6 +209,17 @@ Authorization: Bearer ${VVIBE_API_KEY}
 
 The Vibe MCP uses its own Bearer token; do **not** pass `VVIBE_API_KEY`
 to MCP calls.
+
+**No VVibe account yet? Register before asking for a key.** Only the
+reporting modes (`report-via-rest` needs `VVIBE_API_KEY`; `report-via-mcp`
+needs the Vibe MCP) require a VVibe account — `local-scan-only` needs none,
+so a brand-new user can always still get a report in chat. If the user
+wants their results on the dashboard but has neither a key nor an MCP
+connection, don't just ask for a key — ask whether they have a VVibe
+account. If not (or unsure), either fall back to `local-scan-only`, or walk
+them through signing up at `https://vvibe.ai/dashboard` (new visitors are
+redirected to register) and copying the key from the dashboard's API-key
+settings. Full walkthrough: `ONBOARDING.md` at the repo root.
 
 **Don't pre-flight scanner availability.** The orchestrator (`report.mjs`)
 runs detection itself and picks the best available source per layer. The

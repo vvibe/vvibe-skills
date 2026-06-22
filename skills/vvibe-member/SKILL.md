@@ -1,6 +1,6 @@
 ---
 name: vvibe-member
-version: 0.4.0
+version: 0.5.0
 manifest_version: 1
 description: Help users wire member data between their app and VVibe — push their users to VVibe, query VVibe for member state, and capture signup attribution. Trigger when the user mentions VVibe user sync, member sync, user management, fetching members from VVibe, building a member admin UI, signup attribution, utm tracking, or referral tracking.
 ---
@@ -201,9 +201,18 @@ API Key prefix determines mode: `pcs_live_*` → production, `pcs_test_*` →
 sandbox. The Sync endpoint requires API Key. GET endpoints also accept
 Firebase JWT (for in-browser Dashboard usage).
 
-Get the key from `https://vvibe.ai/dashboard`. If `VVIBE_API_KEY` is
-missing from the project's env, stop and ask the user to paste it before
-any mode can proceed.
+**No VVibe account yet? Register before asking for a key.** When
+`VVIBE_API_KEY` is missing from the project's env, don't just ask the
+user to paste one — a brand-new user won't have an account at all. First
+ask whether they already have a VVibe account:
+
+- **No / unsure** → walk them through signing up at
+  `https://vvibe.ai/dashboard` (new visitors are redirected to register),
+  then copying their `pcs_live_*` / `pcs_test_*` key from the dashboard's
+  API-key settings. Full walkthrough: `ONBOARDING.md` at the repo root.
+- **Yes** → point them at `https://vvibe.ai/dashboard` to copy the key.
+
+Only once the key is in `.env` can any mode proceed.
 
 **Consent gate (outbound-sync and attribution-utm only).** Before
 modifying the vibe coder's codebase, the agent **must** ask explicit

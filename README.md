@@ -24,6 +24,21 @@ npx skills update
 npx skills update vvibe-analytics
 ```
 
+## Create your VVibe account
+
+These skills act on **your** VVibe account. If you're brand-new to VVibe (no
+account yet), create one before using any skill that needs it — your agent will
+walk you through this automatically when it detects you don't have a key.
+
+1. Open [`https://vvibe.ai/dashboard`](https://vvibe.ai/dashboard) — new
+   visitors are redirected to sign up.
+2. After signing up, copy your API key (`pcs_live_*` / `pcs_test_*`) from the
+   dashboard's API-key settings.
+3. Add it to your project as `VVIBE_API_KEY` (keep it out of version control).
+
+Full walkthrough: **[ONBOARDING.md](./ONBOARDING.md)**. (The read-only
+`vvibe-blog-render` skill needs no account.)
+
 ## Skills
 
 | Skill | Description | Triggers |
@@ -48,7 +63,7 @@ Helps creators install Google Analytics 4 on their websites and connect analytic
 - 5 VVibe standard events + GA4 ecommerce event mapping
 - VVibe dashboard authorization flow
 
-**Prerequisites:** Google Analytics 4 account with a Measurement ID (`G-XXXXXXX`) and a VVibe account.
+**Prerequisites:** Google Analytics 4 account with a Measurement ID (`G-XXXXXXX`) and a VVibe account ([new to VVibe?](./ONBOARDING.md)).
 
 **Skill triggers:**
 - "Help me install Google Analytics on my website"
@@ -70,7 +85,7 @@ Helps vibe coders sync their application users to VVibe, so creators can view us
 - Dashboard viewing at `https://vvibe.ai/dashboard/users`
 - Sync log tracking
 
-**Prerequisites:** VVibe API Key (`pcs_live_*` or `pcs_test_*`). Apply at [VVibe Dashboard](https://vvibe.ai/dashboard).
+**Prerequisites:** A VVibe account and API Key (`pcs_live_*` or `pcs_test_*`). New to VVibe? [Create an account and get your key](./ONBOARDING.md).
 
 **Skill triggers:**
 - "Sync my users to VVibe"
@@ -94,7 +109,7 @@ Four layers:
 
 Every finding is graded CRITICAL / WARNING / INFO. Read-only — never modifies user code. Optionally reports the summary to the dashboard at `https://vvibe.ai/dashboard/sentry-scans`, or via the `vibe_report_health_check` MCP tool when an agent is connected.
 
-**Prerequisites:** [gitleaks](https://github.com/gitleaks/gitleaks), [osv-scanner](https://github.com/google/osv-scanner), and [semgrep](https://semgrep.dev/) installed (sentry gracefully skips any missing tool). Optional: VVibe API Key (`pcs_live_*` or `pcs_test_*`) to report results to the dashboard.
+**Prerequisites:** [gitleaks](https://github.com/gitleaks/gitleaks), [osv-scanner](https://github.com/google/osv-scanner), and [semgrep](https://semgrep.dev/) installed (sentry gracefully skips any missing tool). Optional: a VVibe account ([new to VVibe?](./ONBOARDING.md)) and API Key (`pcs_live_*` or `pcs_test_*`) to report results to the dashboard.
 
 **Skill triggers:**
 - "Run a VVibe sentry scan before I deploy"
@@ -116,7 +131,7 @@ Helps vibe coders wire the registration link inside VVibe invitation emails to t
 - Templates for Next.js, React SPA, and plain HTML in Mode B
 - Cross-links to `vvibe-member` for syncing the new signup back to the dashboard
 
-**Prerequisites:** VVibe API Key (`pcs_live_*` or `pcs_test_*`). For Mode B, an HTTPS-reachable domain for the waitlist page.
+**Prerequisites:** A VVibe account and API Key (`pcs_live_*` or `pcs_test_*`) — [new to VVibe?](./ONBOARDING.md). For Mode B, an HTTPS-reachable domain for the waitlist page.
 
 **Skill triggers:**
 - "Where does the registration email link land?"
@@ -137,7 +152,7 @@ Builds or refreshes the creator's Product Brain on VVibe — the structured agen
 - Hard discipline: EXTRACT verbatim → INFER with confidence flag → NO FABRICATION (null + `missing_fields[]`)
 - Never invents customer names or metrics; detects forbidden claims (CAN-SPAM / FTC / medical / financial) and records them for downstream skills to avoid
 
-**Prerequisites:** A VVibe MCP connection OR a `VVIBE_API_KEY` (`pcs_live_*` / `pcs_test_*`); at least one source (repo / URL / document set).
+**Prerequisites:** A VVibe account ([new to VVibe?](./ONBOARDING.md)) reached via a VVibe MCP connection OR a `VVIBE_API_KEY` (`pcs_live_*` / `pcs_test_*`); at least one source (repo / URL / document set).
 
 **Skill triggers:**
 - "Set up my product brain on VVibe"
@@ -159,7 +174,7 @@ Drafts SEO blog articles from the creator's Product Brain, then publishes them t
 - Brief → 3 SEO-title candidates + outline → full draft (answer-first structure, FAQ, JSON-LD), all editable; every edit is a tracked revision
 - **VVibe blog** publish (`target: native`): goes live on the content API instantly, no credentials; pair with **vvibe-blog-render** to display it. **WordPress** publish: **draft only**, never auto-publishes; public-HTTPS-only with SSRF protection
 
-**Prerequisites:** A VVibe MCP connection OR a `VVIBE_API_KEY` (`pcs_live_*` / `pcs_test_*`); a Product Brain (run **vvibe-product-brain** first); the deployment's operator must have an LLM provider configured for drafting. WordPress publishing additionally needs an application password (the VVibe-blog path needs none).
+**Prerequisites:** A VVibe account ([new to VVibe?](./ONBOARDING.md)) reached via a VVibe MCP connection OR a `VVIBE_API_KEY` (`pcs_live_*` / `pcs_test_*`); a Product Brain (run **vvibe-product-brain** first); the deployment's operator must have an LLM provider configured for drafting. WordPress publishing additionally needs an application password (the VVibe-blog path needs none).
 
 **Skill triggers:**
 - "Write a blog post about X"
