@@ -115,9 +115,11 @@ When editing skill content:
 ## Onboarding (brand-new users)
 
 Every skill except the read-only `vvibe-blog-render` acts on the creator's
-VVibe account and needs either a `VVIBE_API_KEY` or a Vibe MCP connection.
-A first-time user may have **neither a key nor an account**. The convention,
-enforced in each gated `SKILL.md`'s auth/prereq section, is:
+VVibe account, though how the agent authenticates varies by skill: most read a
+`VVIBE_API_KEY` (`pcs_live_*` / `pcs_test_*`); `vvibe-blog-writer` is MCP-only
+(no `pcs_*` key path); `vvibe-product-brain` accepts either. Whatever the
+mechanism, a first-time user may have **neither credentials nor an account**.
+The convention, enforced in each gated `SKILL.md`'s auth/prereq section, is:
 
 - When the key / MCP connection is missing, **do not** jump straight to "paste
   your key" — first establish whether the user even has a VVibe account.
