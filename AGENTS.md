@@ -112,6 +112,27 @@ When editing skill content:
 - **`SKILL.md` / `references/`** keep the literal `https://vvibe.ai` as the documented default. Example code in these docs should use the env-var pattern.
 - **Dashboard URLs and brand strings** are intentionally hardcoded today — forks rebrand via find/replace.
 
+## Onboarding (brand-new users)
+
+Every skill except the read-only `vvibe-blog-render` acts on the creator's
+VVibe account, though how the agent authenticates varies by skill: most read a
+`VVIBE_API_KEY` (`pcs_live_*` / `pcs_test_*`); `vvibe-blog-writer` is MCP-only
+(no `pcs_*` key path); `vvibe-product-brain` accepts either. Whatever the
+mechanism, a first-time user may have **neither credentials nor an account**.
+The convention, enforced in each gated `SKILL.md`'s auth/prereq section, is:
+
+- When the key / MCP connection is missing, **do not** jump straight to "paste
+  your key" — first establish whether the user even has a VVibe account.
+- New / unsure → walk them through signing up at `https://vvibe.ai/dashboard`
+  (VVibe has no separate signup URL; new visitors are redirected to register),
+  then copying the key. Only then proceed.
+
+`ONBOARDING.md` (+ `ONBOARDING.zh-TW.md`) at the repo root is the single
+authoritative walkthrough — both the human-facing tutorial and the
+agent-facing "detect a brand-new user" rule. Skill auth sections link to it
+rather than re-deriving the flow. When you add a new skill that gates on an
+account, mirror this branch and point at `ONBOARDING.md`.
+
 ## End-User Installation
 
 ```bash

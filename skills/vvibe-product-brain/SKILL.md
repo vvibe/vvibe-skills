@@ -1,6 +1,6 @@
 ---
 name: vvibe-product-brain
-version: 0.2.0
+version: 0.3.0
 manifest_version: 1
 description: Build or refresh a creator's Product Brain on VVibe — extract structured product facts from a github repo, public website, or document set, then write the result via the `vibe_set_product_kb` MCP tool. The Product Brain is read by every prose-generating skill (email, SEO, conversion) before drafting, so this skill is the upstream feeder for everything else. Trigger when the user mentions building / refreshing the product brain, knowledge base, "teach VVibe about my product", or asks the agent to set up the brain so other skills have context.
 ---
@@ -72,8 +72,14 @@ yourself.
 After detection, briefly tell the human what you found and what's
 missing. If `vibe_mcp_connected` is false AND `has_api_key_local` is
 also false, stop — the skill cannot write the result without one of
-the two. Ask the user to either install the Vibe MCP server or paste
-their `VVIBE_API_KEY`.
+the two. But don't just ask for a key: a brand-new user may not have a
+VVibe account at all. First ask whether they already have a VVibe
+account. If **no / unsure**, walk them through signing up at
+`https://vvibe.ai/dashboard` (new visitors are redirected to register)
+before anything else — these steps are self-contained, with the full
+version in `ONBOARDING.md` at the repo root when present. Once they have an
+account, ask them to either connect the Vibe MCP server or paste their
+`VVIBE_API_KEY` from the dashboard's API-key settings.
 
 ## 3. Modes
 

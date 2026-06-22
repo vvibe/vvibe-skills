@@ -1,6 +1,6 @@
 ---
 name: vvibe-analytics
-version: 0.2.0
+version: 0.3.0
 description: Help VVibe creators install Google Analytics 4 (GA4) on their websites, set up VVibe event tracking, and connect their GA4 account to VVibe for viewing analytics dashboards. Also covers utm tracking & traffic-source attribution at the GA4 layer; for signup-time first-touch attribution, see the vvibe-member skill. Trigger when the user mentions Google Analytics, GA4, tracking, analytics, website traffic, event tracking, utm tracking, traffic source, referral attribution, or wants to connect analytics to VVibe.
 ---
 
@@ -108,7 +108,7 @@ NEXT_PUBLIC_GA_MEASUREMENT_ID=G-XXXXXXX
 
 ### 6. Authorize VVibe to access GA data
 
-Once GA4 is installed and collecting data, guide the user to connect it to VVibe:
+Once GA4 is installed and collecting data, guide the user to connect it to VVibe. This needs a VVibe account — if the user is brand-new to VVibe (no account yet), don't assume they have one: first have them sign up at `https://vvibe.ai/dashboard` (new visitors are redirected to register; these steps are self-contained, with the full version in `ONBOARDING.md` at the repo root when present), then continue:
 
 1. Go to VVibe Dashboard: `https://vvibe.ai/dashboard/analytics`
 2. Navigate to **數據分析** (Analytics) settings

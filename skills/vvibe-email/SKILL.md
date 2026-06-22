@@ -1,6 +1,6 @@
 ---
 name: vvibe-email
-version: 0.4.0
+version: 0.5.0
 manifest_version: 1
 description: Help VVibe creators wire invitation-email integration end-to-end — where the email CTA lands (VVibe-hosted, self-hosted waitlist, or direct register), how to send campaigns via Vibe MCP, and how to manage system + follower-flow email templates. When drafting campaign copy, reads the creator's Product Brain (`vibe_get_product_kb`) for brand voice, value prop, audience, and forbidden claims so the email matches the brand and avoids legal landmines. Trigger when the user mentions invitation emails, follower outreach campaigns, sending an email blast, drafting an email campaign, waitlist signup landing page, app base URL, embedding a waitlist CTA, skipping the waitlist when a member system already exists, or asks where the registration email link lands.
 
@@ -231,6 +231,16 @@ Authorization: Bearer ${VVIBE_API_KEY}
 Same `pcs_live_*` / `pcs_test_*` key as vvibe-member and vvibe-sentry.
 Public endpoints (`GET /api/waitlist/{slug}`, `POST /api/waitlist/{slug}`)
 need no auth. MCP tools use the Vibe MCP Bearer token, not the API key.
+
+**No VVibe account yet? Register before asking for a key.** Modes that
+need `VVIBE_API_KEY` (everything except the public waitlist endpoints)
+require a VVibe account first. If the key is missing, don't just ask the
+user to paste one — a brand-new user won't have an account. Ask whether
+they already have a VVibe account; if not (or unsure), walk them through
+signing up at `https://vvibe.ai/dashboard` (new visitors are redirected to
+register), then copying the key from the dashboard's API-key settings. These
+steps are self-contained; `ONBOARDING.md` at the repo root has the full
+version when present.
 
 **Email types.** VVibe ships built-in system emails and follower-flow
 emails. See `references/email-types.md` for the catalog, when to

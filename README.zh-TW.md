@@ -24,6 +24,16 @@ npx skills update
 npx skills update vvibe-analytics
 ```
 
+## 建立你的 VVibe 帳號
+
+這些 skill 操作的是**你自己的** VVibe 帳號。如果你是 VVibe 全新用戶（還沒有帳號），在使用任何需要帳號的 skill 前先建立一個——當 agent 偵測到你沒有金鑰時，會自動引導你完成這一步。
+
+1. 打開 [`https://vvibe.ai/dashboard`](https://vvibe.ai/dashboard)——新訪客會被自動導向註冊。
+2. 註冊後，到儀表板的 API 金鑰設定複製你的 API 金鑰（`pcs_live_*` / `pcs_test_*`）。
+3. 把它加進專案環境變數 `VVIBE_API_KEY`（別提交進版控）。
+
+完整教學：**[ONBOARDING.zh-TW.md](./ONBOARDING.zh-TW.md)**。（唯讀的 `vvibe-blog-render` skill 不需要帳號。）
+
 ## Skills 一覽
 
 | Skill | 說明 | 觸發關鍵字 |
@@ -48,7 +58,7 @@ npx skills add vvibe/vvibe-skills --skill vvibe-analytics
 - 5 個 VVibe 標準事件 + GA4 電商事件對應
 - VVibe 後台 GA 授權連結流程
 
-**前置條件：** Google Analytics 4 帳號與 Measurement ID（`G-XXXXXXX`），以及 VVibe 帳號。
+**前置條件：** Google Analytics 4 帳號與 Measurement ID（`G-XXXXXXX`），以及 VVibe 帳號（[VVibe 新手？](./ONBOARDING.zh-TW.md)）。
 
 **Skill 觸發條件：**
 - 「幫我在網站安裝 Google Analytics」
@@ -70,7 +80,7 @@ npx skills add vvibe/vvibe-skills --skill vvibe-member
 - Dashboard 可視化：`https://vvibe.ai/dashboard/users`
 - 同步紀錄：追蹤每次同步的成功/失敗狀態
 
-**前置條件：** VVibe API 金鑰（`pcs_live_*` 或 `pcs_test_*`）。至 [VVibe Dashboard](https://vvibe.ai/dashboard) 申請。
+**前置條件：** VVibe 帳號與 API 金鑰（`pcs_live_*` 或 `pcs_test_*`）。VVibe 新手？[先註冊帳號再取得金鑰](./ONBOARDING.zh-TW.md)。
 
 **Skill 觸發條件：**
 - 「幫我同步用戶到 VVibe」
@@ -94,7 +104,7 @@ npx skills add vvibe/vvibe-skills --skill vvibe-sentry
 
 每個 finding 分級為 CRITICAL / WARNING / INFO。**Read-only**——絕不修改使用者程式碼。可選擇把摘要回報到 `https://vvibe.ai/dashboard/sentry-scans`，或當 agent 已透過 MCP 連線時改走 `vibe_report_health_check`。
 
-**前置條件：** 安裝 [gitleaks](https://github.com/gitleaks/gitleaks)、[osv-scanner](https://github.com/google/osv-scanner) 與 [semgrep](https://semgrep.dev/)（任一缺席，sentry 會優雅跳過該層）。選用：VVibe API 金鑰（`pcs_live_*` 或 `pcs_test_*`），把結果回報到儀表板。
+**前置條件：** 安裝 [gitleaks](https://github.com/gitleaks/gitleaks)、[osv-scanner](https://github.com/google/osv-scanner) 與 [semgrep](https://semgrep.dev/)（任一缺席，sentry 會優雅跳過該層）。選用：VVibe 帳號（[新手？](./ONBOARDING.zh-TW.md)）與 API 金鑰（`pcs_live_*` 或 `pcs_test_*`），把結果回報到儀表板。
 
 **Skill 觸發條件：**
 - 「部署前幫我跑一次 sentry 掃描」
@@ -116,7 +126,7 @@ npx skills add vvibe/vvibe-skills --skill vvibe-email
 - Mode B 提供 Next.js、React SPA、純 HTML 三種範本
 - 與 `vvibe-member` 串接，把新訂閱者同步進創作者儀表板
 
-**前置條件：** VVibe API 金鑰（`pcs_live_*` 或 `pcs_test_*`）。Mode B 需要一個可公開存取的 HTTPS 網域。
+**前置條件：** VVibe 帳號與 API 金鑰（`pcs_live_*` 或 `pcs_test_*`）——[VVibe 新手？](./ONBOARDING.zh-TW.md)。Mode B 需要一個可公開存取的 HTTPS 網域。
 
 **Skill 觸發條件：**
 - 「註冊信件的連結會導去哪裡？」
@@ -137,7 +147,7 @@ npx skills add vvibe/vvibe-skills --skill vvibe-product-brain
 - 嚴格紀律：**EXTRACT verbatim → INFER 並標註 confidence → 不准 fabricate**（沒有 source signal 的欄位留 `null` 並寫進 `missing_fields[]`）
 - 永不捏造客戶名或數據；偵測法務地雷（CAN-SPAM / FTC / 醫療 / 金融）並 verbatim 記錄到 `legal_compliance.forbidden_claims`，讓下游 skill 自動避開
 
-**前置條件：** 連上 VVibe MCP 或設定 `VVIBE_API_KEY`（`pcs_live_*` / `pcs_test_*`）；至少一種來源（repo / URL / 文件集）。
+**前置條件：** VVibe 帳號（[新手？](./ONBOARDING.zh-TW.md)），透過連上 VVibe MCP 或設定 `VVIBE_API_KEY`（`pcs_live_*` / `pcs_test_*`）存取；至少一種來源（repo / URL / 文件集）。
 
 **Skill 觸發條件：**
 - 「在 VVibe 上建立我的產品腦」
@@ -159,7 +169,7 @@ npx skills add vvibe/vvibe-skills --skill vvibe-blog-writer
 - 流程：brief → 3 個 SEO 標題候選 + 大綱 → 完整草稿（answer-first 結構、FAQ、JSON-LD），全部可編輯；每次編輯都記錄為 revision
 - **VVibe 部落格**發佈（`target: native`）：免憑證、立即上架到內容 API，再搭配 **vvibe-blog-render** 顯示。**WordPress** 發佈：**只建立草稿**、絕不自動發佈；僅限公開 HTTPS 並有 SSRF 防護
 
-**前置條件：** 連上 VVibe MCP 或設定 `VVIBE_API_KEY`（`pcs_live_*` / `pcs_test_*`）；先有「產品腦」（請先跑 **vvibe-product-brain**）；部署需由 operator 設定 LLM provider 才能起草。WordPress 發佈另需 application password（VVibe 部落格路徑則完全不需要）。
+**前置條件：** VVibe 帳號（[新手？](./ONBOARDING.zh-TW.md)），透過連上 VVibe MCP 或設定 `VVIBE_API_KEY`（`pcs_live_*` / `pcs_test_*`）存取；先有「產品腦」（請先跑 **vvibe-product-brain**）；部署需由 operator 設定 LLM provider 才能起草。WordPress 發佈另需 application password（VVibe 部落格路徑則完全不需要）。
 
 **Skill 觸發條件：**
 - 「幫我寫一篇關於 X 的部落格」
