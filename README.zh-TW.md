@@ -28,7 +28,7 @@ npx skills update vvibe-analytics
 
 這些 skill 操作的是**你自己的** VVibe 帳號。如果你是 VVibe 全新用戶（還沒有帳號），在使用任何需要帳號的 skill 前先建立一個——當 agent 偵測到你沒有金鑰時，會自動引導你完成這一步。
 
-1. 打開 [`https://vvibe.ai/dashboard`](https://vvibe.ai/dashboard)——新訪客會被自動導向註冊。
+1. 打開 [`https://vvibe.ai/dashboard`](https://vvibe.ai/dashboard)——若尚未登入會被導到登入頁，用 **註冊** 切換建立帳號。
 2. 註冊後，到儀表板的 API 金鑰設定複製你的 API 金鑰（`pcs_live_*` / `pcs_test_*`）。
 3. 把它加進專案環境變數 `VVIBE_API_KEY`（別提交進版控）。
 

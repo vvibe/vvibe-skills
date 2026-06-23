@@ -124,7 +124,7 @@ The convention, enforced in each gated `SKILL.md`'s auth/prereq section, is:
 - When the key / MCP connection is missing, **do not** jump straight to "paste
   your key" — first establish whether the user even has a VVibe account.
 - New / unsure → walk them through signing up at `https://vvibe.ai/dashboard`
-  (VVibe has no separate signup URL; new visitors are redirected to register),
+  (VVibe has no separate signup URL; signed-out visitors land on the login page and use the "Sign up" toggle to create an account),
   then copying the key. Only then proceed.
 
 `ONBOARDING.md` (+ `ONBOARDING.zh-TW.md`) at the repo root is the single

@@ -13,15 +13,19 @@ set — skip this page.
 
 ## 1. Create your VVibe account
 
-VVibe doesn't have a separate signup URL — the dashboard is the front door.
+The dashboard is the entry point. Opening it while signed out sends you to the
+**login page**, where you can create an account.
 
 1. Open **`https://vvibe.ai/dashboard`**. If you're not signed in, you'll be
-   redirected to register.
-2. Sign up and finish the prompts.
+   sent to the login page (`/login`).
+2. On the login page, use the **"Sign up" toggle** to switch to account
+   creation, then sign up (email + password, or Google/GitHub).
 3. You land back on the dashboard.
 
 > Self-hosting or on a fork? Replace `vvibe.ai` with your backend's host. See
 > [PROVIDER.md](./PROVIDER.md).
+
+> If you instead see an "apply for access" screen, VVibe is in limited beta — submit the short form and you'll be emailed when you're approved.
 
 ## 2. Get your API key
 
@@ -59,8 +63,9 @@ VVibe account at all. Instead:
 
 1. Ask whether they already have a VVibe account.
 2. **No / unsure →** they're a brand-new user. Walk them through §1–§3 above:
-   register first (`https://vvibe.ai/dashboard` redirects new visitors to
-   signup), then copy the key.
+   create an account first (opening `https://vvibe.ai/dashboard` while signed
+   out sends them to the login page, where the "Sign up" toggle switches to
+   account creation), then copy the key.
 3. **Yes →** point them at the dashboard's API-key settings to copy the
    existing key.
 
