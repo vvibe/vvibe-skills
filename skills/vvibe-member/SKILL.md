@@ -207,7 +207,7 @@ user to paste one — a brand-new user won't have an account at all. First
 ask whether they already have a VVibe account:
 
 - **No / unsure** → walk them through signing up at
-  `https://vvibe.ai/dashboard` (new visitors are redirected to register),
+  `https://vvibe.ai/dashboard` (new visitors land on the login page — use the "Sign up" toggle to create an account),
   then copying their `pcs_live_*` / `pcs_test_*` key from the dashboard's
   API-key settings. These steps are self-contained; `ONBOARDING.md` at the
   repo root has the full version when present.

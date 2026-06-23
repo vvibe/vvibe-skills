@@ -30,8 +30,9 @@ These skills act on **your** VVibe account. If you're brand-new to VVibe (no
 account yet), create one before using any skill that needs it — your agent will
 walk you through this automatically when it detects you don't have a key.
 
-1. Open [`https://vvibe.ai/dashboard`](https://vvibe.ai/dashboard) — new
-   visitors are redirected to sign up.
+1. Open [`https://vvibe.ai/dashboard`](https://vvibe.ai/dashboard) — if you're
+   signed out you'll land on the login page; use the **Sign up** toggle to
+   create an account.
 2. After signing up, copy your API key (`pcs_live_*` / `pcs_test_*`) from the
    dashboard's API-key settings.
 3. Add it to your project as `VVIBE_API_KEY` (keep it out of version control).

@@ -108,7 +108,7 @@ NEXT_PUBLIC_GA_MEASUREMENT_ID=G-XXXXXXX
 
 ### 6. Authorize VVibe to access GA data
 
-Once GA4 is installed and collecting data, guide the user to connect it to VVibe. This needs a VVibe account — if the user is brand-new to VVibe (no account yet), don't assume they have one: first have them sign up at `https://vvibe.ai/dashboard` (new visitors are redirected to register; these steps are self-contained, with the full version in `ONBOARDING.md` at the repo root when present), then continue:
+Once GA4 is installed and collecting data, guide the user to connect it to VVibe. This needs a VVibe account — if the user is brand-new to VVibe (no account yet), don't assume they have one: first have them sign up at `https://vvibe.ai/dashboard` (new visitors land on the login page — use the "Sign up" toggle to create an account; these steps are self-contained, with the full version in `ONBOARDING.md` at the repo root when present), then continue:
 
 1. Go to VVibe Dashboard: `https://vvibe.ai/dashboard/analytics`
 2. Navigate to **數據分析** (Analytics) settings

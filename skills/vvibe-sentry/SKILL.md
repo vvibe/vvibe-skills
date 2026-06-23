@@ -218,8 +218,8 @@ wants their results on the dashboard but has neither a key nor an MCP
 connection, don't just ask for a key — ask whether they have a VVibe
 account. If they don't (or are unsure) and only want results in chat, fall
 back to `local-scan-only`. If they specifically want the dashboard, walk
-them through signing up at `https://vvibe.ai/dashboard` (new visitors are
-redirected to register) and copying the key from the dashboard's API-key
+them through signing up at `https://vvibe.ai/dashboard` (new visitors land on
+the login page — use the "Sign up" toggle to create an account) and copying the key from the dashboard's API-key
 settings. These steps are self-contained; `ONBOARDING.md` at the repo root
 has the full version when present.
 
