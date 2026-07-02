@@ -131,10 +131,13 @@ modes:
       - "send invitation emails"
     requires: [vibe_mcp_connected]
     fallback: >
-      If MCP isn't connected: invitation campaigns can only be created
-      via the dashboard UI today. There is no REST equivalent to
-      `vibe_send_campaign`. Direct the creator to vvibe.ai/dashboard
-      and offer to revisit when MCP is wired.
+      If MCP isn't connected, the fastest fix is to wire it in one
+      command: `npx @vvibe/cli connect --server=https://mcp.vvibe.ai`
+      (first call opens a browser login; sign-up is on that same page, so
+      a brand-new user creates the account and connects in one step). Then
+      send via `vibe_send_campaign`. There is no REST/API-key equivalent —
+      without MCP, campaigns can only be created in the dashboard UI at
+      vvibe.ai/dashboard. Prefer the connect command.
     load: references/sending-campaigns.md
 ```
 

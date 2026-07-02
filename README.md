@@ -24,21 +24,24 @@ npx skills update
 npx skills update vvibe-analytics
 ```
 
-## Create your VVibe account
+## Connect to VVibe (fastest: one command)
 
-These skills act on **your** VVibe account. If you're brand-new to VVibe (no
-account yet), create one before using any skill that needs it — your agent will
-walk you through this automatically when it detects you don't have a key.
+These skills act on **your** VVibe account. The fastest way in is to connect
+your agent to VVibe's MCP — one command, and the agent opens your browser to log
+in the first time it's used (**sign-up is on that same page**). No key to copy,
+no trip back to the dashboard:
 
-1. Open [`https://vvibe.ai/dashboard`](https://vvibe.ai/dashboard) — if you're
-   signed out you'll land on the login page; use the **Sign up** toggle to
-   create an account.
-2. After signing up, copy your API key (`pcs_live_*` / `pcs_test_*`) from the
-   dashboard's API-key settings.
-3. Add it to your project as `VVIBE_API_KEY` (keep it out of version control).
+```bash
+npx @vvibe/cli connect --server=https://mcp.vvibe.ai
+```
+
+Prefer an API key (needed for member sync, or on token-only self-hosts)? Open
+[`https://vvibe.ai/dashboard`](https://vvibe.ai/dashboard) to sign up, copy your
+key (`pcs_live_*` / `pcs_test_*`), and add it to your project as `VVIBE_API_KEY`.
 
 Full walkthrough: **[ONBOARDING.md](./ONBOARDING.md)**. (The read-only
-`vvibe-blog-render` skill needs no account.)
+`vvibe-blog-render` skill needs no account.) When the agent detects neither an
+MCP connection nor a key, it steers you to the one-command connect above first.
 
 ## Skills
 

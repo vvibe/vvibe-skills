@@ -72,14 +72,16 @@ yourself.
 After detection, briefly tell the human what you found and what's
 missing. If `vibe_mcp_connected` is false AND `has_api_key_local` is
 also false, stop — the skill cannot write the result without one of
-the two. But don't just ask for a key: a brand-new user may not have a
-VVibe account at all. First ask whether they already have a VVibe
-account. If **no / unsure**, walk them through signing up at
-`https://vvibe.ai/dashboard` (new visitors land on the login page — use the "Sign up" toggle to create an account)
-before anything else — these steps are self-contained, with the full
-version in `ONBOARDING.md` at the repo root when present. Once they have an
-account, ask them to either connect the Vibe MCP server or paste their
-`VVIBE_API_KEY` from the dashboard's API-key settings.
+the two. But don't just ask for a key: that's the slow path, and a
+brand-new user may not have a VVibe account at all. Recommend the
+fastest path first: have them run
+`npx @vvibe/cli connect --server=https://mcp.vvibe.ai` (Claude Code /
+Cursor / Codex). The first VVibe call opens a browser login — and
+**sign-up is on that same page** — so this single step both creates the
+account and connects, with no key to copy. Only if they can't use MCP
+(self-host token-only) fall back to pasting a `VVIBE_API_KEY` from the
+dashboard's API-key settings. Full walkthrough in `ONBOARDING.md` at the
+repo root when present.
 
 ## 3. Modes
 
