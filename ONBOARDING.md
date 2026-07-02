@@ -66,8 +66,8 @@ VVIBE_API_KEY=pcs_live_xxxxxxxxxxxxxxxx
 ```
 
 Treat it like a password — never commit it or paste it into client-side code.
-Every key-based skill (member, email, sentry, analytics) reads `VVIBE_API_KEY`
-from here.
+Every key-based skill (member, email, sentry) reads `VVIBE_API_KEY` from here.
+(Analytics is not key-based — it connects GA4 via its own in-dashboard OAuth.)
 
 > If you see an "apply for access" screen instead, VVibe is in limited beta —
 > submit the short form and you'll be emailed when you're approved.

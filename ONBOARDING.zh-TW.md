@@ -42,7 +42,7 @@ claude mcp add --transport http vvibe https://mcp.vvibe.ai
 VVIBE_API_KEY=pcs_live_xxxxxxxxxxxxxxxx
 ```
 
-把它當密碼看待——絕不提交進版控，也不要貼到前端程式碼裡。所有走金鑰的 skill（member、email、sentry、analytics）都會從這裡讀取 `VVIBE_API_KEY`。
+把它當密碼看待——絕不提交進版控，也不要貼到前端程式碼裡。所有走金鑰的 skill（member、email、sentry）都會從這裡讀取 `VVIBE_API_KEY`。（analytics 不走金鑰——它透過 dashboard 內建的 OAuth 連 GA4。）
 
 > 若你看到的是「申請使用權限」的畫面，表示 VVibe 仍在限量 beta——填完簡短表單，通過後會以 email 通知你。
 
