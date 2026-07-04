@@ -90,3 +90,25 @@ Recommend the fastest path first:
    walk them through the API-key steps above.
 
 Only once the MCP is connected (or a key is in `.env`) should the skill proceed.
+
+## After connecting: set your product basics
+
+Connecting is not the finish line. A fresh account starts with blank or defaulted brand
+fields (the product name may default to your account name), so the dashboard shows no
+product info and **analytics can't run — it requires `appBaseUrl`**. Right after the
+first successful `vibe_heartbeat`, set the basics:
+
+1. Call `vibe_get_brand` to see which fields are empty.
+2. Call `vibe_update_brand` to fill:
+   - **product name** — from the project (`package.json` name / README title), **not** the
+     account owner's personal name;
+   - **`appBaseUrl`** — the product's public HTTPS URL. Find it in deploy config
+     (`package.json` homepage, `.env` / hosting settings, `next.config.*`). If you can't
+     determine it, ask the user or have them set it in dashboard **Settings**. Must be
+     HTTPS — `localhost` is rejected.
+   - **brand description** — plain, non-technical: what the product does and who it's for.
+     No tech stack / framework / infra names.
+
+The dashboard **Settings** page edits the same fields, so a non-agent user can do this by
+hand. (`vibe_recommend_skills` also nudges this — it looks for the deploy URL and sets
+`appBaseUrl` before recommending analytics.)
