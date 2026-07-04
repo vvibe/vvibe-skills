@@ -53,4 +53,16 @@ VVIBE_API_KEY=pcs_live_xxxxxxxxxxxxxxxx
 1. **先提 MCP + OAuth。** 請用戶執行 `npx @vvibe/cli connect --server=https://mcp.vvibe.ai`（Claude Code / Cursor / Codex）。只要一行；第一次呼叫 VVibe 就會開瀏覽器登入，而註冊就在同一頁——所以這一步同時**建立帳號並連線**，沒有金鑰要複製，也不用回 dashboard。這就是 one-click 路徑，優先採用。
 2. **只有在必要時才退回 API 金鑰**——用戶需要只有金鑰才能做的功能（會員同步）、正在自架且只走 token，或明確不想用 MCP。這時才帶他走上面的 API 金鑰步驟。
 
+## 連線之後：設定產品基本資料
+
+連上線不是終點。全新帳號的品牌欄位是空白或預設值（產品名可能預設成你的帳號名），所以 dashboard 沒有任何產品資訊，而且 **analytics 無法運作——它需要 `appBaseUrl`**。在第一次 `vibe_heartbeat` 成功後，立刻把基本資料設好：
+
+1. 呼叫 `vibe_get_brand` 看哪些欄位是空的。
+2. 呼叫 `vibe_update_brand` 填入：
+   - **產品名稱**——取自專案（`package.json` name / README 標題），**不是**帳號擁有者的本名；
+   - **`appBaseUrl`**——產品的公開 HTTPS 網址。到部署設定找（`package.json` homepage、`.env` / hosting 設定、`next.config.*`）。找不到就問使用者，或請他到 dashboard **Settings** 設定。必須是 HTTPS——`localhost` 會被拒絕。
+   - **品牌描述**——用白話、非技術性的語言：產品做什麼、給誰用。不要提技術棧 / 框架 / 基礎設施名稱。
+
+dashboard 的 **Settings** 頁面改的是同一組欄位，所以非 agent 使用者也能手動設定。（`vibe_recommend_skills` 也會推一把——它會找部署 URL，並在推薦 analytics 前先設好 `appBaseUrl`。）
+
 只有在 MCP 已連線（或金鑰已進 `.env`）後，skill 才能繼續。
