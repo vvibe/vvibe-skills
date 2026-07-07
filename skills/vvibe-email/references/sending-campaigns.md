@@ -63,7 +63,9 @@ vibe_create_campaign  ({ name, subject, bodyHtml, aiContext })  # aiContext = br
   ↓
 vibe_update_campaign  (optional — only if revising copy)
   ↓
-read back to creator + confirm
+vibe_get_brand  # resolve where the CTA will actually land (mode + URL)
+  ↓
+read back to creator + confirm (name saved copy AND resolved CTA landing URL)
   ↓
 vibe_send_campaign  ({ campaignId })
   ↓
@@ -71,6 +73,35 @@ switch on outcome
   ↓
 vibe_get_campaign_analytics  (a few min later)
 ```
+
+## Resolve the CTA landing URL before sending (mandatory)
+
+Every invitation-email CTA goes through `https://vvibe.ai/r/{referralCode}`
+first (tracking + rate-limit + log), then 302-redirects somewhere else
+depending on the merchant's current configuration. **Never answer "where
+does the CTA land" from memory or assumption** — call `vibe_get_brand` and
+read `appBaseUrl` + `inviteRedirectPath` off the response, then apply this
+table:
+
+| `appBaseUrl` | `inviteRedirectPath` | Mode | Resolved landing URL |
+|---|---|---|---|
+| empty | empty | **hosted-cta** | `https://vvibe.ai/waitlist/{creatorSlug}` |
+| set | empty | **self-hosted-waitlist** | `{appBaseUrl}/waitlist/{creatorSlug}` |
+| set | set | **direct-register** | `{appBaseUrl}{inviteRedirectPath}` |
+
+Do this **before every send** — the merchant's mode can change between
+campaigns (see the "Common Mistakes" / "Switching modes" notes in
+`references/self-hosted-waitlist.md` and `references/hosted-cta.md`), so a
+prior send's resolved URL is not safe to reuse.
+
+If the resolved mode is **self-hosted-waitlist** or **direct-register**,
+also confirm the creator's app actually serves that route
+(`/waitlist/{creatorSlug}` or the `inviteRedirectPath`) before sending — a
+correctly configured `appBaseUrl` with no matching route on the app side
+still 404s for every recipient who clicks. Ask the creator to confirm, or
+check the codebase yourself if you have access (see
+`references/self-hosted-waitlist.md` / `references/direct-register.md` for
+what the route should look like).
 
 ## Drafting the body
 
@@ -155,7 +186,11 @@ switch result.outcome:
 
 ## Confirmation pattern
 
-Before calling `vibe_send_campaign`, read the saved draft back to the creator and wait for explicit confirmation:
+Before calling `vibe_send_campaign`, you must already have called
+`vibe_get_brand` and resolved the CTA landing URL (see above) — do not
+state the landing destination from memory. Read the saved draft **and**
+the resolved landing URL back to the creator, and wait for explicit
+confirmation:
 
 > About to send campaign **"{name}"** to **N recipients** imported on {date}.
 >
@@ -166,9 +201,11 @@ Before calling `vibe_send_campaign`, read the saved draft back to the creator an
 > {first 200 chars of saved bodyHtml stripped to text}
 > ```
 >
+> **CTA lands on:** {resolved URL} (mode: {hosted-cta | self-hosted-waitlist | direct-register})
+>
 > Sending costs {N} email credits ({remainingQuota} available). Proceed?
 
-If the creator wants changes, call `vibe_update_campaign` with the revisions, then re-read the saved draft.
+If the creator wants changes, call `vibe_update_campaign` with the revisions, then re-read the saved draft. If the creator wants to change the landing mode itself (e.g. switch to direct-register), that's a separate `vibe_update_brand` call — route to `references/hosted-cta.md`, `references/self-hosted-waitlist.md`, or `references/direct-register.md` first, then re-resolve with `vibe_get_brand` before sending.
 
 ## Reading analytics
 
