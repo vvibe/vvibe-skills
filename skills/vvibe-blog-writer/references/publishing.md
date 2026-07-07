@@ -44,12 +44,33 @@ read-only, from the public content API:
 - list:   `GET /api/blog/public/{merchantSlug}`
 - single: `GET /api/blog/public/{merchantSlug}/{postSlug}`
 
-Give the creator the content API URL, and be honest about what
-"published" means here: the article is now **available**, but a reader
-sees it only once the creator's **own site** pulls it. That site is built
-with the **`vvibe-blog-render`** skill — if they haven't set it up,
-route them there next ("Your post is published — let's get your site
-showing it"). Don't claim readers can already see it.
+### Post-publish checklist (mandatory — run every time, don't skip)
+
+A native publish only makes the article available at the content API
+above. It does **not**, by itself, put a page in front of a reader. Work
+through this before you report success — don't shortcut to "Published!":
+
+1. **Determine whether a reader-facing page already exists.** Don't
+   assume either way — ask the creator ("does your site already show your
+   VVibe blog somewhere?"), or, if you have access to their app/repo,
+   probe it the way `vvibe-blog-render` does (an existing `/blog` or
+   `/posts` route already wired to this content API).
+2. **If a rendering frontend exists and is wired to this content API** —
+   confirm the URL and tell the creator the post should appear there
+   (immediately, or after their site's next revalidate/rebuild — see that
+   skill's freshness note; don't promise instant visibility).
+3. **If no rendering frontend exists yet (the common case for a new
+   creator)** — do not let the creator believe the article is visible to
+   readers. Say so in plain language: "Your post is published to the
+   content API, but your website doesn't have a page that shows it yet."
+   Then route them to fix it: "Run the `vvibe-blog-render` skill to build
+   (or extend) a blog page on your site that reads this API." Hand them
+   the content API base URL (`GET /api/blog/public/{merchantSlug}`) and
+   the merchant slug so they — or their agent — can hand it straight to
+   that skill.
+4. Don't call the publish "done" or "live" to the creator until step 2 or
+   3 has been said out loud. A bare "Published!" is misleading when
+   nothing renders it yet.
 
 - The **first** native publish turns the creator's public blog on
   automatically. They can toggle it off in the dashboard (Blog →
