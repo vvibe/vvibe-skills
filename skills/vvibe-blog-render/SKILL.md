@@ -1,6 +1,6 @@
 ---
 name: vvibe-blog-render
-version: 0.2.0
+version: 0.3.0
 manifest_version: 1
 description: Build a blog frontend in the creator's OWN app that renders their VVibe-published articles by reading the VVibe public content API — index + post pages, the SEO VVibe already generated (meta tags + JSON-LD), incremental revalidation, and an RSS feed + sitemap at the creator's own domain. VVibe is a headless CMS — it serves content but does not render pages; this skill is the "head". Trigger when the user wants to show / display / render their VVibe blog on their website, "put my vvibe articles on my site", set up the blog frontend, connect their site to the VVibe content API, or add a blog page to their app.
 ---
@@ -50,6 +50,7 @@ endpoints a reader's browser could.
 | The creator's app + framework | inspect the repo (package.json, `next.config`, `astro.config`, etc.) | ask which framework and where the site lives |
 | VVibe API base URL + merchant slug | from the creator's VVibe connection / dashboard, or ask | ask for the public blog URL or merchant slug + VVibe host |
 | Blog is published + enabled | `GET {base}/api/blog/public/{slug}` returns `200` with `posts[]` | `404` → nothing published yet or blog disabled: route to `vvibe-blog-writer` to publish (`target: "native"`), which auto-enables the blog |
+| **Whether the app already has a blog** | search the repo for existing `/blog` or `/posts` routes, a CMS/markdown content source, or a nav link to one — **mandatory, run before scaffolding anything** | see `references/rendering.md` §0 for the three outcomes (scaffold fresh / never overwrite / merge) |
 
 Detect, don't interrogate: probe the repo and the content API yourself
 before asking.
@@ -57,7 +58,8 @@ before asking.
 ## 3. The flow — pick where the user is
 
 - **"show my vvibe blog on my site" / "set up the blog frontend"** →
-  build the client + pages: `references/rendering.md`
+  detect an existing blog first (`references/rendering.md` §0), then build
+  the client + pages: `references/rendering.md`
 - **"what does the API give me?" / building the data layer** →
   `references/content-api.md`
 - **"new posts aren't showing" / caching** → revalidation section of
@@ -67,6 +69,11 @@ before asking.
 
 ## 4. Hard rules
 
+- **Detect before you scaffold.** Never create `/blog` or `/posts` routes
+  blind. Run the existing-blog detection in `references/rendering.md` §0
+  first, every time — even when the creator says "just set it up." Never
+  overwrite an existing blog route or its content source; a collision
+  means you mount somewhere else and ask, not replace.
 - **Read-only, public.** Only `GET` the content API. No credentials, no
   write tools. If you find yourself needing an API key, you're on the
   wrong skill (that's `vvibe-blog-writer`).

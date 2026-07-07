@@ -9,6 +9,35 @@ frameworks follow the same shape — see §5.
 Parameterise two values once (env): `VVIBE_BASE` (the deployment host) and
 `VVIBE_SLUG` (the creator's merchant slug). Never hardcode them in pages.
 
+## 0. Detect an existing blog first (mandatory)
+
+Never scaffold `/blog` blind. Before writing a single file, check whether
+the creator's app already has a blog:
+
+- **Existing routes** — search the router for `/blog`, `/posts`, `/news`,
+  `/articles` (Next.js App Router: `app/blog/`, `app/posts/`; Pages
+  Router: `pages/blog/`; Astro: `src/pages/blog/`; Nuxt: `pages/blog/`;
+  SvelteKit: `src/routes/blog/`).
+- **Existing content source** — a CMS integration (Contentful, Sanity,
+  WordPress via REST/GraphQL, Ghost, …) or a local markdown/MDX content
+  folder (`content/`, `posts/`, `_posts/`) already feeding a blog-like
+  page.
+- **Navigation** — a "Blog" / "Articles" / "News" link in the site's nav
+  component, even before you've located the route it points to.
+
+Pick exactly one of these three strategies from what you find — say which
+one out loud and why before writing any files, so the creator can correct
+you:
+
+| What you find | Strategy |
+|---|---|
+| Nothing — no matching routes, content source, or nav link | **(a) Scaffold.** Build the index/post routes as in §1–§3 below, and add a link to them from the site's navigation so the new blog is actually reachable. |
+| A blog-like route already exists **and** it collides with the path you'd scaffold (e.g. `app/blog/page.tsx` already renders something else) | **(b) Never overwrite.** Do not touch the existing route or its content source. Mount VVibe's rendering at a non-conflicting path instead (e.g. `/vvibe-blog`, `/updates` — whatever fits the site) and ask the creator where they actually want it before deciding for them. |
+| A blog-like route/index already exists and does **not** collide (its own path is free, or you'd be extending rather than replacing) | **(c) Merge.** Don't create a second, disconnected blog. Either (i) merge VVibe's posts into the existing listing/index's data source — call `listAllPosts()` alongside the existing content and render one combined list/feed — or, if merging the data isn't practical (e.g. the existing blog is backed by a CMS you don't want to touch), at minimum add a link from the existing blog index to the new VVibe-rendered pages so a reader can find them. |
+
+This applies to RSS/sitemap too (§4): merge into an existing feed/sitemap
+where one already exists rather than emitting a second, competing one.
+
 ## 1. A tiny typed client
 
 ```ts
