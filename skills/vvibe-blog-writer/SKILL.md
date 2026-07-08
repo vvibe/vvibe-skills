@@ -1,6 +1,6 @@
 ---
 name: vvibe-blog-writer
-version: 0.8.0
+version: 0.9.0
 manifest_version: 1
 description: Draft SEO blog articles for a VVibe creator from their Product Brain, then publish them either to the creator's own VVibe headless blog (no external CMS, no setup) or as a draft to their WordPress. Reads the Product Brain for brand voice, forbidden claims, FAQ, and audience so the article matches the brand and avoids legal landmines. Trigger when the user asks to write / draft / generate a blog post or article, "write a blog about X", "draft an SEO article", refresh, publish or unpublish a post, or connect a WordPress site for publishing.
 ---
@@ -84,7 +84,8 @@ in `references/api.md`. There is no separate API-key surface for the blog.
 
 | Intent | MCP tool | REST it wraps |
 |---|---|---|
-| List the creator's posts | `vibe_list_blog_posts` | `GET /api/blog/posts` |
+| List the creator's posts (lightweight — no body) | `vibe_list_blog_posts` | `GET /api/blog/posts` |
+| Get one post's full content | `vibe_get_blog_post` | `GET /api/blog/posts/{id}` |
 | Create a post from a brief | `vibe_create_blog_post` | `POST /api/blog/posts` |
 | Generate brief + draft | `vibe_generate_blog_post` | `POST /api/blog/posts/{id}/generate` |
 | Edit prose (title/body/outline/meta) | `vibe_update_blog_post` | `PATCH /api/blog/posts/{id}` |

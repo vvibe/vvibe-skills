@@ -18,8 +18,31 @@ no merchant id in the payloads.
 ## Posts
 
 ### List
-- MCP: `vibe_list_blog_posts`
-- REST: `GET /api/blog/posts` → `{ data: BlogPost[] }` (newest-updated first)
+- MCP: `vibe_list_blog_posts` — optional `{ includeBody }` (default `false`)
+- REST: `GET /api/blog/posts` → `{ data: BlogPost[] }` (newest-updated
+  first, full shape — see "BlogPost shape" below)
+
+**The MCP tool's default response is a lightweight projection, not the
+full BlogPost shape** — the raw REST call still returns full rows; the
+thinning happens only in the MCP tool. Default fields: `id, slug, title,
+status, updatedAt, publishedAt, excerpt, metaDescription, outline`
+(heading strings only — no per-heading `notes`), `categories, tags,
+language, version`. No `bodyHtml` / `schemaJsonld`. That's enough to find
+a post's id + `version`, report what's in flight, and judge topical
+overlap for a new post's internal links — title + excerpt + outline
+headings + tags are sufficient for relevance/duplication checks, so don't
+fetch full article bodies just to compare posts. Pass `includeBody: true`
+only if you genuinely need every post's full HTML at once (expensive on a
+blog with many/long posts) — prefer `vibe_get_blog_post` for a single
+post's full content instead.
+
+### Get one
+- MCP: `vibe_get_blog_post({ postId })`
+- REST: `GET /api/blog/posts/{id}` → `{ data: BlogPost }` (full shape,
+  including `bodyHtml` and `schemaJsonld`) or `404`.
+
+Call this when you need the actual article — to read/quote it, edit it
+(grab `version` for `expectedVersion`), or review before publishing.
 
 ### Create
 - MCP: `vibe_create_blog_post`
@@ -163,6 +186,10 @@ URL isn't a public HTTPS host.
 - REST: `POST /api/blog/sites/{id}/test` → `{ data: { ok, status } }`.
 
 ## BlogPost shape (read)
+Full shape, as returned by create / generate / edit / publish / unpublish
+and `vibe_get_blog_post` (`vibe_list_blog_posts`'s default response is the
+smaller list projection described above):
+
 `id, status, topic, title, targetKeyword, tone, articleLength,
 fixedDirection, referenceUrl, referenceText, outline[], bodyHtml, metaTitle,
 metaDescription, slug, excerpt, coverImageUrl, coverImageCredit,
