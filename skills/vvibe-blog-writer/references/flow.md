@@ -92,9 +92,18 @@ from `brief_ready` or `draft_ready`; it won't touch a `published_draft`.
 
 ## 7. List posts
 
-`vibe_list_blog_posts` (`GET /api/blog/posts`) returns the creator's
-posts newest-updated first, with `status` and `remote_post_url` (set once
-published). Use it to answer "what's in flight?" or to find a post id.
+`vibe_list_blog_posts` returns the creator's posts newest-updated first as
+a lightweight list by default: `id, slug, title, status, updatedAt,
+publishedAt, excerpt, metaDescription, outline` (heading strings only),
+`categories, tags, language, version`. Use it to answer "what's in
+flight?", find a post's id + `version`, or judge whether a new topic
+overlaps with an existing post / pick internal-link candidates — title +
+excerpt + outline headings + tags are enough for that, so don't fetch
+every post's full body just to check for overlap.
+
+It does **not** include `bodyHtml`, `schemaJsonld`, or `remotePostUrl` —
+call `vibe_get_blog_post({ postId })` when you actually need one post's
+full article or its publish details (see `api.md`).
 
 ## 8. Publish
 

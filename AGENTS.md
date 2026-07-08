@@ -77,7 +77,7 @@ SKILL.md is the entry point when an agent loads a skill. References are loaded o
 
 **Blog Writer Skill:**
 - Drafts SEO articles from the Product Brain, then publishes to the creator's **VVibe blog** (native, `target:'native'`) or pushes a **WordPress draft** — WordPress never auto-publishes
-- MCP tools: `vibe_create_blog_post`, `vibe_update_blog_post`, `vibe_publish_blog_post`, `vibe_list_blog_posts` (REST fallback under `/api/blog/*`)
+- MCP tools: `vibe_create_blog_post`, `vibe_update_blog_post`, `vibe_publish_blog_post`, `vibe_list_blog_posts` (lightweight projection — no body), `vibe_get_blog_post` (one post's full content) (REST fallback under `/api/blog/*`)
 - Two entry points, one model: agent (MCP) and dashboard form both produce the same post; every prose edit appends a revision tagged `authored_by: 'agent' | 'human'`
 - Optimistic concurrency: edits pass `expectedVersion`; a 409 means re-read and re-apply
 - State machine: `created → brief_ready → draft_ready → cover_ready → { published_draft (WordPress) | published (VVibe blog) }` (`failed` is recoverable)
