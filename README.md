@@ -24,6 +24,9 @@ npx skills update
 npx skills update vvibe-analytics
 ```
 
+Each skill is versioned independently (see the `version:` field in its
+`SKILL.md`). See [CHANGELOG.md](CHANGELOG.md) for what changed in each release.
+
 ## Connect to VVibe (fastest: one command)
 
 These skills act on **your** VVibe account. The fastest way in is to connect

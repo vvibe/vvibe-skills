@@ -1,6 +1,6 @@
 ---
 name: vvibe-email
-version: 0.5.0
+version: 0.5.1
 manifest_version: 1
 description: Help VVibe creators wire invitation-email integration end-to-end — where the email CTA lands (VVibe-hosted, self-hosted waitlist, or direct register), how to send campaigns via Vibe MCP, and how to manage system + follower-flow email templates. When drafting campaign copy, reads the creator's Product Brain (`vibe_get_product_kb`) for brand voice, value prop, audience, and forbidden claims so the email matches the brand and avoids legal landmines. Trigger when the user mentions invitation emails, follower outreach campaigns, sending an email blast, drafting an email campaign, waitlist signup landing page, app base URL, embedding a waitlist CTA, skipping the waitlist when a member system already exists, or asks where the registration email link lands.
 

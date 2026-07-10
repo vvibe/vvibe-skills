@@ -133,6 +133,14 @@ agent-facing "detect a brand-new user" rule. Skill auth sections link to it
 rather than re-deriving the flow. When you add a new skill that gates on an
 account, mirror this branch and point at `ONBOARDING.md`.
 
+## Versioning & Changelog
+
+Skills version independently via `version:` in each `SKILL.md` frontmatter.
+Any behavior change to a skill (its `SKILL.md`, `references/`, or `scripts/`)
+bumps that skill's version (new capability → minor, fix → patch) **and** adds
+an entry to the root `CHANGELOG.md` in the same PR. See the rules at the top
+of `CHANGELOG.md`.
+
 ## End-User Installation
 
 ```bash

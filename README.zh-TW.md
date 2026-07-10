@@ -24,6 +24,9 @@ npx skills update
 npx skills update vvibe-analytics
 ```
 
+每個 skill 各自獨立版控（版本號在各自 `SKILL.md` 的 `version:` 欄位）。
+每次發布改了什麼請見 [CHANGELOG.md](CHANGELOG.md)。
+
 ## 連上 VVibe（最快：一行指令）
 
 這些 skill 操作的是**你自己的** VVibe 帳號。最快的方式是把 agent 連上 VVibe 的 MCP——一行指令，然後 agent 在第一次使用時開瀏覽器帶你登入（**註冊也在同一頁**）。沒有金鑰要複製，不用回 dashboard：
