@@ -18,7 +18,10 @@ whole catalog, newest first, grouped by date.
 
 - **vvibe-analytics 0.4.0** — provider-neutral rewrite: canonical event contract
   (platform lifecycle events, GA4/PostHog/Mixpanel mapping, identity & dedup
-  rules), PostHog + Mixpanel setup guides, GA4 MP server-side reference (#PR)
+  rules), PostHog + Mixpanel setup guides, GA4 MP server-side reference; plus
+  VV-66 dogfood fixes to the GA4 guide (Next 15/16 `instrumentation-client.ts`
+  route-change variant + `useSearchParams` Suspense note, vanilla DOM-inject
+  gtag loader, client/server `value` ownership + `purchase` dedup cross-link) (#PR)
 
 ## 2026-07-10
 

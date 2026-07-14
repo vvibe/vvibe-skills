@@ -377,6 +377,16 @@ dropped.
 (the VVibe `session_id`). PostHog/Mixpanel send the same `eventId` as
 `uuid` / `$insert_id` on both calls.
 
+**Which track owns `value`:** when you fire both a client and a server track for
+the same purchase, the **server track is the revenue authority** — the payment
+webhook / GA4 Measurement Protocol call knows the confirmed, authoritative amount.
+The **client track MAY omit `value`** (the browser often has no trustworthy final
+amount — coupons, tax, currency conversion, or partial captures are resolved
+server-side). Sending `value` on both is safe *only because* the two tracks share
+the same `transaction_id` / `eventId` and are deduplicated to one; if you are
+unsure the ids will match, omit `value` client-side and let the server track carry
+revenue so you never double-count the amount.
+
 ```ts
 // PostHog — same uuid on both client and server capture
 posthog.capture('vvibe_checkout_complete', { $revenue: 299 }, { uuid: eventId });
