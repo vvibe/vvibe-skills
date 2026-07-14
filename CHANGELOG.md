@@ -14,6 +14,12 @@ whole catalog, newest first, grouped by date.
 - Entry format: `- **skill x.y.z** — what changed (#PR)`. One commit touching
   several skills gets one line per bumped skill.
 
+## 2026-07-14
+
+- **vvibe-analytics 0.4.0** — provider-neutral rewrite: canonical event contract
+  (platform lifecycle events, GA4/PostHog/Mixpanel mapping, identity & dedup
+  rules), PostHog + Mixpanel setup guides, GA4 MP server-side reference (#PR)
+
 ## 2026-07-10
 
 - **vvibe-email 0.5.1** — require resolving the live CTA landing URL before
