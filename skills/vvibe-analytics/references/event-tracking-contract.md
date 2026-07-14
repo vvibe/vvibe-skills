@@ -21,8 +21,14 @@ interface CanonicalAnalyticsEvent {
   eventId: string;
   /** Canonical event name, always `vvibe_`-prefixed (e.g. 'vvibe_checkout_complete'). */
   event: string;
-  /** The merchant this event belongs to. */
-  merchantId: string;
+  /**
+   * The merchant this event belongs to, or `null` for pre-merchant events.
+   * Pre-merchant lifecycle events (notably `vvibe_sign_up`) fire before a
+   * merchant exists — the default merchant is only provisioned on the first
+   * agent connection (`ensureDefaultMerchant`). For those, `merchantId` is
+   * `null` and the event is attributed by `userId` instead.
+   */
+  merchantId: string | null;
   /** Who caused the event. */
   actorKind: 'user' | 'agent' | 'admin' | 'system';
   /** The authenticated user id, once known. Omit for anonymous / pre-signup events. */
