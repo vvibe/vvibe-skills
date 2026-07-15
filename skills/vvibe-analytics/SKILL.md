@@ -1,6 +1,6 @@
 ---
 name: vvibe-analytics
-version: 0.4.0
+version: 0.4.1
 description: Help VVibe creators install web analytics on their websites — Google Analytics 4 (GA4), PostHog (cloud or self-hosted), or Mixpanel — set up VVibe's canonical event tracking against a provider-neutral contract, and connect GA4 to VVibe for viewing dashboards. Covers utm tracking & traffic-source attribution, conversion funnels, identity/user_id, and event deduplication. For signup-time first-touch attribution, see the vvibe-member skill. Trigger when the user mentions analytics, tracking, Google Analytics, GA4, PostHog, Mixpanel, product analytics, funnels, retention, website traffic, event tracking, utm tracking, traffic source, referral attribution, or wants to connect analytics to VVibe.
 ---
 

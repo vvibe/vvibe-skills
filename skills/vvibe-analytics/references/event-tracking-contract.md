@@ -140,6 +140,28 @@ Fired when a subscription is cancelled.
 | `plan_id` | string | No | VVibe plan ID |
 | `reason` | string | No | Cancellation reason |
 
+### vvibe_subscription_past_due
+
+Fired when a subscription's dunning flow transitions it into `past_due` (a
+failed-payment retry state). This is a **transition signal, distinct from
+cancellation** — a `past_due` subscription may still recover (payment retried
+successfully) or later end in `vvibe_subscription_cancel`. Keeping the two
+events separate avoids polluting churn metrics with recoverable payment
+retries.
+
+```ts
+// properties
+{
+  subscription_id: 'cs_xyz789',
+  previous_status: 'active',
+}
+```
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `subscription_id` | string | No | VVibe subscription ID |
+| `previous_status` | string | Yes | Subscription status immediately before the transition (e.g. `active`) |
+
 ### vvibe_page_view
 
 Fired when a VVibe-embedded or VVibe-powered page is viewed. Use this in addition
@@ -258,6 +280,7 @@ across providers unless a note says otherwise.
 | `vvibe_checkout_start` | `begin_checkout` (+ `items[]`, `value`, `currency`) | `vvibe_checkout_start` | `vvibe_checkout_start` |
 | `vvibe_checkout_complete` | `purchase` (+ `transaction_id`, `items[]`, `value`, `currency`) | `vvibe_checkout_complete` + `$revenue` on the event | `vvibe_checkout_complete` + Mixpanel revenue (`people.track_charge`) |
 | `vvibe_subscription_cancel` | `vvibe_subscription_cancel` (custom) | `vvibe_subscription_cancel` | `vvibe_subscription_cancel` |
+| `vvibe_subscription_past_due` | `vvibe_subscription_past_due` (custom event, **not** a conversion) | `vvibe_subscription_past_due` | `vvibe_subscription_past_due` |
 | `vvibe_sign_up` | `sign_up` (`method`) | `vvibe_sign_up` (then `identify` + `alias`) | `vvibe_sign_up` (then `identify`) |
 | `vvibe_agent_connected` | `vvibe_agent_connected` (custom) | `vvibe_agent_connected` | `vvibe_agent_connected` |
 | `vvibe_skill_installed` | `vvibe_skill_installed` (custom) | `vvibe_skill_installed` | `vvibe_skill_installed` |

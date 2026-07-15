@@ -14,6 +14,10 @@ whole catalog, newest first, grouped by date.
 - Entry format: `- **skill x.y.z** — what changed (#PR)`. One commit touching
   several skills gets one line per bumped skill.
 
+## 2026-07-15
+
+- **vvibe-analytics 0.4.1** — add vvibe_subscription_past_due to the event contract (#PR)
+
 ## 2026-07-14
 
 - **vvibe-analytics 0.4.0** — provider-neutral rewrite: canonical event contract
