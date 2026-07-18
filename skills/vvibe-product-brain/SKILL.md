@@ -1,6 +1,6 @@
 ---
 name: vvibe-product-brain
-version: 0.3.0
+version: 0.4.0
 manifest_version: 1
 description: Build or refresh a creator's Product Brain on VVibe — extract structured product facts from a github repo, public website, or document set, then write the result via the `vibe_set_product_kb` MCP tool. The Product Brain is read by every prose-generating skill (email, SEO, conversion) before drafting, so this skill is the upstream feeder for everything else. Trigger when the user mentions building / refreshing the product brain, knowledge base, "teach VVibe about my product", or asks the agent to set up the brain so other skills have context.
 ---
@@ -236,6 +236,14 @@ for this skill.
 
 - Tell the human upfront how many sections you expect to fill vs.
   leave in `missing_fields[]`, based on what you've seen in source.
+- **Build mode runs a short closing interview before writing.** For
+  the high/medium-impact gaps that only live in the creator's head
+  (persona, pain points, brand voice, channels, keywords), build mode
+  asks up to five quick questions with an explicit "skip" — answers
+  fold into the KB, skips stay in `missing_fields[]`. The closing
+  summary then reports how many of the 8 blocks filled and which
+  missing fields were captured vs. skipped (topped up later from the
+  dashboard). Full rules in `references/mode-build.md` §5, §7.
 - When you write, **echo a one-paragraph summary** of what landed in
   the Product Brain and what stayed missing — the creator reads this
   in chat; the structured data lives in the dashboard.

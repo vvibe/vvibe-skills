@@ -73,6 +73,57 @@ If you find yourself writing a sentence and you can't quote the
 source that backs it, stop. That sentence is fabrication. Set the
 field to `null`, log the path, move on.
 
+## 2.5 The starter-template guard (don't treat demo data as product fact)
+
+Many first-time creators run build mode on a **starter template they
+haven't customised yet** — the showcase repo still ships its seed
+data, placeholder copy, and example domains. That demo content is not
+the creator's product. Building a KB from it writes fiction into
+`pricing`, `company`, and `growth_context.icp_persona` that every
+downstream skill then treats as fact.
+
+**Detection — treat the source as suspect starter / demo content when
+you see any of:**
+
+- **Seed / preset / fixture data used as a source of product facts** —
+  files like `presets*`, `seed*.{mjs,ts,js,json}`, `*.seed.*`,
+  `fixtures/`, `demo-data/`, `mock*`, or a "preview" seeding script.
+- **Example / test domains** in the marketing copy or config —
+  `example.com`, `example.org`, `test.com`, `localhost`,
+  `yourdomain.*`, `acme.*`, `mysite.*`, or an unset
+  `appBaseUrl` / `NEXT_PUBLIC_*_URL`.
+- **Placeholder copy** — `Lorem ipsum`, `Your product name`,
+  `Company Name`, `Product description goes here`, `TODO`,
+  `Coming soon`, visibly templated hero text, or demo prices like
+  `$0` / `$XX` / a round `99.99` sitting in a sample pricing table.
+- **Showcase content that contradicts the README** — the landing page
+  sells "Acme CRM" but the README describes a member-hub starter; the
+  showcased product and the documented product don't match.
+
+**Behaviour when detected — stop and ask; never silently proceed.**
+Do not write demo values into the KB. Ask the creator one plain
+question and wait for the answer:
+
+> This looks like the starter template's default content — I can still
+> see placeholder copy / example domains / seed data (specifically:
+> `<the exact signal you found>`). Want me to build the Product Brain
+> from these defaults anyway, or hold off until you've swapped in your
+> real product content?
+
+- If the creator says **build from defaults anyway** → proceed, but
+  keep `_confidence` low on any section sourced from demo content and
+  flag in the closing summary that it was placeholder-derived.
+- If the creator says **hold off / it's still the template** → don't
+  write. Tell them what to replace (product copy, pricing, domain) and
+  offer to re-run once it's real.
+
+This is a data-authenticity gate, not fabrication by another name: the
+fix is to ask, not to guess. It pairs with §2's mantra — no
+trustworthy source signal → don't manufacture one from demo data. The
+capability-gate ordering in `mode-build.md` §1 and this guard together
+mean build mode never burns a full extraction on content it shouldn't
+have trusted.
+
 ## 3. Source-precedence when sections conflict
 
 When multiple sources are available and they disagree, this is the
@@ -218,3 +269,64 @@ The Builder should refuse to write and surface the problem in chat
 - The `cases[]` array would contain anything you can't quote
   verbatim from source. Fail hard rather than ship invented
   customers.
+
+## 8. Source consent — asking before you read images
+
+Images can carry the richest product signal (a pricing screenshot, a
+landing-page hero export, a brand / style board, a slide exported to
+PNG) — but reading them costs meaningfully more tokens than text, and
+the creator may not expect the agent to open every image it can see.
+So images get an explicit consent gate. **This is the skill's single
+consent rule for source access — there is no second, looser one; when
+another surface (e.g. `sources/document-set.md` screenshots) needs to
+read an image, it defers here.**
+
+**Never read an image source without asking first.** This holds in
+build and refresh, and for every image entry point: files in the repo,
+uploads / pastes in a `document_set`, and inline images on a crawled
+page.
+
+**When image sources are present, before reading any of them:**
+
+1. **List them.** Show the creator the specific images you've spotted
+   that look like they carry product info — surface the filename / URL
+   and why it looks relevant. Prioritise obvious signal: `pricing*`,
+   `landing*`, `hero*`, `brand*`, `logo*`, `style*`, `screenshot*`,
+   `og*` / social-card images, and slide / deck exports (a `*.png` /
+   `*.jpg` sitting next to a `.pdf` deck).
+2. **Ask for permission, and name the cost.** State plainly that
+   reading images uses more tokens than text, and let the creator
+   approve **all, some, or none**:
+
+   > I found 3 images that might hold product details:
+   > 1. `pricing-table.png`
+   > 2. `hero-shot.jpg`
+   > 3. `team-photo.png`
+   >
+   > Reading images costs more tokens than text, so I won't open any
+   > without your OK. Which should I scan — all, just some (say which),
+   > or none?
+
+3. **Scan only what they approve.** Read the approved images and treat
+   the extracted text as a single-page document of whatever type it
+   shows (apply `sources/document-set.md`). Leave un-approved images
+   unread.
+
+**When the creator declines (all or some):** proceed with the text
+sources as normal. For every field an un-scanned image might have
+filled, leave it in `missing_fields[]` and **record that an image
+source went unread**, so the gap is explainable later. Use the
+lightest annotation the current schema already supports — do **not**
+change the schema:
+
+- In **build** mode there is no `change_log`; note the unread image(s)
+  in the step-7 closing summary (e.g. "I left `pricing` missing —
+  `pricing-table.png` wasn't scanned").
+- In **refresh** mode, add a `change_log` entry recording the skipped
+  scan (`path` = the affected section, `before` / `after` unchanged),
+  and mention it in the diff you show before writing.
+
+**If nothing product-relevant is in an image** (a decorative
+background, a UI icon), you don't need to ask — the gate is for images
+that plausibly carry product facts, judged by the filename / context
+signals above.
