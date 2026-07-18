@@ -14,6 +14,28 @@ whole catalog, newest first, grouped by date.
 - Entry format: `- **skill x.y.z** — what changed (#PR)`. One commit touching
   several skills gets one line per bumped skill.
 
+## 2026-07-18
+
+- **vvibe-product-brain 0.4.0** — capture missed fields in the build
+  conversation instead of one-way-dumping them into `missing_fields[]`:
+  - **VV-73** build-mode closing interview + expectation management: after
+    extraction, before the write, ask up to 5 questions about the
+    high/medium-impact fields the creator can only answer from memory
+    (persona, pain points, brand voice, channels, keywords, pricing, one FAQ),
+    with an explicit skip; answers fold into the KB, skips stay in
+    `missing_fields[]`; the closing summary reports blocks-filled +
+    captured-vs-skipped (`mode-build.md` §5, §7; `SKILL.md` §7).
+  - **VV-74** starter-template fake-data guard + capability-gate-first: detect
+    uncustomised demo / seed / placeholder source and ask before treating it as
+    product fact (`extraction-discipline.md` §2.5); make the write-path
+    capability check build's first step so a full extraction never strands at
+    the write (`mode-build.md` §1).
+  - **VV-75** image-scan consent: list candidate images and ask before reading
+    any — token cost named, partial approval allowed, refusals recorded via
+    `missing_fields[]` / `change_log` without schema changes
+    (`extraction-discipline.md` §8; `sources/document-set.md` screenshots defer
+    to it). (#PR)
+
 ## 2026-07-15
 
 - **vvibe-analytics 0.4.1** — add vvibe_subscription_past_due to the event contract (#PR)

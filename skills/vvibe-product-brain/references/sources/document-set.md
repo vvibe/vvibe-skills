@@ -101,7 +101,12 @@ Useful when the creator can't easily paste the source as text
 (e.g. a screenshot of their landing page hero, a Twitter screenshot
 of a customer testimonial).
 
-For each screenshot:
+**Consent first.** Screenshots are images — never read one without the
+consent gate in `extraction-discipline.md` §8 (list the images, name
+the extra token cost, ask, and scan only what the creator approves).
+The steps below apply once a given screenshot has been approved.
+
+For each approved screenshot:
 
 - OCR / read the text content via the agent's vision tool.
 - Treat the extracted text as if it were a single-page document —
