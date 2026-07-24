@@ -53,13 +53,15 @@ this KB was last written:
 
 ```jsonc
 existing.data.staleness
-// { pendingChanges: number, entries: [{ summary, change_type, significance, affected_kb_sections, created_at }] }
+// { pendingChanges: number, entries: [{ summary, changeType, significance, affectedKbSections, createdAt }] }
+// NOTE: camelCase — these are internal entry objects, not the snake_case
+// shape the public /api/changelog/public feed uses.
 ```
 
 When present, treat each entry as a **targeted diff hint**, not a fact
 to copy into `kb_data` verbatim:
 
-- Its `affected_kb_sections` names which of the eight sections likely
+- Its `affectedKbSections` names which of the eight sections likely
   drifted — read those first and with extra scrutiny, instead of
   working through all eight in file order.
 - Its `summary` tells you in plain language what changed, so you know

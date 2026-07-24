@@ -37,7 +37,7 @@ GET {base}/api/changelog/public/{merchantSlug}
 ```jsonc
 {
   "data": {
-    "product": { /* basic product identity for the feed header, e.g. a name */ },
+    "product": "Acme", // the product/merchant display name (a plain string)
     "entries": [
       {
         "id": "chg_...",
