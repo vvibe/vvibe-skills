@@ -1,6 +1,6 @@
 ---
 name: vvibe-product-brain
-version: 0.4.0
+version: 0.4.1
 manifest_version: 1
 description: Build or refresh a creator's Product Brain on VVibe — extract structured product facts from a github repo, public website, or document set, then write the result via the `vibe_set_product_kb` MCP tool. The Product Brain is read by every prose-generating skill (email, SEO, conversion) before drafting, so this skill is the upstream feeder for everything else. Trigger when the user mentions building / refreshing the product brain, knowledge base, "teach VVibe about my product", or asks the agent to set up the brain so other skills have context.
 ---
@@ -113,7 +113,11 @@ modes:
       and writes the merged full `kb_data` plus a `change_log[]`
       listing only the changed fields. Triggered after meaningful
       product changes — new pricing, new feature, audience pivot,
-      brand voice update.
+      brand voice update. If `vibe_get_product_kb` also returned a
+      `staleness` field (changes logged via `vvibe-changelog` since the
+      last update), treat its `entries[]` as targeted diff hints —
+      prioritize the sections they name before the full re-extraction
+      (see `mode-refresh.md` §2.5).
     triggers:
       - "refresh product brain"
       - "update product brain"
@@ -259,7 +263,7 @@ for this skill.
 | `references/extraction-discipline.md` | EXTRACT / INFER / no-FABRICATION rules with per-section examples; source-precedence rules; forbidden-claims taxonomy. | every run, before extracting anything |
 | `references/kb-schema.md` | Authoritative shape of the eight Product Brain sections — field names, nullability, what good extraction looks like per field. | every run, as you fill each section |
 | `references/mode-build.md` | First-time build workflow: walk sources, fill sections, finalise `missing_fields[]`, call `vibe_set_product_kb`. | mode = build |
-| `references/mode-refresh.md` | Refresh workflow: fetch existing Product Brain, re-extract, field-level diff, construct `change_log[]`, then write the merged full `kb_data` while preserving unchanged fields. | mode = refresh |
+| `references/mode-refresh.md` | Refresh workflow: fetch existing Product Brain, re-extract, field-level diff, construct `change_log[]`, then write the merged full `kb_data` while preserving unchanged fields; also covers consuming `vibe_get_product_kb`'s optional `staleness` field as targeted diff hints (§2.5). | mode = refresh |
 | `references/sources/github-repo.md` | Where to look in a codebase — `README.md`, `package.json`, route handlers, env example, marketing copy in components, existing email drafts. | source = github_repo |
 | `references/sources/website.md` | Crawl order (sitemap → robots → fallback), what each page type usually yields, parsing tips. | source = website_url |
 | `references/sources/document-set.md` | Reading PDFs / markdown / screenshots — what each typical document type contributes to which Product Brain section. | source = document_set |

@@ -49,6 +49,11 @@ covered by that announcement.
 - Don't call `vibe_mark_change_announced` speculatively before the
   send/publish actually happens. If the draft gets abandoned, the
   entries should stay unannounced so they resurface next time.
+- This same call also publishes the entry to VVibe's public changelog
+  feed (`references/public-changelog.md`), if the creator has a page or
+  third-party tool wired to it — announcing via email/blog and making
+  the entry visible on a public changelog page happen in one step, not
+  two.
 
 ## 5. If the user declines
 

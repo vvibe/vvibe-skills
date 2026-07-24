@@ -2,7 +2,7 @@
 name: vvibe-changelog
 version: 0.1.0
 manifest_version: 1
-description: Log user-visible product changes (new features, pricing changes, repositioning, significant fixes) into VVibe right after they ship, so VVibe can detect when the Product Knowledge Base (KB) has gone stale — then act on that signal before drafting prose. Trigger to LOG a change when the user says things like "I just shipped X", "we launched Y", "deployed a fix for Z", "changed our pricing" — right after a user-visible change goes live in production, never for internal refactors or typo fixes. Trigger to ACT when another VVibe prose task (an email campaign, a blog post) surfaces a stale KB or unannounced major features — nudge a KB update first, then suggest announcing shipped features via email or blog.
+description: Log user-visible product changes (new features, pricing changes, repositioning, significant fixes) into VVibe right after they ship, so VVibe can detect when the Product Knowledge Base (KB) has gone stale — then act on that signal before drafting prose. Trigger to LOG a change when the user says things like "I just shipped X", "we launched Y", "deployed a fix for Z", "changed our pricing" — right after a user-visible change goes live in production, never for internal refactors or typo fixes. Trigger to ACT when another VVibe prose task (an email campaign, a blog post) surfaces a stale KB or unannounced major features — nudge a KB update first, then suggest announcing shipped features via email or blog. Trigger to WIRE a public feed when the user wants a public changelog / "what's new" page for their product — VVibe serves the data only; read `references/public-changelog.md` for the feed contract and wiring guidance.
 ---
 
 # VVibe Changelog Skill — Routing
@@ -34,6 +34,14 @@ These aren't sequential steps of one flow — either can happen on its own.
 A session might only ever log changes; another might only ever act on a
 staleness signal surfaced by the blog-writer or email skill.
 
+There's also a third, standalone reference that isn't a log/act
+direction at all: `references/public-changelog.md` documents VVibe's
+separate **public** changelog feed — a read-only, unauthenticated JSON
+endpoint, no MCP tool involved. Load it whenever the human wants shipped
+changes visible publicly (a `/changelog` page on their own site, or a
+third-party changelog tool pointed at the feed) — independent of whether
+you're also logging or acting this session.
+
 ### Out of scope
 
 - Writing the KB content itself — that's `vvibe-product-brain`. This
@@ -46,6 +54,10 @@ staleness signal surfaced by the blog-writer or email skill.
 - Logging internal-only changes. Refactors, dependency bumps, typo
   fixes, CI/tooling changes, and anything not yet deployed are not
   loggable — see `references/logging.md` §1.
+- Rendering a changelog page. VVibe exposes only the public feed's data
+  (`references/public-changelog.md`); the page itself belongs in the
+  creator's own site, or a third-party changelog tool — never inside
+  VVibe.
 
 ## 2. Capability checklist (run BEFORE asking the user anything)
 
@@ -57,7 +69,7 @@ staleness signal surfaced by the blog-writer or email skill.
 Detect, don't interrogate: check tool availability yourself before asking
 the creator for anything.
 
-## 3. The two directions — pick where you are
+## 3. Pick where you are
 
 - **"I just shipped/deployed X" / "we launched Y" / "changed our
   pricing" / "fixed Z" / any user-visible change just went live** →
@@ -69,6 +81,9 @@ the creator for anything.
 - **Unannounced major features** — `vibe_get_product_changelog`'s
   `unannouncedMajorFeatures[]` is non-empty, or `vibe_log_product_change`
   just returned `suggestAnnouncement: true` → `references/announce-flow.md`
+- **"add a public changelog / what's-new page" / "show shipped changes
+  on my site" / wiring a third-party changelog tool** — not a log/act
+  direction, just data consumption → `references/public-changelog.md`
 
 kb-sync and announce can chain: an announcement is drafted from the KB,
 so `announce-flow.md` routes through `kb-sync-flow.md` first if the KB is
@@ -93,6 +108,11 @@ Two tools from other skills this one routes into:
 | Read the Product Brain (now carries `staleness`) | `vibe_get_product_kb` | always available (no skill gate) |
 | Update a KB section to absorb a pending change | `vibe_update_product_kb_section` | `vvibe-product-brain` |
 
+The **public changelog feed** (`references/public-changelog.md`) is
+separate again — a plain public `GET` endpoint, no MCP tool, no VVibe
+connection needed at all (same posture as `vvibe-blog-render`'s content
+API).
+
 ## 5. Hard rules
 
 - **Log after shipped, not planned.** A merged PR or a described intent
@@ -115,3 +135,4 @@ Two tools from other skills this one routes into:
 | `references/logging.md` | When to log, how to write a good `summary`, picking `change_type` / `significance` / `affected_kb_sections`, dedup check, what to do with the response. | direction = log |
 | `references/kb-sync-flow.md` | List pending changes → propose a KB update → write via `vibe_update_product_kb_section` → continue the original task. | staleness detected |
 | `references/announce-flow.md` | Sync the KB first → suggest an email campaign and/or blog post for unannounced major features → mark announced after send/publish. | unannounced major features |
+| `references/public-changelog.md` | The public, unauthenticated changelog feed (`GET /api/changelog/public/{merchantSlug}`) — what "announced" means for the feed, wiring it into the creator's own site or a third-party tool, a framework-agnostic fetch example, the 5-minute cache. | user wants a public changelog / "what's new" page |

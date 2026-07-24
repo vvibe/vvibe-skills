@@ -22,7 +22,16 @@ whole catalog, newest first, grouped by date.
   drafting prose (`references/kb-sync-flow.md`) and suggest announcing
   shipped major features via email or blog
   (`references/announce-flow.md`), marking entries announced afterward
-  (`vibe_mark_change_announced`) (VV-81) (#PR)
+  (`vibe_mark_change_announced`); plus a public, unauthenticated
+  changelog feed reference (`references/public-changelog.md`) — what
+  "announced" means for the feed, and wiring a `/changelog` page into the
+  creator's own site or a third-party tool (VV-81) (#PR)
+- **vvibe-product-brain 0.4.1** — `mode-refresh.md` now consumes
+  `vibe_get_product_kb`'s optional `staleness` field (changes logged via
+  `vvibe-changelog`) as targeted diff hints: prioritize the
+  `affected_kb_sections` an entry names before a full re-extraction, then
+  verify against the actual source as usual — entries are hints, not
+  facts to copy verbatim (VV-81) (#PR)
 
 ## 2026-07-18
 
