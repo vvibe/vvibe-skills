@@ -38,6 +38,9 @@ skills/
   vvibe-blog-render/        # Frontend for the headless VVibe blog — renders the content API in the creator's own app
     SKILL.md                  # Skill definition (entry point / router)
     references/               # content-api (the read contract), rendering (routes, SEO, revalidation, RSS/sitemap)
+  vvibe-changelog/          # Product-change logging + KB staleness / announcement nudges
+    SKILL.md                  # Skill definition (entry point / router)
+    references/               # logging, kb-sync-flow, announce-flow
 ```
 
 ## Skill Architecture
@@ -91,6 +94,13 @@ SKILL.md is the entry point when an agent loads a skill. References are loaded o
 - Scaffolds index + post routes, carries through VVibe's `metaTitle`/`metaDescription` + `schemaJsonld` (injected safely; omitted when null), wires ISR revalidation (`ETag`/`Last-Modified`), and emits RSS + `sitemap.xml` at the creator's domain
 - RSS / sitemap live HERE, not in VVibe — their links must point at the creator's rendered pages, which only the creator's app knows
 - Downstream of vvibe-blog-writer's native publish — pairs with it (publish first, then render)
+
+**Changelog Skill:**
+- Two directions, not one flow: **log** a shipped user-visible change via `vibe_log_product_change`, or **act** on a staleness/announcement signal surfaced by another skill
+- Three MCP tools, no REST/API-key equivalent: `vibe_log_product_change` (`{summary, change_type, significance, affected_kb_sections?}`, returns `kbStale` / `suggestAnnouncement`), `vibe_get_product_changelog` (`{limit?}` → `entries[]`, `pending`, `kbLastUpdatedAt`, `unannouncedMajorFeatures[]`), `vibe_mark_change_announced` (`{entry_ids}`)
+- `vibe_get_product_kb` (always available) now also returns a `staleness: {pendingChanges, entries[]}` field when changelog entries postdate the KB
+- Gated like the blog tools: `vibe_report_skill_installed({ skillId: 'changelog', ... })` activates the three tools for a connection that already has core `vibe_*` access
+- Pairs both ways: nudges a `vvibe-product-brain` KB sync (`vibe_update_product_kb_section`) before prose, then nudges an announcement via `vvibe-email` or `vvibe-blog-writer` for major features, marking entries announced after the send/publish
 
 **Sentry Skill:**
 - Four layers: `SECRETS` (gitleaks), `DEPS` (osv-scanner + npm audit), `SAST` (semgrep w/ OWASP / JS / TS rule packs), `VVIBE` (sentry-internal integration checks)

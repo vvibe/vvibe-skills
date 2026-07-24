@@ -14,6 +14,16 @@ whole catalog, newest first, grouped by date.
 - Entry format: `- **skill x.y.z** — what changed (#PR)`. One commit touching
   several skills gets one line per bumped skill.
 
+## 2026-07-24
+
+- **vvibe-changelog 0.1.0** — new skill: log user-visible product changes
+  (`vibe_log_product_change`) after they ship so VVibe can detect a stale
+  Product Knowledge Base, then act on that signal — nudge a KB sync before
+  drafting prose (`references/kb-sync-flow.md`) and suggest announcing
+  shipped major features via email or blog
+  (`references/announce-flow.md`), marking entries announced afterward
+  (`vibe_mark_change_announced`) (VV-81) (#PR)
+
 ## 2026-07-18
 
 - **vvibe-product-brain 0.4.0** — capture missed fields in the build
