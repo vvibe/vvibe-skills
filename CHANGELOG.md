@@ -25,7 +25,14 @@ whole catalog, newest first, grouped by date.
   (`vibe_mark_change_announced`); plus a public, unauthenticated
   changelog feed reference (`references/public-changelog.md`) — what
   "announced" means for the feed, and wiring a `/changelog` page into the
-  creator's own site or a third-party tool (VV-81) (#PR)
+  creator's own site or a third-party tool. Detection is agent-initiated,
+  not user-announced: the LOG trigger fires on the agent's own completed
+  work (shipping a feature, changing pricing/plan config, rewriting
+  positioning or marketing copy, a notable fix, a merge-to-main or
+  deploy/release/publish, flipping a flag to GA), with a self-detection
+  checklist and a session-close checkpoint in `references/logging.md`
+  §1/§3 — the user announcing a change out loud is still a valid trigger,
+  just no longer the only one (VV-81) (#PR)
 - **vvibe-product-brain 0.4.1** — `mode-refresh.md` now consumes
   `vibe_get_product_kb`'s optional `staleness` field (changes logged via
   `vvibe-changelog`) as targeted diff hints: prioritize the

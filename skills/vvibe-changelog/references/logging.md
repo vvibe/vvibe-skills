@@ -1,25 +1,77 @@
 # Logging a product change
 
-Read this once you've passed the §2 capability check in SKILL.md and a
-user-visible change has just shipped (or you've been asked to log one).
+Read this once you've passed the §2 capability check in SKILL.md. Unlike
+most skills, this one isn't invoked by a user request — you need to
+notice the trigger yourself. That's the point of this file.
 
-## 1. When to log
+## 1. Detect it yourself — don't wait to be told
 
-Log only changes a customer would notice, or that change what VVibe
-should say about the product. Do **not** log:
+The failure mode this guidance exists to prevent: waiting for the user
+to say "I just shipped X" before logging anything. They usually don't
+announce it — they finish the task and move on. You're the one holding
+the evidence: you edited the pricing config, added the route, rewrote
+the copy, ran the deploy. So after finishing any unit of work, ask
+yourself:
+
+> **Did what I just did change what a user of this product sees, pays,
+> or can do?**
+
+If yes, log it — right then, not when asked. Concrete signals that
+should make you ask that question in the first place, tied to what you
+actually observe in a session:
+
+- You edited a pricing/plan file or a plan-limit constant.
+- You added or changed a user-facing route, page, or screen.
+- You changed landing-page copy or other product-facing marketing text.
+- You added a capability that sits behind a flag, and the flag is now
+  enabled (GA) — not just merged behind a flag still off.
+- You ran `git push` to a deploy branch, ran a deploy/publish/release
+  command, or merged a PR to the default branch.
+- The user approved and shipped a change you built earlier in the
+  session (a plan they signed off on, now live).
+
+Do **not** log:
 
 - internal refactors, code cleanup, dependency bumps, CI/tooling changes
 - typo fixes and copy tweaks that don't change meaning
 - test additions, internal documentation
-- anything not yet deployed — a merged PR or a described plan isn't
-  shipped
+- anything not yet deployed — a merged-but-undeployed PR or a described
+  plan isn't shipped
+
+## 2. Log after it's live, not when planned
 
 Log **after** the change is live in production, not when merely planned
 or merged. "We're going to add X" is not loggable; "X shipped" is. If
-you're not sure whether something has actually gone out, ask before
-logging rather than guessing.
+you built something in this session but it hasn't deployed yet, don't
+log it now — note that it's pending and log it once you observe it's
+actually live (a deploy finishes, the PR merges to the branch that
+auto-deploys, etc.). If you're not sure whether something has actually
+gone out, ask before logging rather than guessing.
 
-## 2. Writing a good summary
+## 3. Session-close checkpoint
+
+Before wrapping up a working session that touched any user-visible
+surface, do one quick pass: run the §1 question against everything you
+did this session — anything shippable that isn't logged yet? If so,
+offer it in one short line, don't interrogate:
+
+> "Want me to log the new dark mode toggle to your vvibe changelog?"
+
+Take the answer and move on — one offer, not a back-and-forth. If they
+say yes, log it (§4-§7 below); if no, drop it, don't re-ask later in
+the same session.
+
+## 4. The `changelogReminder` signal
+
+`vibe_get_product_kb` and `vibe_heartbeat` may return an optional
+`changelogReminder` field when nothing has been logged in a while. It
+may be absent — don't treat its absence as meaningful, and don't fail
+if your MCP client's cached response doesn't have it. When it *is*
+present, treat it exactly like the session-close checkpoint above: run
+the §1 self-detection question against whatever you've done recently in
+this project, and offer to log anything that qualifies.
+
+## 5. Writing a good summary
 
 One sentence, plain language, phrased as what the user's *customers*
 would notice — not the internal engineering description.
@@ -34,7 +86,7 @@ Bad: "Updated `PROJECT_LIMIT_FREE` from 1 to 3 and added a migration."
 If the change came out of a commit message or PR title, translate it —
 don't paste the git log line in as the summary.
 
-## 3. Picking `change_type`
+## 6. Picking `change_type`
 
 - `feature` — a new capability or user-visible functionality.
 - `pricing` — a price, tier, plan, or quota/billing change.
@@ -48,7 +100,7 @@ don't paste the git log line in as the summary.
 - `other` — anything user-visible that doesn't fit the above (e.g.
   deprecating a feature, a UI redesign, a workflow change).
 
-## 4. Picking `significance`
+## 7. Picking `significance`
 
 - `major` — something customers should be told about; worth its own
   announcement (a new capability, a pricing change, a meaningful
@@ -62,7 +114,7 @@ When unsure, default to `minor` — `announce-flow.md` only nudges on
 major features, so over-marking causes noisy, unwarranted announcement
 suggestions.
 
-## 5. Picking `affected_kb_sections`
+## 8. Picking `affected_kb_sections`
 
 Map the change to the Product Brain sections it makes stale, so
 `kb-sync-flow.md` knows exactly what to update:
@@ -82,7 +134,7 @@ change doesn't map to any KB section (e.g. a performance fix with no
 visible behavior change worth telling customers about, logged anyway
 for the record), omit the field entirely rather than guessing a section.
 
-## 6. Dedup — check before you log
+## 9. Dedup — check before you log
 
 If you're not sure whether a change was already logged (resuming after
 a break, another session might have logged it, or the user says "did I
@@ -90,7 +142,7 @@ already log this?"), call `vibe_get_product_changelog({ limit: ... })`
 first and scan `entries[]` for a matching summary before calling
 `vibe_log_product_change`. Don't log the same shipped change twice.
 
-## 7. After logging
+## 10. After logging
 
 The response carries two signals — act on both in the same turn:
 

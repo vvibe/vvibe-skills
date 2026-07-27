@@ -2,7 +2,7 @@
 name: vvibe-changelog
 version: 0.1.0
 manifest_version: 1
-description: Log user-visible product changes (new features, pricing changes, repositioning, significant fixes) into VVibe right after they ship, so VVibe can detect when the Product Knowledge Base (KB) has gone stale — then act on that signal before drafting prose. Trigger to LOG a change when the user says things like "I just shipped X", "we launched Y", "deployed a fix for Z", "changed our pricing" — right after a user-visible change goes live in production, never for internal refactors or typo fixes. Trigger to ACT when another VVibe prose task (an email campaign, a blog post) surfaces a stale KB or unannounced major features — nudge a KB update first, then suggest announcing shipped features via email or blog. Trigger to WIRE a public feed when the user wants a public changelog / "what's new" page for their product — VVibe serves the data only; read `references/public-changelog.md` for the feed contract and wiring guidance.
+description: Keeps VVibe's record of what the product does in sync with what actually shipped, so the Product Knowledge Base behind every generated email and blog post never goes stale. USE THIS SKILL WHENEVER YOU ARE ASKED TO CHANGE THE PRODUCT ITSELF — changing pricing, plan, or tier config; adding or changing a user-facing feature, page, screen, or flow; rewriting landing-page, positioning, or marketing copy; shipping a notable user-facing fix; enabling a feature flag for everyone; or running a deploy, release, or publish. Load it at the START of that work: do exactly what the user asked first, then, once the change is live, log one entry with `vibe_log_product_change` — the user will not remind you, and an unlogged change silently rots the Knowledge Base. Also triggers when the user says "I just shipped X" / "we launched Y" / "changed our pricing". Never log internal refactors, typo fixes, or work that isn't live yet. Trigger to ACT when another VVibe prose task (an email campaign, a blog post) surfaces a stale KB or unannounced major features — nudge a KB update first, then suggest announcing shipped features via email or blog. Trigger to WIRE a public feed when the user wants a public changelog / "what's new" page for their product — VVibe serves the data only; read `references/public-changelog.md` for the feed contract and wiring guidance.
 ---
 
 # VVibe Changelog Skill — Routing
@@ -19,10 +19,12 @@ front.
 
 Two independent directions, both riding on the same MCP tools:
 
-1. **Log** — after a user-visible product change ships (a feature,
+1. **Log** — as soon as a user-visible product change ships (a feature,
    a pricing change, a repositioning, a significant fix), record it with
-   `vibe_log_product_change`. This is what lets VVibe know the Product
-   Knowledge Base (KB) might be out of date, and what feeds the
+   `vibe_log_product_change`. Most of the time you're the one who
+   shipped it — recognize your own completed work as the trigger, don't
+   wait for the user to bring it up. This is what lets VVibe know the
+   Product Knowledge Base (KB) might be out of date, and what feeds the
    "should we announce this?" signal.
 2. **Act** — when a different VVibe prose task (drafting an email
    campaign, writing a blog post) reveals the KB is stale relative to
@@ -71,9 +73,12 @@ the creator for anything.
 
 ## 3. Pick where you are
 
-- **"I just shipped/deployed X" / "we launched Y" / "changed our
-  pricing" / "fixed Z" / any user-visible change just went live** →
-  **log it**: `references/logging.md`
+- **You just shipped user-visible work** — implemented a feature,
+  changed pricing/plan config, rewrote positioning or marketing copy,
+  shipped a notable fix, merged to main or ran a deploy/release/publish
+  command, flipped a flag to GA — or the user says "I just shipped X" /
+  "we launched Y" / "changed our pricing" / "fixed Z" → **log it**:
+  `references/logging.md`
 - **KB staleness detected** — `vibe_get_product_kb`'s `staleness` field
   is present, or `vibe_get_product_changelog`'s `pending > 0` — usually
   surfacing mid another task (drafting an email, writing a blog post) →
@@ -115,6 +120,12 @@ API).
 
 ## 5. Hard rules
 
+- **Detect it yourself — don't wait to be told.** You hold the evidence
+  (you wrote the code, edited the config, ran the deploy); after
+  finishing work that changes what a user sees, pays, or can do,
+  recognize that and offer to log it — see `references/logging.md` §1
+  for the self-detection checklist and §3 for the session-close
+  checkpoint.
 - **Log after shipped, not planned.** A merged PR or a described intent
   isn't loggable — only changes actually live in production.
 - **User-visible only.** No internal refactors, dependency bumps, or
@@ -132,7 +143,7 @@ API).
 
 | File | Contains | Load when |
 |---|---|---|
-| `references/logging.md` | When to log, how to write a good `summary`, picking `change_type` / `significance` / `affected_kb_sections`, dedup check, what to do with the response. | direction = log |
+| `references/logging.md` | Self-detection checklist for recognizing your own shipped work (plus a session-close checkpoint), how to write a good `summary`, picking `change_type` / `significance` / `affected_kb_sections`, dedup check, what to do with the response. | direction = log |
 | `references/kb-sync-flow.md` | List pending changes → propose a KB update → write via `vibe_update_product_kb_section` → continue the original task. | staleness detected |
 | `references/announce-flow.md` | Sync the KB first → suggest an email campaign and/or blog post for unannounced major features → mark announced after send/publish. | unannounced major features |
 | `references/public-changelog.md` | The public, unauthenticated changelog feed (`GET /api/changelog/public/{merchantSlug}`) — what "announced" means for the feed, wiring it into the creator's own site or a third-party tool, a framework-agnostic fetch example, the 5-minute cache. | user wants a public changelog / "what's new" page |
