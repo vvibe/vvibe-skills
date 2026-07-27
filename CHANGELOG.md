@@ -14,6 +14,32 @@ whole catalog, newest first, grouped by date.
 - Entry format: `- **skill x.y.z** — what changed (#PR)`. One commit touching
   several skills gets one line per bumped skill.
 
+## 2026-07-24
+
+- **vvibe-changelog 0.1.0** — new skill: log user-visible product changes
+  (`vibe_log_product_change`) after they ship so VVibe can detect a stale
+  Product Knowledge Base, then act on that signal — nudge a KB sync before
+  drafting prose (`references/kb-sync-flow.md`) and suggest announcing
+  shipped major features via email or blog
+  (`references/announce-flow.md`), marking entries announced afterward
+  (`vibe_mark_change_announced`); plus a public, unauthenticated
+  changelog feed reference (`references/public-changelog.md`) — what
+  "announced" means for the feed, and wiring a `/changelog` page into the
+  creator's own site or a third-party tool. Detection is agent-initiated,
+  not user-announced: the LOG trigger fires on the agent's own completed
+  work (shipping a feature, changing pricing/plan config, rewriting
+  positioning or marketing copy, a notable fix, a merge-to-main or
+  deploy/release/publish, flipping a flag to GA), with a self-detection
+  checklist and a session-close checkpoint in `references/logging.md`
+  §1/§3 — the user announcing a change out loud is still a valid trigger,
+  just no longer the only one (VV-81) (#PR)
+- **vvibe-product-brain 0.4.1** — `mode-refresh.md` now consumes
+  `vibe_get_product_kb`'s optional `staleness` field (changes logged via
+  `vvibe-changelog`) as targeted diff hints: prioritize the
+  `affected_kb_sections` an entry names before a full re-extraction, then
+  verify against the actual source as usual — entries are hints, not
+  facts to copy verbatim (VV-81) (#PR)
+
 ## 2026-07-18
 
 - **vvibe-product-brain 0.4.0** — capture missed fields in the build

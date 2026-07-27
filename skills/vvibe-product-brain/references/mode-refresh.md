@@ -45,13 +45,53 @@ Example:
 
 > Your Product Brain is at version 3, last updated 11 days ago. I'll re-read your repo and your live site. I expect `pricing` and `features[]` to have moved (you mentioned new tiers); I'll preserve `company` and `legal_compliance` unless I find genuinely changed signal. Brand voice examples I'll leave alone — those are creator-curated.
 
+### 2.5 Check for changelog staleness hints (if present)
+
+`vibe_get_product_kb` (step 1) may return an additional `staleness`
+field when the `vvibe-changelog` skill has logged product changes since
+this KB was last written:
+
+```jsonc
+existing.data.staleness
+// { pendingChanges: number, entries: [{ summary, changeType, significance, affectedKbSections, createdAt }] }
+// NOTE: camelCase — these are internal entry objects, not the snake_case
+// shape the public /api/changelog/public feed uses.
+```
+
+When present, treat each entry as a **targeted diff hint**, not a fact
+to copy into `kb_data` verbatim:
+
+- Its `affectedKbSections` names which of the eight sections likely
+  drifted — read those first and with extra scrutiny, instead of
+  working through all eight in file order.
+- Its `summary` tells you in plain language what changed, so you know
+  what to look for once you're in source.
+- **Still verify against the actual source** (repo / site / documents)
+  before writing anything. A changelog `summary` is a pointer to where
+  to look, not a pre-approved fact — if re-reading source doesn't
+  corroborate an entry, don't force a `change_log` change to match it
+  anyway.
+- Sections `staleness.entries[]` didn't flag can still have drifted for
+  unrelated reasons — prioritizing the flagged sections isn't a license
+  to skip the rest of step 3's full re-extraction.
+- No `staleness` field, or an empty `entries[]`, means nothing new was
+  logged since the last update — proceed with step 3 as normal, with no
+  section prioritized over another.
+
+Mention what you found alongside the plan in step 2 — e.g. "Two changes
+were logged since your last refresh: a pricing tier add and a new SSO
+feature — I'll check `pricing` and `features[]` first."
+
 ### 3. Re-extract from source
 
 Run the same extraction passes `mode-build.md` describes — read the
 sources, build a candidate `kbData` from scratch. Don't try to be
 clever and "only re-read the changed parts" at this stage; that's
 the diff step's job. Re-reading the full source set is the simplest
-path to correctness.
+path to correctness. If §2.5 surfaced staleness hints, read the
+sections they name first and give them closer scrutiny — but still walk
+the rest of the source set per the usual discipline, don't stop at the
+flagged sections alone.
 
 For each section, follow the same EXTRACT → INFER → NO FABRICATION
 discipline. Track `meta._confidence` for the new extraction as if
