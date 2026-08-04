@@ -14,6 +14,25 @@ whole catalog, newest first, grouped by date.
 - Entry format: `- **skill x.y.z** — what changed (#PR)`. One commit touching
   several skills gets one line per bumped skill.
 
+## 2026-08-04
+
+- **vvibe-changelog 0.2.2** — excludes beta, private-preview, pilot, and
+  allowlisted releases from public changelog logging and historical backfill;
+  records a feature only after it reaches general availability for its
+  intended audience (VV-96) (#PR)
+- **vvibe-changelog 0.2.1** — distinguishes announcement-worthy customer
+  improvements from merely user-visible restrictive changes: excludes price
+  increases, entitlement removals, access gates, narrowed eligibility, and
+  enforcement steps from both normal logging and the first-history backfill;
+  preserves a narrow creator-approved security/legal/service notice exception
+  (VV-96) (#PR)
+- **vvibe-changelog 0.2.0** — on its first execution for an empty project,
+  atomically claims and scans the last two months of trustworthy shipping
+  history, groups customer-visible changes into the first changelog batch,
+  and preserves each shipped date. The durable claim prevents re-scans even
+  when a new project has no usable history; projects with entries stay on the
+  normal single-change flow (VV-96) (#PR)
+
 ## 2026-07-24
 
 - **vvibe-changelog 0.1.0** — new skill: log user-visible product changes

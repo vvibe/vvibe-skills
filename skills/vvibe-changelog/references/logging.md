@@ -13,10 +13,13 @@ the evidence: you edited the pricing config, added the route, rewrote
 the copy, ran the deploy. So after finishing any unit of work, ask
 yourself:
 
-> **Did what I just did change what a user of this product sees, pays,
-> or can do?**
+> **Did what I just did deliver a customer-noticeable improvement, a
+> meaningful fix, or a substantive new product message?**
 
-If yes, log it — right then, not when asked. Concrete signals that
+Being visible is necessary but not sufficient: the changelog is a record of
+what is newly useful or better for customers, not a complete policy,
+entitlement, or enforcement history. If yes, log it — right then, not when
+asked. Concrete signals that
 should make you ask that question in the first place, tied to what you
 actually observe in a session:
 
@@ -37,6 +40,22 @@ Do **not** log:
 - test additions, internal documentation
 - anything not yet deployed — a merged-but-undeployed PR or a described
   plan isn't shipped
+- a beta, private preview, pilot, allowlisted rollout, or feature limited to
+  selected accounts or teams. Wait until it is generally available to its
+  intended audience; log the beta-to-GA transition, not the earlier rollout.
+- a change whose primary outcome is taking something away or making it
+  harder to access: a price increase, a reduced quota, a feature moved behind
+  a higher tier, a narrower eligibility rule, an account/API lock, or a
+  removal/deprecation. Do not disguise one as a benefit in the summary.
+
+If a restrictive change also includes a genuinely independent customer
+improvement, log only that separable improvement. If the positive wording
+would hide the material restriction, skip the whole candidate. The exception
+is a security, legal, or service-continuity change that customers must be
+notified about; in that case, ask the creator before logging a direct,
+plain-language notice. A skipped restriction can still require a Product
+Brain or support-document update — route that work to `vvibe-product-brain`;
+do not use a changelog entry as its proxy.
 
 ## 2. Log after it's live, not when planned
 

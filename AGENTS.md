@@ -97,9 +97,10 @@ SKILL.md is the entry point when an agent loads a skill. References are loaded o
 
 **Changelog Skill:**
 - Two directions, not one flow: **log** a shipped user-visible change via `vibe_log_product_change`, or **act** on a staleness/announcement signal surfaced by another skill
-- Three MCP tools, no REST/API-key equivalent: `vibe_log_product_change` (`{summary, change_type, significance, affected_kb_sections?}`, returns `kbStale` / `suggestAnnouncement`), `vibe_get_product_changelog` (`{limit?}` → `entries[]`, `pending`, `kbLastUpdatedAt`, `unannouncedMajorFeatures[]`), `vibe_mark_change_announced` (`{entry_ids}`)
+- First execution additionally claims a one-time two-month history scan with `vibe_claim_initial_product_changelog_backfill` (`{}` → `{shouldBackfill}`); this persists even when no historical changes qualify, so it never repeats
+- Four MCP tools, no REST/API-key equivalent: `vibe_claim_initial_product_changelog_backfill`, `vibe_log_product_change` (`{summary, change_type, significance, affected_kb_sections?, occurred_at?}`, returns `kbStale` / `suggestAnnouncement`), `vibe_get_product_changelog` (`{limit?}` → `entries[]`, `pending`, `kbLastUpdatedAt`, `unannouncedMajorFeatures[]`), `vibe_mark_change_announced` (`{entry_ids}`)
 - `vibe_get_product_kb` (always available) now also returns a `staleness: {pendingChanges, entries[]}` field when changelog entries postdate the KB
-- Gated like the blog tools: `vibe_report_skill_installed({ skillId: 'changelog', ... })` activates the three tools for a connection that already has core `vibe_*` access
+- Gated like the blog tools: `vibe_report_skill_installed({ skillId: 'changelog', ... })` activates the four tools for a connection that already has core `vibe_*` access
 - Pairs both ways: nudges a `vvibe-product-brain` KB sync (`vibe_update_product_kb_section`) before prose, then nudges an announcement via `vvibe-email` or `vvibe-blog-writer` for major features, marking entries announced after the send/publish
 
 **Sentry Skill:**
