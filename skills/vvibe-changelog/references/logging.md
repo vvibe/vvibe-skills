@@ -18,8 +18,9 @@ yourself:
 
 Being visible is necessary but not sufficient: the changelog is a record of
 what is newly useful or better for customers, not a complete policy,
-entitlement, or enforcement history. If yes, log it — right then, not when
-asked. Concrete signals that
+entitlement, or enforcement history. If yes, it is a logging candidate. Apply
+§2 before writing: log it as soon as you observe it live in production, not
+merely when the code is finished or the PR is merged. Concrete signals that
 should make you ask that question in the first place, tied to what you
 actually observe in a session:
 
