@@ -26,7 +26,10 @@ whole catalog, newest first, grouped by date.
   preview, allowlist, or feature gate says otherwise; new products and major
   launches require positive GA evidence. It excludes restrictive changes and
   verifies each candidate's product surface, audience, behaviour, and
-  conditions from focused source evidence before writing (VV-96) (#PR)
+  conditions from focused source evidence before writing. Its claim uses a
+  recoverable lease: successful scans are explicitly completed (including an
+  empty result), while interrupted scans can retry without duplicating a
+  completed backfill (VV-96) (#PR)
 
 ## 2026-07-24
 

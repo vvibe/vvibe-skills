@@ -66,7 +66,7 @@ you're also logging or acting this session.
 
 | Capability | How to detect | If missing |
 |---|---|---|
-| Changelog tools available | `vibe_claim_initial_product_changelog_backfill`, `vibe_log_product_change`, `vibe_get_product_changelog`, and `vibe_mark_change_announced` are in your tool list | **Two different cases — don't conflate them.** If you have NO `vibe_*` tools at all → VVibe isn't connected; have the creator connect it — fastest is `npx @vvibe/cli connect --server=https://mcp.vvibe.ai` (the first call opens a browser login, and sign-up is on that same page — full walkthrough in `ONBOARDING.md` at the repo root when present). If you have core `vibe_*` tools (e.g. `vibe_get_product_kb`) but NOT the changelog ones → you're connected but this skill isn't activated for the connection: call `vibe_report_skill_installed({ skillId: 'changelog', version: '<from this file's frontmatter>' })`. That registers the skill for your connection and the changelog tools become available on the same session (reconnect once if your MCP client caches the tool list). |
+| Changelog tools available | `vibe_claim_initial_product_changelog_backfill`, `vibe_complete_initial_product_changelog_backfill`, `vibe_log_product_change`, `vibe_get_product_changelog`, and `vibe_mark_change_announced` are in your tool list | **Two different cases — don't conflate them.** If you have NO `vibe_*` tools at all → VVibe isn't connected; have the creator connect it — fastest is `npx @vvibe/cli connect --server=https://mcp.vvibe.ai` (the first call opens a browser login, and sign-up is on that same page — full walkthrough in `ONBOARDING.md` at the repo root when present). If you have core `vibe_*` tools (e.g. `vibe_get_product_kb`) but NOT the changelog ones → you're connected but this skill isn't activated for the connection: call `vibe_report_skill_installed({ skillId: 'changelog', version: '<from this file's frontmatter>' })`. That registers the skill for your connection and the changelog tools become available on the same session (reconnect once if your MCP client caches the tool list). |
 | Product Brain exists | `vibe_get_product_kb` returns non-null `data` | You can still log changes without a KB — logging doesn't depend on it. But the staleness signal is meaningless with no KB to compare against; if this is a brand-new account, mention routing to `vvibe-product-brain` once there's something worth building |
 
 Detect, don't interrogate: check tool availability yourself before asking
@@ -77,16 +77,20 @@ the creator for anything.
 Call `vibe_claim_initial_product_changelog_backfill({})` once, before
 choosing the usual log/act direction:
 
-- `shouldBackfill: false` — this project already has changelog entries, or
-  an earlier execution already attempted its initial scan. **Do not inspect
-  historical records again**; continue straight to §3.
-- `shouldBackfill: true` — this is the first execution for a project with an
-  empty changelog. Read `references/initial-backfill.md`, perform the
-  two-month scan, then continue to §3 in the same session.
+- `shouldBackfill: false` — this project already has changelog entries, has a
+  completed initial scan, or another fresh agent is scanning now. **Do not
+  inspect historical records again**; continue straight to §3.
+- `shouldBackfill: true` plus `backfillToken` — this is the first execution
+  (or a reclaimed interrupted attempt) for a project with an empty changelog.
+  Read `references/initial-backfill.md`, perform the two-month scan, then call
+  `vibe_complete_initial_product_changelog_backfill({ backfill_token:
+  backfillToken })` once the scan has completed successfully — including when
+  it found no eligible history. Then continue to §3 in the same session.
 
-The claim is persistent and is made before the scan. That is intentional: a
-new project with no usable history still needs to record that its one allowed
-backfill pass happened, rather than rescanning on every future execution.
+The claim is a recoverable lease. Do **not** complete it when repository access
+or historical inspection fails or is interrupted; the lease can then be
+reclaimed later. A successful empty scan is different: complete it so a new
+project with no usable history does not rescan forever.
 
 ## 3. Pick where you are
 
@@ -115,11 +119,12 @@ stale — don't announce off stale content.
 
 Operate the changelog through the `vibe_*` MCP tools — they carry your
 VVibe connection token. There is no REST/API-key equivalent for these
-four; they're MCP-only, same posture as the blog-writer tools.
+five; they're MCP-only, same posture as the blog-writer tools.
 
 | Intent | MCP tool | Params | Notes |
 |---|---|---|---|
-| Claim the one-time initial history scan | `vibe_claim_initial_product_changelog_backfill` | `{}` | Returns `{shouldBackfill}`; run once on every skill load before routing. `true` only once for an empty changelog. |
+| Claim the initial history scan lease | `vibe_claim_initial_product_changelog_backfill` | `{}` | Returns `{shouldBackfill, backfillToken}`. When true, keep the token and scan history. |
+| Complete a successful initial history scan | `vibe_complete_initial_product_changelog_backfill` | `{backfill_token}` | Call after a successful scan, even if it logged nothing. Never call after an inaccessible or interrupted scan. |
 | Log a shipped change | `vibe_log_product_change` | `{summary, change_type, significance, affected_kb_sections?, occurred_at?}` | `occurred_at` is historical-backfill only; returns `kbStale` and `suggestAnnouncement` |
 | List the changelog / check staleness | `vibe_get_product_changelog` | `{limit?}` | Returns `{entries[], pending, kbLastUpdatedAt, unannouncedMajorFeatures[]}` |
 | Mark changes as announced | `vibe_mark_change_announced` | `{entry_ids: string[]}` | Call after the email/blog for those entries actually sent/published |
@@ -177,9 +182,10 @@ API).
 - **Dedup before logging if unsure.** Check
   `vibe_get_product_changelog` for a matching entry before calling
   `vibe_log_product_change` again for the same shipped change.
-- **Backfill is a one-time exception.** Run the §2.5 claim before looking at
-  history. Only `shouldBackfill: true` permits the two-month scan; never
-  create a synthetic entry just to mark a completed scan.
+- **Backfill is a one-time completed exception.** Run the §2.5 claim before
+  looking at history. Only `shouldBackfill: true` permits the two-month scan;
+  complete its token only after successful inspection (including zero eligible
+  records), and never create a synthetic entry just to mark a completed scan.
 - **Sync before announcing.** Announcement copy is generated from the
   KB — never draft an announcement from a KB you know is stale.
 

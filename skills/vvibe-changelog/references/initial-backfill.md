@@ -1,9 +1,10 @@
 # Initial changelog backfill
 
 Read this only after `vibe_claim_initial_product_changelog_backfill({})`
-returns `{ shouldBackfill: true }`. The server has now reserved this
-project's single initial-history pass. Finish the scan before continuing to
-the ordinary log/act direction that loaded the skill.
+returns `{ shouldBackfill: true, backfillToken }`. The server has now reserved
+a recoverable lease for this project's initial-history pass. Finish the scan,
+then call `vibe_complete_initial_product_changelog_backfill` with that token
+before continuing to the ordinary log/act direction that loaded the skill.
 
 ## 1. Search the last two months — not the whole repository
 
@@ -19,8 +20,8 @@ the product's available shipping records, in this order:
    git log --first-parent --since="2 months ago" --format="%H%x09%cI%x09%s"
    ```
 
-   Read the linked PR description or a focused diff only when the subject
-   does not make customer impact clear.
+   Use the subject only to find candidates. Before logging a surviving
+   candidate, verify its product facts with the focused evidence in §2.
 3. Existing project changelog files, launch notes, or issue/PR records that
    unambiguously describe something shipped in that same window.
 
@@ -116,21 +117,33 @@ vibe_log_product_change({
 `occurred_at` is for this historical import only. Omit it for a change that
 just shipped; the normal logging flow records the current time automatically.
 
-## 3. Empty or inaccessible history is a successful outcome
+## 3. Finish successful scans; leave failed scans recoverable
 
-If the project is new, has no commits/releases in the window, its history is
-unavailable, or none of the records can safely be identified as a
-customer-visible shipped change, log nothing. Do not report an error and do
-not create a placeholder changelog entry. State briefly that no eligible
-history was found, then continue with the original request's normal flow.
+If the project is new, has no commits/releases in the window, or none of the
+records can safely be identified as a customer-visible shipped change, log
+nothing. Do not report an error and do not create a placeholder changelog
+entry. Call:
 
-The initial claim remains complete in this case, so subsequent executions
-will not repeat the scan.
+```text
+vibe_complete_initial_product_changelog_backfill({
+  backfill_token: backfillToken
+})
+```
+
+Then state briefly that no eligible history was found and continue with the
+original request's normal flow. The same completion call is required after
+logging one or more eligible candidates.
+
+If Git/release history is inaccessible, the inspection errors, or the scan is
+interrupted, do **not** call the completion tool. State the issue briefly and
+continue the original request where possible; the lease will become
+reclaimable later, rather than permanently losing eligible history.
 
 ## 4. Finish the original flow
 
-After recording any candidates, run `vibe_get_product_changelog` if you need
-the resulting staleness or unannounced-feature signals, then resume the §3
-direction that triggered this skill. If the current task's newly shipped
-change may have been included in the historical scan, deduplicate it against
-the newly created entries before using the normal single-change log flow.
+After recording any candidates, complete the lease token as §3 requires. Then
+run `vibe_get_product_changelog` if you need the resulting staleness or
+unannounced-feature signals, and resume the §3 direction that triggered this
+skill. If the current task's newly shipped change may have been included in
+the historical scan, deduplicate it against the newly created entries before
+using the normal single-change log flow.
