@@ -111,7 +111,23 @@ Good: "Free tier now includes 3 projects instead of 1."
 Bad: "Updated `PROJECT_LIMIT_FREE` from 1 to 3 and added a migration."
 
 If the change came out of a commit message or PR title, translate it —
-don't paste the git log line in as the summary.
+don't paste the git log line in as the summary. For historical work or work
+shipped by another team, a title is only a lead: verify the actual product
+surface, audience, and relevant conditions in the focused PR description,
+user-facing diff, tests, API contract, or release note before writing.
+Never infer a product name or flow from a payment provider, a component name,
+or another overloaded term in the title.
+
+Make a compact fact check before calling the tool:
+
+1. **Who** can use it?
+2. **What** customer-visible behaviour changed?
+3. **Where/when** does it apply, including material conditions?
+4. **Which focused source** proves each part?
+
+The changelog summary may contain only facts supported by that check. If the
+scope stays ambiguous after inspecting the focused evidence, skip the
+candidate or ask the creator together with the other unresolved candidates.
 
 ## 6. Picking `change_type`
 

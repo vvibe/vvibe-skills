@@ -16,6 +16,11 @@ whole catalog, newest first, grouped by date.
 
 ## 2026-08-04
 
+- **vvibe-changelog 0.2.4** — requires a separate, focused product-fact
+  verification for every historical candidate: commit subjects discover
+  records but cannot determine the product, audience, flow, or conditions in
+  a changelog summary; ambiguous candidates are skipped or grouped for
+  creator confirmation (VV-96) (#PR)
 - **vvibe-changelog 0.2.3** — treats the documented automatic production
   deployment path as default GA evidence during normal logging and historical
   backfill, while explicit beta, preview, pilot, allowlist, and feature-gate

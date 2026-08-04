@@ -53,6 +53,24 @@ release path cannot be established, inspect the focused PR, release note, or
 feature-gate change. If a high-value candidate is still unresolved, ask the
 creator about the candidates together instead of silently omitting them.
 
+Treat a Git subject as a discovery lead only, never as text to paraphrase
+into a changelog. Before logging each surviving candidate, verify its product
+fact with the smallest focused evidence that resolves it: start with the PR
+description and changed-file list, then inspect the user-facing component,
+copy, API contract, test, or release note as needed. Capture four facts:
+
+1. the user or customer audience;
+2. the changed customer-visible behaviour;
+3. the product surface and any material conditions; and
+4. the source that supports those facts.
+
+Write only what those facts establish. In particular, do not infer a product
+or flow from a provider name, a component name, or an overloaded word in a
+commit subject. For example, an Apple Pay change might belong to a political
+donation form rather than a product called "Payment". If focused evidence
+still cannot resolve the scope, skip it or include it in one concise,
+grouped question to the creator; never guess to make the first batch longer.
+
 The backfill is an announcement-quality history, not an audit log. Exclude
 price increases, reduced quotas, features moved behind a higher tier,
 narrower eligibility, account/API locks, removals, and enforcement steps. Do
