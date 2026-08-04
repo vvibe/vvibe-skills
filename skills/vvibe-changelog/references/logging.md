@@ -33,6 +33,14 @@ actually observe in a session:
 - The user approved and shipped a change you built earlier in the
   session (a plan they signed off on, now live).
 
+Use the project's documented release path to establish availability. A
+successful production deployment, or a merge to a branch documented as
+automatically deploying to production, is normally enough to treat a change
+as GA — it does not need an explicit "GA" label. Before logging, still check
+the task, PR, release note, or changed code for a beta, private preview,
+pilot, allowlist, feature flag, or selected-account/team gate. That explicit
+limited-availability evidence overrides the production-branch default.
+
 Do **not** log:
 
 - internal refactors, code cleanup, dependency bumps, CI/tooling changes

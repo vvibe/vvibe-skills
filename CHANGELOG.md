@@ -16,6 +16,11 @@ whole catalog, newest first, grouped by date.
 
 ## 2026-08-04
 
+- **vvibe-changelog 0.2.3** — treats the documented automatic production
+  deployment path as default GA evidence during normal logging and historical
+  backfill, while explicit beta, preview, pilot, allowlist, and feature-gate
+  evidence still excludes a release; unresolved high-value candidates are
+  surfaced together rather than silently dropped (VV-96) (#PR)
 - **vvibe-changelog 0.2.2** — excludes beta, private-preview, pilot, and
   allowlisted releases from public changelog logging and historical backfill;
   records a feature only after it reaches general availability for its

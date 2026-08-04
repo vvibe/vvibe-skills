@@ -1,6 +1,6 @@
 ---
 name: vvibe-changelog
-version: 0.2.2
+version: 0.2.3
 manifest_version: 1
 description: Keeps VVibe's record of what the product does in sync with what actually shipped, so the Product Knowledge Base behind every generated email and blog post never goes stale. USE THIS SKILL WHENEVER YOU ARE ASKED TO CHANGE THE PRODUCT ITSELF — changing pricing, plan, or tier config; adding or changing a user-facing feature, page, screen, or flow; rewriting landing-page, positioning, or marketing copy; shipping a notable user-facing fix; enabling a feature flag for everyone; or running a deploy, release, or publish. Load it at the START of that work: do exactly what the user asked first, then, once the change is live, log one entry with `vibe_log_product_change` — the user will not remind you, and an unlogged change silently rots the Knowledge Base. Also triggers when the user says "I just shipped X" / "we launched Y" / "changed our pricing". Never log internal refactors, typo fixes, or work that isn't live yet. Trigger to ACT when another VVibe prose task (an email campaign, a blog post) surfaces a stale KB or unannounced major features — nudge a KB update first, then suggest announcing shipped features via email or blog. Trigger to WIRE a public feed when the user wants a public changelog / "what's new" page for their product — VVibe serves the data only; read `references/public-changelog.md` for the feed contract and wiring guidance.
 ---
@@ -154,11 +154,13 @@ API).
   eligibility narrowing, account locks, or enforcement steps into release
   notes. See `references/logging.md` §1 for the narrow exception and how to
   keep the Product Brain accurate without publishing such a change.
-- **GA only.** Do not log a beta, private preview, pilot, allowlisted rollout,
-  or feature available only to selected accounts or teams. It becomes
-  eligible only once it is broadly available to its intended customer
-  audience; a beta-to-GA transition can then be logged as that availability
-  change.
+- **GA only, using the project's release evidence.** A documented automatic
+  production-deployment branch or a release/deployment record is sufficient
+  evidence of GA unless the commit, PR, release note, or code explicitly
+  shows a beta, private preview, pilot, allowlist, feature gate, or selected
+  account/team rollout. Do not require the literal word "GA" in every
+  record; explicit limited-availability evidence always wins. A beta-to-GA
+  transition can then be logged as that availability change.
 - **Soft nudges, not gates.** If the user declines a KB-sync or
   announce suggestion, proceed with whatever they were doing — don't
   re-nag in the same session.

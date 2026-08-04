@@ -30,6 +30,14 @@ the project is known to deploy that branch or another source confirms it
 shipped. Keep the normal rule from `logging.md`: do not invent or log work
 that was only planned, merged-but-undeployed, internal, or a typo-level fix.
 
+Establish that release path once before classifying candidates. For example,
+if the project's deployment documentation says the default branch is
+automatically deployed to production, a first-parent commit on that branch is
+production/GA evidence by default. Do not require every commit to say "GA".
+That default is overridden by any stronger evidence that the change was a
+beta, private preview, pilot, allowlisted rollout, feature-gated, or limited
+to selected accounts or teams.
+
 ## 2. Turn records into product changes
 
 Create one candidate per customer-noticeable improvement, meaningful fix, or
@@ -38,8 +46,12 @@ implementation, test, and follow-up commits for the same release into the
 same candidate. Skip refactors, dependencies, CI, tooling, documentation-only
 work, invisible fixes, beta/private-preview/pilot/allowlisted releases, and
 changes that only make access more restrictive. Treat a feature as eligible
-only when the records prove it was generally available to its intended
-customer audience; do not infer GA from a merged branch or a beta label.
+when it has either a release/deployment record or a commit on the project's
+documented automatic production branch, unless a stronger record shows that
+it had limited availability. When the availability evidence conflicts or the
+release path cannot be established, inspect the focused PR, release note, or
+feature-gate change. If a high-value candidate is still unresolved, ask the
+creator about the candidates together instead of silently omitting them.
 
 The backfill is an announcement-quality history, not an audit log. Exclude
 price increases, reduced quotas, features moved behind a higher tier,
