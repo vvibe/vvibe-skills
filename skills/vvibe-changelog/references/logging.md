@@ -33,13 +33,20 @@ actually observe in a session:
 - The user approved and shipped a change you built earlier in the
   session (a plan they signed off on, now live).
 
-Use the project's documented release path to establish availability. A
-successful production deployment, or a merge to a branch documented as
-automatically deploying to production, is normally enough to treat a change
-as GA — it does not need an explicit "GA" label. Before logging, still check
-the task, PR, release note, or changed code for a beta, private preview,
-pilot, allowlist, feature flag, or selected-account/team gate. That explicit
-limited-availability evidence overrides the production-branch default.
+Use the project's documented release path to establish that a change shipped.
+For an incremental improvement or fix to an established public flow, a
+successful production deployment (or a documented automatic-production merge)
+is normally enough to treat it as GA; it does not need an explicit "GA"
+label. Before logging, still check the task, PR, release note, or changed code
+for a beta, private preview, pilot, allowlist, feature flag, or
+selected-account/team gate. That explicit limited-availability evidence
+overrides the default.
+
+Do not apply that default to a newly named product, standalone launch, or
+major new capability. Those need positive GA evidence: a release announcement,
+rollout record, Product Brain/release registry, or creator confirmation. If
+that evidence is missing, collect such candidates and ask the creator together
+instead of treating "no beta flag found" as GA.
 
 Do **not** log:
 

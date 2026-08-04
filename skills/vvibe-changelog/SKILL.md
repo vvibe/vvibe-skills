@@ -154,12 +154,15 @@ API).
   eligibility narrowing, account locks, or enforcement steps into release
   notes. See `references/logging.md` §1 for the narrow exception and how to
   keep the Product Brain accurate without publishing such a change.
-- **GA only, using the project's release evidence.** A documented automatic
-  production-deployment branch or a release/deployment record is sufficient
-  evidence of GA unless the commit, PR, release note, or code explicitly
-  shows a beta, private preview, pilot, allowlist, feature gate, or selected
-  account/team rollout. Do not require the literal word "GA" in every
-  record; explicit limited-availability evidence always wins. A beta-to-GA
+- **GA only, with the right evidence for the scope.** A documented automatic
+  production-deployment branch or a release/deployment record proves that a
+  change shipped. For an incremental improvement or fix to an established
+  public surface, that is normally sufficient unless the commit, PR, release
+  note, or code explicitly shows a beta, private preview, pilot, allowlist,
+  feature gate, or selected account/team rollout. A newly named product,
+  standalone launch, or major new capability needs positive GA evidence — a
+  release announcement, rollout record, Product Brain/release registry, or
+  creator confirmation — not merely the absence of a beta flag. A beta-to-GA
   transition can then be logged as that availability change.
 - **Verify the product fact separately from release status.** A commit title
   only discovers a candidate; it never proves the product, audience, flow, or

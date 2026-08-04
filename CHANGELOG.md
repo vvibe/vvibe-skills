@@ -22,10 +22,11 @@ whole catalog, newest first, grouped by date.
   and preserves each shipped date. The durable claim prevents re-scans even
   when a new project has no usable history; projects with entries stay on the
   normal single-change flow. The scan uses the documented production delivery
-  path as availability evidence unless a beta, preview, allowlist, or feature
-  gate says otherwise; it excludes restrictive changes and verifies each
-  candidate's product surface, audience, behaviour, and conditions from
-  focused source evidence before writing (VV-96) (#PR)
+  path as availability evidence for incremental changes unless a beta,
+  preview, allowlist, or feature gate says otherwise; new products and major
+  launches require positive GA evidence. It excludes restrictive changes and
+  verifies each candidate's product surface, audience, behaviour, and
+  conditions from focused source evidence before writing (VV-96) (#PR)
 
 ## 2026-07-24
 

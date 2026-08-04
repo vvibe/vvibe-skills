@@ -33,10 +33,18 @@ that was only planned, merged-but-undeployed, internal, or a typo-level fix.
 Establish that release path once before classifying candidates. For example,
 if the project's deployment documentation says the default branch is
 automatically deployed to production, a first-parent commit on that branch is
-production/GA evidence by default. Do not require every commit to say "GA".
-That default is overridden by any stronger evidence that the change was a
-beta, private preview, pilot, allowlisted rollout, feature-gated, or limited
-to selected accounts or teams.
+evidence that the change shipped. For an incremental improvement or fix to an
+established public flow, it is GA evidence by default; do not require every
+commit to say "GA". That default is overridden by any stronger evidence that
+the change was a beta, private preview, pilot, allowlisted rollout,
+feature-gated, or limited to selected accounts or teams.
+
+Treat a newly named product, standalone launch, or major new capability
+differently: production deployment proves only that code is live, not that the
+product is generally available. Require positive GA evidence from a release
+announcement, rollout record, Product Brain/release registry, or creator
+confirmation. Keep unresolved launches in a short availability-question list;
+do not infer GA from the absence of a beta label.
 
 ## 2. Turn records into product changes
 
@@ -48,10 +56,13 @@ work, invisible fixes, beta/private-preview/pilot/allowlisted releases, and
 changes that only make access more restrictive. Treat a feature as eligible
 when it has either a release/deployment record or a commit on the project's
 documented automatic production branch, unless a stronger record shows that
-it had limited availability. When the availability evidence conflicts or the
-release path cannot be established, inspect the focused PR, release note, or
-feature-gate change. If a high-value candidate is still unresolved, ask the
-creator about the candidates together instead of silently omitting them.
+it had limited availability. For a new product, standalone launch, or major
+new capability, that shipping evidence must be accompanied by positive GA
+evidence. When the availability evidence conflicts, the release path cannot
+be established, or a launch lacks that positive evidence, inspect the focused
+PR, release note, Product Brain/release registry, or feature-gate change. If a
+high-value candidate is still unresolved, ask the creator about the candidates
+together instead of silently omitting them.
 
 Treat a Git subject as a discovery lead only, never as text to paraphrase
 into a changelog. Before logging each surviving candidate, verify its product
