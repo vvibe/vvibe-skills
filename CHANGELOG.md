@@ -16,32 +16,16 @@ whole catalog, newest first, grouped by date.
 
 ## 2026-08-04
 
-- **vvibe-changelog 0.2.4** — requires a separate, focused product-fact
-  verification for every historical candidate: commit subjects discover
-  records but cannot determine the product, audience, flow, or conditions in
-  a changelog summary; ambiguous candidates are skipped or grouped for
-  creator confirmation (VV-96) (#PR)
-- **vvibe-changelog 0.2.3** — treats the documented automatic production
-  deployment path as default GA evidence during normal logging and historical
-  backfill, while explicit beta, preview, pilot, allowlist, and feature-gate
-  evidence still excludes a release; unresolved high-value candidates are
-  surfaced together rather than silently dropped (VV-96) (#PR)
-- **vvibe-changelog 0.2.2** — excludes beta, private-preview, pilot, and
-  allowlisted releases from public changelog logging and historical backfill;
-  records a feature only after it reaches general availability for its
-  intended audience (VV-96) (#PR)
-- **vvibe-changelog 0.2.1** — distinguishes announcement-worthy customer
-  improvements from merely user-visible restrictive changes: excludes price
-  increases, entitlement removals, access gates, narrowed eligibility, and
-  enforcement steps from both normal logging and the first-history backfill;
-  preserves a narrow creator-approved security/legal/service notice exception
-  (VV-96) (#PR)
 - **vvibe-changelog 0.2.0** — on its first execution for an empty project,
   atomically claims and scans the last two months of trustworthy shipping
   history, groups customer-visible changes into the first changelog batch,
   and preserves each shipped date. The durable claim prevents re-scans even
   when a new project has no usable history; projects with entries stay on the
-  normal single-change flow (VV-96) (#PR)
+  normal single-change flow. The scan uses the documented production delivery
+  path as availability evidence unless a beta, preview, allowlist, or feature
+  gate says otherwise; it excludes restrictive changes and verifies each
+  candidate's product surface, audience, behaviour, and conditions from
+  focused source evidence before writing (VV-96) (#PR)
 
 ## 2026-07-24
 
