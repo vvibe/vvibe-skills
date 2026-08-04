@@ -88,9 +88,13 @@ choosing the usual log/act direction:
   it found no eligible history. Then continue to §3 in the same session.
 
 The claim is a recoverable lease. Do **not** complete it when repository access
-or historical inspection fails or is interrupted; the lease can then be
-reclaimed later. A successful empty scan is different: complete it so a new
-project with no usable history does not rescan forever.
+or historical inspection fails or is interrupted, a historical log call
+fails, or a high-value candidate's scope/release/GA status is unresolved; the
+lease can then be reclaimed later. On a reclaimed lease, follow
+`references/initial-backfill.md` to check the changelog before every
+candidate and skip already-recorded matches. A successful empty scan is
+different: complete it so a new project with no usable history does not
+rescan forever.
 
 ## 3. Pick where you are
 
