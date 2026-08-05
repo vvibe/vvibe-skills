@@ -13,10 +13,14 @@ the evidence: you edited the pricing config, added the route, rewrote
 the copy, ran the deploy. So after finishing any unit of work, ask
 yourself:
 
-> **Did what I just did change what a user of this product sees, pays,
-> or can do?**
+> **Did what I just did deliver a customer-noticeable improvement, a
+> meaningful fix, or a substantive new product message?**
 
-If yes, log it — right then, not when asked. Concrete signals that
+Being visible is necessary but not sufficient: the changelog is a record of
+what is newly useful or better for customers, not a complete policy,
+entitlement, or enforcement history. If yes, it is a logging candidate. Apply
+§2 before writing: log it as soon as you observe it live in production, not
+merely when the code is finished or the PR is merged. Concrete signals that
 should make you ask that question in the first place, tied to what you
 actually observe in a session:
 
@@ -30,6 +34,21 @@ actually observe in a session:
 - The user approved and shipped a change you built earlier in the
   session (a plan they signed off on, now live).
 
+Use the project's documented release path to establish that a change shipped.
+For an incremental improvement or fix to an established public flow, a
+successful production deployment (or a documented automatic-production merge)
+is normally enough to treat it as GA; it does not need an explicit "GA"
+label. Before logging, still check the task, PR, release note, or changed code
+for a beta, private preview, pilot, allowlist, feature flag, or
+selected-account/team gate. That explicit limited-availability evidence
+overrides the default.
+
+Do not apply that default to a newly named product, standalone launch, or
+major new capability. Those need positive GA evidence: a release announcement,
+rollout record, Product Brain/release registry, or creator confirmation. If
+that evidence is missing, collect such candidates and ask the creator together
+instead of treating "no beta flag found" as GA.
+
 Do **not** log:
 
 - internal refactors, code cleanup, dependency bumps, CI/tooling changes
@@ -37,6 +56,22 @@ Do **not** log:
 - test additions, internal documentation
 - anything not yet deployed — a merged-but-undeployed PR or a described
   plan isn't shipped
+- a beta, private preview, pilot, allowlisted rollout, or feature limited to
+  selected accounts or teams. Wait until it is generally available to its
+  intended audience; log the beta-to-GA transition, not the earlier rollout.
+- a change whose primary outcome is taking something away or making it
+  harder to access: a price increase, a reduced quota, a feature moved behind
+  a higher tier, a narrower eligibility rule, an account/API lock, or a
+  removal/deprecation. Do not disguise one as a benefit in the summary.
+
+If a restrictive change also includes a genuinely independent customer
+improvement, log only that separable improvement. If the positive wording
+would hide the material restriction, skip the whole candidate. The exception
+is a security, legal, or service-continuity change that customers must be
+notified about; in that case, ask the creator before logging a direct,
+plain-language notice. A skipped restriction can still require a Product
+Brain or support-document update — route that work to `vvibe-product-brain`;
+do not use a changelog entry as its proxy.
 
 ## 2. Log after it's live, not when planned
 
@@ -84,7 +119,23 @@ Good: "Free tier now includes 3 projects instead of 1."
 Bad: "Updated `PROJECT_LIMIT_FREE` from 1 to 3 and added a migration."
 
 If the change came out of a commit message or PR title, translate it —
-don't paste the git log line in as the summary.
+don't paste the git log line in as the summary. For historical work or work
+shipped by another team, a title is only a lead: verify the actual product
+surface, audience, and relevant conditions in the focused PR description,
+user-facing diff, tests, API contract, or release note before writing.
+Never infer a product name or flow from a payment provider, a component name,
+or another overloaded term in the title.
+
+Make a compact fact check before calling the tool:
+
+1. **Who** can use it?
+2. **What** customer-visible behaviour changed?
+3. **Where/when** does it apply, including material conditions?
+4. **Which focused source** proves each part?
+
+The changelog summary may contain only facts supported by that check. If the
+scope stays ambiguous after inspecting the focused evidence, skip the
+candidate or ask the creator together with the other unresolved candidates.
 
 ## 6. Picking `change_type`
 

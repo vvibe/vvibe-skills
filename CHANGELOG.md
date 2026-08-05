@@ -14,6 +14,23 @@ whole catalog, newest first, grouped by date.
 - Entry format: `- **skill x.y.z** — what changed (#PR)`. One commit touching
   several skills gets one line per bumped skill.
 
+## 2026-08-04
+
+- **vvibe-changelog 0.2.0** — on its first execution for an empty project,
+  atomically claims and scans the last two months of trustworthy shipping
+  history, groups customer-visible changes into the first changelog batch,
+  and preserves each shipped date. The durable claim prevents re-scans even
+  when a new project has no usable history; projects with entries stay on the
+  normal single-change flow. The scan uses the documented production delivery
+  path as availability evidence for incremental changes unless a beta,
+  preview, allowlist, or feature gate says otherwise; new products and major
+  launches require positive GA evidence. It excludes restrictive changes and
+  verifies each candidate's product surface, audience, behaviour, and
+  conditions from focused source evidence before writing. Its claim uses a
+  recoverable lease: successful scans are explicitly completed (including an
+  empty result), while interrupted scans can retry without duplicating a
+  completed backfill (VV-96) (#PR)
+
 ## 2026-07-24
 
 - **vvibe-changelog 0.1.0** — new skill: log user-visible product changes

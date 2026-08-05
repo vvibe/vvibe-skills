@@ -1,19 +1,20 @@
 ---
 name: vvibe-changelog
-version: 0.1.0
+version: 0.2.0
 manifest_version: 1
 description: Keeps VVibe's record of what the product does in sync with what actually shipped, so the Product Knowledge Base behind every generated email and blog post never goes stale. USE THIS SKILL WHENEVER YOU ARE ASKED TO CHANGE THE PRODUCT ITSELF — changing pricing, plan, or tier config; adding or changing a user-facing feature, page, screen, or flow; rewriting landing-page, positioning, or marketing copy; shipping a notable user-facing fix; enabling a feature flag for everyone; or running a deploy, release, or publish. Load it at the START of that work: do exactly what the user asked first, then, once the change is live, log one entry with `vibe_log_product_change` — the user will not remind you, and an unlogged change silently rots the Knowledge Base. Also triggers when the user says "I just shipped X" / "we launched Y" / "changed our pricing". Never log internal refactors, typo fixes, or work that isn't live yet. Trigger to ACT when another VVibe prose task (an email campaign, a blog post) surfaces a stale KB or unannounced major features — nudge a KB update first, then suggest announcing shipped features via email or blog. Trigger to WIRE a public feed when the user wants a public changelog / "what's new" page for their product — VVibe serves the data only; read `references/public-changelog.md` for the feed contract and wiring guidance.
 ---
 
 # VVibe Changelog Skill — Routing
 
-This file is a router. It decides which of the two directions you're in —
-**logging** a change, or **acting** on a staleness/announcement signal —
-then directs you to a single deep-dive in `references/`. Keep the flow
-detail in the referenced files, not here. When you load this skill: read
-this whole file, run the capability check in §2, then **read the matching
-`references/*.md`** for the flow you're on. Do not read every reference up
-front.
+This file is a router. It first handles a one-time initial-history backfill,
+then decides which of the two ongoing directions you're in — **logging** a
+change, or **acting** on a staleness/announcement signal — and directs you
+to a single deep-dive in `references/`. Keep the flow detail in the
+referenced files, not here. When you load this skill: read this whole file,
+run the capability check in §2, run the first-execution gate in §2.5, then
+**read the matching `references/*.md`** for the flow you're on. Do not read
+every reference up front.
 
 ## 1. What this skill does
 
@@ -65,11 +66,35 @@ you're also logging or acting this session.
 
 | Capability | How to detect | If missing |
 |---|---|---|
-| Changelog tools available | `vibe_log_product_change` (+ `vibe_get_product_changelog`, `vibe_mark_change_announced`) are in your tool list | **Two different cases — don't conflate them.** If you have NO `vibe_*` tools at all → VVibe isn't connected; have the creator connect it — fastest is `npx @vvibe/cli connect --server=https://mcp.vvibe.ai` (the first call opens a browser login, and sign-up is on that same page — full walkthrough in `ONBOARDING.md` at the repo root when present). If you have core `vibe_*` tools (e.g. `vibe_get_product_kb`) but NOT the changelog ones → you're connected but this skill isn't activated for the connection: call `vibe_report_skill_installed({ skillId: 'changelog', version: '<from this file's frontmatter>' })`. That registers the skill for your connection and the changelog tools become available on the same session (reconnect once if your MCP client caches the tool list). |
+| Changelog tools available | `vibe_claim_initial_product_changelog_backfill`, `vibe_complete_initial_product_changelog_backfill`, `vibe_log_product_change`, `vibe_get_product_changelog`, and `vibe_mark_change_announced` are in your tool list | **Two different cases — don't conflate them.** If you have NO `vibe_*` tools at all → VVibe isn't connected. For a new or unsure creator, first direct them to [the VVibe dashboard](https://vvibe.ai/dashboard) to sign in or create an account, then follow `ONBOARDING.md` at this repo's root when present. A creator who already has an account can connect directly with `npx @vvibe/cli connect --server=https://mcp.vvibe.ai` (the first call opens browser login). If you have core `vibe_*` tools (e.g. `vibe_get_product_kb`) but NOT the changelog ones → you're connected but this skill isn't activated for the connection: call `vibe_report_skill_installed({ skillId: 'changelog', version: '<from this file's frontmatter>' })`. That registers the skill for your connection and the changelog tools become available on the same session (reconnect once if your MCP client caches the tool list). |
 | Product Brain exists | `vibe_get_product_kb` returns non-null `data` | You can still log changes without a KB — logging doesn't depend on it. But the staleness signal is meaningless with no KB to compare against; if this is a brand-new account, mention routing to `vvibe-product-brain` once there's something worth building |
 
 Detect, don't interrogate: check tool availability yourself before asking
 the creator for anything.
+
+## 2.5 First-execution gate — always run this after §2
+
+Call `vibe_claim_initial_product_changelog_backfill({})` once, before
+choosing the usual log/act direction:
+
+- `shouldBackfill: false` — this project already has changelog entries, has a
+  completed initial scan, or another fresh agent is scanning now. **Do not
+  inspect historical records again**; continue straight to §3.
+- `shouldBackfill: true` plus `backfillToken` — this is the first execution
+  (or a reclaimed interrupted attempt) for a project with an empty changelog.
+  Read `references/initial-backfill.md`, perform the two-month scan, then call
+  `vibe_complete_initial_product_changelog_backfill({ backfill_token:
+  backfillToken })` once the scan has completed successfully — including when
+  it found no eligible history. Then continue to §3 in the same session.
+
+The claim is a recoverable lease. Do **not** complete it when repository access
+or historical inspection fails or is interrupted, a historical log call
+fails, or a high-value candidate's scope/release/GA status is unresolved; the
+lease can then be reclaimed later. On a reclaimed lease, follow
+`references/initial-backfill.md` to check the changelog before every
+candidate and skip already-recorded matches. A successful empty scan is
+different: complete it so a new project with no usable history does not
+rescan forever.
 
 ## 3. Pick where you are
 
@@ -98,11 +123,13 @@ stale — don't announce off stale content.
 
 Operate the changelog through the `vibe_*` MCP tools — they carry your
 VVibe connection token. There is no REST/API-key equivalent for these
-three; they're MCP-only, same posture as the blog-writer tools.
+five; they're MCP-only, same posture as the blog-writer tools.
 
 | Intent | MCP tool | Params | Notes |
 |---|---|---|---|
-| Log a shipped change | `vibe_log_product_change` | `{summary, change_type, significance, affected_kb_sections?}` | Returns `kbStale` and `suggestAnnouncement` |
+| Claim the initial history scan lease | `vibe_claim_initial_product_changelog_backfill` | `{}` | Returns `{shouldBackfill, backfillToken}`. When true, keep the token and scan history. |
+| Complete a successful initial history scan | `vibe_complete_initial_product_changelog_backfill` | `{backfill_token}` | Call after a successful scan, even if it logged nothing. Never call after an inaccessible or interrupted scan. |
+| Log a shipped change | `vibe_log_product_change` | `{summary, change_type, significance, affected_kb_sections?, occurred_at?}` | `occurred_at` is historical-backfill only; returns `kbStale` and `suggestAnnouncement` |
 | List the changelog / check staleness | `vibe_get_product_changelog` | `{limit?}` | Returns `{entries[], pending, kbLastUpdatedAt, unannouncedMajorFeatures[]}` |
 | Mark changes as announced | `vibe_mark_change_announced` | `{entry_ids: string[]}` | Call after the email/blog for those entries actually sent/published |
 
@@ -130,12 +157,39 @@ API).
   isn't loggable — only changes actually live in production.
 - **User-visible only.** No internal refactors, dependency bumps, or
   typo fixes — see `references/logging.md` §1 for the exact line.
+- **Changelog-worthy, not merely user-visible.** Record new or improved
+  customer value, meaningful fixes, and substantive product positioning.
+  Do not turn access restrictions, entitlement removals, price increases,
+  eligibility narrowing, account locks, or enforcement steps into release
+  notes. See `references/logging.md` §1 for the narrow exception and how to
+  keep the Product Brain accurate without publishing such a change.
+- **GA only, with the right evidence for the scope.** A documented automatic
+  production-deployment branch or a release/deployment record proves that a
+  change shipped. For an incremental improvement or fix to an established
+  public surface, that is normally sufficient unless the commit, PR, release
+  note, or code explicitly shows a beta, private preview, pilot, allowlist,
+  feature gate, or selected account/team rollout. A newly named product,
+  standalone launch, or major new capability needs positive GA evidence — a
+  release announcement, rollout record, Product Brain/release registry, or
+  creator confirmation — not merely the absence of a beta flag. A beta-to-GA
+  transition can then be logged as that availability change.
+- **Verify the product fact separately from release status.** A commit title
+  only discovers a candidate; it never proves the product, audience, flow, or
+  conditions to put in the summary. Before logging a historical or
+  other-team change, inspect its focused PR description, user-facing diff,
+  tests, API contract, or release note. State only facts that source supports;
+  if the scope remains unclear, skip it or ask the creator in one grouped
+  question.
 - **Soft nudges, not gates.** If the user declines a KB-sync or
   announce suggestion, proceed with whatever they were doing — don't
   re-nag in the same session.
 - **Dedup before logging if unsure.** Check
   `vibe_get_product_changelog` for a matching entry before calling
   `vibe_log_product_change` again for the same shipped change.
+- **Backfill is a one-time completed exception.** Run the §2.5 claim before
+  looking at history. Only `shouldBackfill: true` permits the two-month scan;
+  complete its token only after successful inspection (including zero eligible
+  records), and never create a synthetic entry just to mark a completed scan.
 - **Sync before announcing.** Announcement copy is generated from the
   KB — never draft an announcement from a KB you know is stale.
 
@@ -144,6 +198,7 @@ API).
 | File | Contains | Load when |
 |---|---|---|
 | `references/logging.md` | Self-detection checklist for recognizing your own shipped work (plus a session-close checkpoint), how to write a good `summary`, picking `change_type` / `significance` / `affected_kb_sections`, dedup check, what to do with the response. | direction = log |
+| `references/initial-backfill.md` | The first-run, two-month history scan: trustworthy source selection, grouping records into customer-visible changes, preserving each change's original date, and returning safely when there is no usable history. | §2.5 returns `shouldBackfill: true` |
 | `references/kb-sync-flow.md` | List pending changes → propose a KB update → write via `vibe_update_product_kb_section` → continue the original task. | staleness detected |
 | `references/announce-flow.md` | Sync the KB first → suggest an email campaign and/or blog post for unannounced major features → mark announced after send/publish. | unannounced major features |
 | `references/public-changelog.md` | The public, unauthenticated changelog feed (`GET /api/changelog/public/{merchantSlug}`) — what "announced" means for the feed, wiring it into the creator's own site or a third-party tool, a framework-agnostic fetch example, the 5-minute cache. | user wants a public changelog / "what's new" page |
