@@ -14,6 +14,18 @@ whole catalog, newest first, grouped by date.
 - Entry format: `- **skill x.y.z** — what changed (#PR)`. One commit touching
   several skills gets one line per bumped skill.
 
+## 2026-08-06
+
+- **vvibe-email 0.6.0** — recipients are no longer dashboard-only: the agent
+  can query the creator's own database for the segment they described, import
+  it into the campaign with the pulled columns registered as merge tags
+  (`vibe_import_campaign_recipients`), and save how the list was pulled so the
+  same segment can be refreshed later (`vibe_list_audience_segments` /
+  `vibe_save_audience_segment`). New `references/audience-segments.md` covers
+  offering a refresh of a segment the creator already built, read-only query
+  discipline, keeping the list out of the chat (PII), and batching past the
+  10,000-row request cap without silent truncation (VV-97) (#PR)
+
 ## 2026-08-04
 
 - **vvibe-changelog 0.2.0** — on its first execution for an empty project,
