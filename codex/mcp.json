@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "vvibe": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "https://mcp.vvibe.ai"]
+    }
+  }
+}

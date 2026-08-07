@@ -17,6 +17,13 @@ Both use the same account, so you can start with MCP and add a key later only if
 a skill needs it. Already connected, or have `VVIBE_API_KEY` in your env? You're
 set — skip this page.
 
+> **Installed the Claude Code plugin?** Then you are already connected — the
+> plugin ships the MCP server itself. **Do not run the connect command below**;
+> it would add a second `vvibe` server alongside the plugin's. Just start a
+> VVibe task and log in when the browser opens, then jump to
+> [product basics](#after-connecting-set-your-product-basics). See
+> [README](./README.md#installation) for install and update commands.
+
 ## Fastest: connect over MCP (one command, one login)
 
 Run one command. It writes VVibe's MCP server into your agent's own config — and
@@ -84,7 +91,11 @@ Recommend the fastest path first:
    Codex). It's one command; the first VVibe call opens the browser to log in,
    and sign-up is on that same page — so this single step both **creates the
    account and connects**, with no key to copy and no trip back to the dashboard.
-   This is the one-click path — prefer it.
+   This is the one-click path — prefer it. On Claude Code you may instead offer
+   the plugin (`/plugin marketplace add vvibe/vvibe-skills` then
+   `/plugin install vvibe@vvibe`), which installs the skills and the MCP server
+   together — but never both: a plugin install already provides the server, so
+   running the connect command on top of it duplicates it.
 2. **Fall back to the API key only when needed** — the user needs a key-only
    capability (member sync), is self-hosting token-only, or declines MCP. Then
    walk them through the API-key steps above.

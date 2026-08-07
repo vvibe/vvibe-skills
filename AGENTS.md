@@ -154,6 +154,78 @@ of `CHANGELOG.md`.
 
 ## End-User Installation
 
+Two paths, and users must pick exactly one (both = duplicate skills):
+
 ```bash
-npx skills add vvibe/vvibe-skills
+npx skills add vvibe/vvibe-skills          # any agent: Codex, Cursor, Claude Code
+```
+
+```text
+/plugin marketplace add vvibe/vvibe-skills # Claude Code: skills + MCP in one
+/plugin install vvibe@vvibe
+```
+
+Codex can install the plugin too, but only from a clone of this repo — see
+below.
+
+## Plugin Packaging (Claude Code + Codex)
+
+This repo root **is** the plugin for both hosts, so the existing `skills/` tree
+is shipped as-is — there is no second copy to keep in sync. Each host wants its
+own manifest pair, because the two plugin formats are not the same file:
+
+```text
+.claude-plugin/marketplace.json   # Claude marketplace, entry source: "./"
+.claude-plugin/plugin.json        # Claude manifest
+.mcp.json                         # HTTP MCP — Claude speaks it directly
+.agents/plugins/marketplace.json  # Codex marketplace (agent-plugins.org shape)
+.codex-plugin/plugin.json         # Codex manifest
+codex/mcp.json                    # same server over stdio via mcp-remote
+hooks/claude-codex-hooks.json     # shared by both manifests
+skills/                           # shared by both, unmodified
+```
+
+Three things to know before editing:
+
+- **Codex speaks MCP over stdio only**, so it cannot use `.mcp.json`. Its
+  manifest points at `codex/mcp.json`, which bridges the same URL through
+  `npx -y mcp-remote` — exactly what `@vvibe/cli`'s codex adapter writes into
+  `~/.codex/config.toml`. One server, two transports; keep the URL in sync.
+- **Both `plugin.json` files carry a version — bump them together.** The check
+  below fails if they drift.
+- **Hooks are shared, not per-host.** Both hosts accept the same
+  `hookSpecificOutput.additionalContext` output, so one file serves both. Every
+  hook needs a `commandWindows` PowerShell variant — a POSIX-only `command`
+  silently never fires for the large Windows share of this audience — and must
+  degrade to a no-op when `node` is missing rather than failing the tool call.
+
+### The changelog nudge
+
+`hooks/changelog-nudge.js` runs on `PostToolUse(Bash)` and, after a successful
+`git commit` whose subject isn't a `chore:`/`docs:`/`test:`-style internal one,
+injects a reminder to log the change with `vibe_log_product_change`.
+
+It exists because **vvibe-changelog's trigger is after-the-fact**, and an
+after-the-fact trigger written into a `SKILL.md` reliably never fires: at the
+moment the change becomes loggable, nothing has pulled the skill into context.
+This is the one class of behaviour skills structurally cannot do, and the only
+reason the plugin is worth more than `npx skills add`. Hold new hooks to the
+same bar — a deterministic moment a skill provably cannot catch.
+
+Logic and hook plumbing are separate so the parsing is testable without a live
+session: `nudgeFor({command, stdout})` is pure, and `hooks/*.check.js` covers
+it. The check script rejects any hook script that lacks a matching
+`.check.js`.
+
+The MCP URL is hardcoded in both, so self-hosters take the `npx skills add`
+path plus `npx @vvibe/cli connect --server=<host>`. Codex's marketplace entry
+is a `local` source, which means the user must clone this repo for Codex to
+discover it — so `npx skills add` also stays the recommended Codex path until a
+remote marketplace source is available.
+
+After touching any manifest or hook:
+
+```bash
+node scripts/check-plugin.mjs
+node hooks/changelog-nudge.check.js
 ```
