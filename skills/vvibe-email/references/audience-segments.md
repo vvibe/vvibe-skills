@@ -37,7 +37,9 @@ Say that plainly instead of inventing a date or reporting zero people:
 > You have **Taiwan paid actives** saved — `plan = pro AND region = TW` — but
 > it has never actually been run, so there's no count yet. Run it now?
 
-Then wait for the answer before pulling anything. If something else is
+Then wait for the answer before pulling any rows — you may run a `count(*)`
+to make the question concrete (see rule 4 below), but the recipient rows come
+out only after they choose. If something else is
 blocking the send (no production credentials, an unresolved CTA, missing
 copy), raise it *after* the segment line — a blocker doesn't excuse skipping
 the question, and the creator can often answer both in one reply.
@@ -82,24 +84,35 @@ The creator's database is production data. Rules, in order:
    you pull rows — an aggregate returns no personal data and reaches nobody, so
    it doesn't need approval; it is what makes the approval meaningful ("this
    matches 412 people — right?"). Approval gates the row pull, not the count.
-5. **Confirm the rules before the run that counts.** Read the conditions back
-   in the creator's own words and get a yes. A wrong segment sends a real email
-   to real people.
+5. **Confirm the rules before pulling the rows.** Read the conditions back in
+   the creator's own words and get a yes. A wrong segment sends a real email to
+   real people. The `rowCount` / run date you save belong to the approved row
+   pull — a scoping `count(*)` is not a run and must not stamp one.
 6. **Pull the columns the copy needs, in the same query.** Plan name, region,
    last login — each becomes a merge tag. Going back for a second pull means
    two chances to disagree with yourself.
 
 ## Don't put the list in the chat
 
-The names and addresses are the creator's customers' personal data. Report:
+The names and addresses are the creator's customers' personal data. Report the
+**shape of the pull**, never the people in it:
 
 - the **count** ("412 people"),
-- **2–3 de-identified samples** to prove the shape (`j•••@gmail.com — pro, TW`),
+- the **spread** that proves you pulled the right thing — domain mix ("mostly
+  gmail.com, 39% company domains"), and the merge-tag values the rows carry
+  ("every row has `plan=pro`, `country=TW`"),
 - the **column names** you'll expose as merge tags.
+
+Masking an address is not de-identifying it: `j•••@gmail.com — pro, TW` still
+carries a prefix, a domain, and two attributes, which in a small segment is
+enough to name someone. If you want an example row in the chat at all, make it
+synthetic (`user@example.invalid — pro, TW`) and say that it is.
 
 Never paste the full list, never dump raw rows, and don't write the list to a
 file in their repo. It goes from the query straight into
-`vibe_import_campaign_recipients`.
+`vibe_import_campaign_recipients`. When the creator wants to eyeball actual
+people, the Recipients tab in the dashboard already shows them — that's where
+the data belongs, not in a transcript.
 
 ## Importing
 
@@ -142,9 +155,10 @@ vibe_import_campaign_recipients({
 `vibe_save_audience_segment` is the same store without an import: use it to
 name a segment you agreed on but haven't run, to correct a `definition` after
 the creator clarifies the rules, or to rename one. Only pass `rowCount` if you
-actually ran the query — it stamps the run date the creator reads back later.
-A segment saved this way stays at `lastRunAt: null` until a real run, which is
-what the "never been run" line above reads back.
+actually pulled the rows — it stamps the run date the creator reads back later.
+A scoping `count(*)` doesn't count: a segment saved this way stays at
+`lastRunAt: null` until an approved pull, which is what the "never been run"
+line above reads back.
 
 ## Then finish the normal send flow
 
@@ -169,15 +183,17 @@ plan renders empty, which reads as a bug in their product.
 2. Read the project's schema: `users(email, plan, country, last_login_at,
    marketing_opt_in, deleted_at)`.
 3. Propose: `plan = 'pro' AND country = 'TW' AND marketing_opt_in = true AND
-   deleted_at IS NULL`. `count(*)` → 412. Read that back, get a yes.
-4. Pull 412 rows with `email`, `name`, `plan`, `country`.
+   deleted_at IS NULL`; `count(*)` → 412 to make it concrete. Read both back,
+   get a yes.
+4. Pull the 412 approved rows and map each one into the import shape:
+   `{ email, displayName: name, columnData: { plan, country } }`.
 5. `vibe_import_campaign_recipients({ campaignId, rows, headers, segment: {
    name: 'Taiwan paid actives', definition: "users table: plan='pro',
    country='TW', marketing_opt_in, not deleted; columns plan + country as
    merge tags" } })` → imported 412.
-6. Report: "412 people, e.g. j•••@gmail.com — pro, TW. `{plan}` and
-   `{country}` are available in the body." Then the normal CTA-resolve →
-   confirm → send.
+6. Report: "412 people, all `plan=pro` / `country=TW`, mostly gmail.com
+   addresses. `{plan}` and `{country}` are available in the body." Then the
+   normal CTA-resolve → confirm → send.
 
 Next month, step 1 finds the segment and the conversation starts with
 "refresh 412, or new?" instead of rebuilding the query from scratch.
