@@ -144,12 +144,16 @@ project isn't TypeScript.
 
 - `outcome` — `created` on the first event for this address, `updated` on a
   repeat. The welcome email only fires on `created`.
-- `refCodeError` — `null`, or `unknown_signup_ref_code` (the code doesn't
-  exist / is disabled / is past `redeemBy` — dropped, signup still recorded),
-  or `signup_ref_code_already_recorded` (a different code was already on file;
-  first-write-wins kept the original).
+- `refCodeError` — one of:
+  - `null` — accepted, or none supplied
+  - `unknown_signup_ref_code` — the code doesn't exist / is disabled / is past
+    `redeemBy`. Dropped; signup still recorded.
+  - `signup_ref_code_already_recorded` — a different code was already on file;
+    first-write-wins kept the original.
+  - `ref_code_lookup_unavailable` — VVibe couldn't check right now, so it kept
+    the code rather than risk discarding a good one permanently.
 
-Neither ref-code error fails the signup. Since the call is fire-and-forget,
+No ref-code error fails the signup. Since the call is fire-and-forget,
 you won't normally read the body — log it if the creator wants to debug why a
 referral didn't apply.
 

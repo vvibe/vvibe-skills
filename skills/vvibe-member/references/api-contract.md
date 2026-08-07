@@ -60,7 +60,7 @@ stored.
 |---|---|
 | `recorded` | Always `true` on 200. |
 | `outcome` | `created` — first event for this address; the welcome email fires. `updated` — already known; no email. |
-| `refCodeError` | `null`, `unknown_signup_ref_code`, or `signup_ref_code_already_recorded`. |
+| `refCodeError` | `null`, `unknown_signup_ref_code`, `signup_ref_code_already_recorded`, or `ref_code_lookup_unavailable`. |
 
 **`refCodeError` values:**
 
@@ -69,8 +69,14 @@ stored.
 - `signup_ref_code_already_recorded` — a different code is already on file for
   this address. The original is kept (first-write-wins); the new one is
   dropped.
+- `ref_code_lookup_unavailable` — VVibe could not check the code right now.
+  The code **is** recorded rather than dropped: since first-write-wins makes
+  the decision permanent, discarding a good code over a transient blip would
+  lock this address out of it forever. Checkout re-resolves the code against
+  the live discount table anyway, so one that turns out to be invalid simply
+  never applies.
 
-Neither blocks the signup.
+None of them block the signup.
 
 **Side effects on `outcome: "created"`:**
 
