@@ -165,9 +165,9 @@ export default function WaitlistForm({ creatorSlug, ref, utm }: Props) {
       }
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       setStatus('done')
-      // Optional: fire-and-forget user sync to VVibe Dashboard.
-      // import { syncToVVibe } from '@/lib/vvibe-member-sync'
-      // syncToVVibe([{ email, name }]).catch(console.error)
+      // Optional: fire-and-forget signup event to VVibe.
+      // import { notifyVVibeSignup } from '@/lib/vvibe-signup'
+      // notifyVVibeSignup({ email, display_name: name }).catch(console.error)
     } catch (err) {
       setStatus('error')
       setErrorMessage(err instanceof Error ? err.message : 'Unknown error')
@@ -300,18 +300,18 @@ Add the route: `<Route path="/waitlist/:creatorSlug" element={<WaitlistPage />} 
 </html>
 ```
 
-## Wiring to VVibe User Sync
+## Wiring to the VVibe signup event
 
-After a successful POST, fire-and-forget a sync so the new follower also appears in the creator's user list (not just the waitlist):
+After a successful POST, fire-and-forget a signup event so VVibe can send the welcome email and stamp campaign analytics (not just record the waitlist row):
 
 ```ts
 // fire-and-forget — never block the success message on this
-syncToVVibe([{ email, name, status: 'active' }]).catch((err) =>
-  console.error('[VVibe Sync]', err)
+notifyVVibeSignup({ email, display_name: name }).catch((err) =>
+  console.error('[VVibe signup]', err)
 )
 ```
 
-`syncToVVibe` lives in your codebase if you've already integrated `vvibe-member`. If not, install that skill (`npx skills add vvibe/vvibe-skills --skill vvibe-member`) to generate the helper.
+`notifyVVibeSignup` lives in your codebase if you've already integrated `vvibe-member`. If not, install that skill (`npx skills add vvibe/vvibe-skills --skill vvibe-member`) to generate the helper.
 
 ## Common Mistakes
 

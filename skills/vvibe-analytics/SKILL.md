@@ -1,6 +1,6 @@
 ---
 name: vvibe-analytics
-version: 0.4.1
+version: 0.4.2
 description: Help VVibe creators install web analytics on their websites — Google Analytics 4 (GA4), PostHog (cloud or self-hosted), or Mixpanel — set up VVibe's canonical event tracking against a provider-neutral contract, and connect GA4 to VVibe for viewing dashboards. Covers utm tracking & traffic-source attribution, conversion funnels, identity/user_id, and event deduplication. For signup-time first-touch attribution, see the vvibe-member skill. Trigger when the user mentions analytics, tracking, Google Analytics, GA4, PostHog, Mixpanel, product analytics, funnels, retention, website traffic, event tracking, utm tracking, traffic source, referral attribution, or wants to connect analytics to VVibe.
 ---
 
@@ -65,9 +65,9 @@ analysis: "how many sessions came from `utm_source=insforge` last month?"
 
 For **signup-time first-touch attribution** — pinning each individual user record
 to the source that originally brought them — use the **`vvibe-member` skill's
-Step 7**. That skill walks through adding a `user_attribution` table, a
-middleware that captures utm/referrer to a 30-day cookie, and a signup hook that
-snapshots the cookie to the DB so every user has a permanent
+`attribution-utm` mode**. That mode walks through adding a `user_attribution`
+table, a middleware that captures utm/referrer to a 30-day cookie, and a signup
+hook that snapshots the cookie to the DB so every user has a permanent
 `(utm_source, utm_medium, utm_campaign, referrer)` of record.
 
 Both layers are useful and complementary: the analytics provider tells you

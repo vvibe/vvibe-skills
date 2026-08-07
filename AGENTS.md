@@ -16,10 +16,10 @@ skills/
     SKILL.md                  # Skill definition (entry point)
     references/               # GA4 setup guide, event tracking contract
     scripts/                  # gtag.js and event tracking examples (.mjs)
-  vvibe-member/             # Member sync and management
+  vvibe-member/             # Signup events, attribution, inbound webhooks
     SKILL.md                  # Skill definition (entry point)
-    references/               # User sync API contract
-    scripts/                  # Migration and sync examples (.mjs)
+    references/               # Signup-event API contract
+    scripts/                  # Signup-event example (.mjs)
   vvibe-email/              # Invitation email + waitlist landing
     SKILL.md                  # Skill definition (entry point)
     references/               # Hosted-CTA / self-hosted waitlist / campaign sending
