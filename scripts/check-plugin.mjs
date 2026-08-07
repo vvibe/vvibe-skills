@@ -54,7 +54,13 @@ for (const c of commands) {
   // Windows users are a large share of the audience: a POSIX-only hook would
   // silently never fire for them.
   assert.ok(c.commandWindows, 'every hook needs a commandWindows variant')
-  for (const script of [...c.command.matchAll(/hooks\/([\w.-]+\.js)/g)].map((m) => m[1])) {
+  // Scan BOTH variants — the Windows one uses backslashes, and a script named
+  // only there would otherwise go unvalidated.
+  const scripts = [c.command, c.commandWindows].flatMap((cmd) =>
+    [...cmd.matchAll(/hooks[/\\]([\w.-]+\.js)/g)].map((m) => m[1]),
+  )
+  assert.ok(scripts.length > 0, `hook "${c.statusMessage}" references no hooks/*.js script`)
+  for (const script of scripts) {
     assert.ok(existsSync(`hooks/${script}`), `hook references missing hooks/${script}`)
     assert.ok(existsSync(`hooks/${script.replace(/\.js$/, '.check.js')}`), `hooks/${script} has no .check.js`)
   }

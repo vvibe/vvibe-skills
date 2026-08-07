@@ -18,16 +18,47 @@ const INTERNAL = /^(chore|docs?|test|tests|style|refactor|ci|build|perf|revert)(
 // out of the command line.
 const COMMITTED = /^\[[^\]\s]+ +[0-9a-f]{7,40}\] +(.+)$/m
 
+/**
+ * Subject of HEAD. Only consulted for `git commit -q`, which succeeds while
+ * printing nothing at all, so there is no summary line to read.
+ *
+ * execFileSync with an argument array, never a shell string — the cwd comes
+ * from the hook payload and must not reach a shell.
+ */
+function headSubject(cwd) {
+  try {
+    return require('node:child_process')
+      .execFileSync('git', ['log', '-1', '--pretty=%s'], {
+        cwd: cwd || undefined,
+        encoding: 'utf8',
+        timeout: 2000,
+        stdio: ['ignore', 'pipe', 'ignore'],
+      })
+      .trim()
+  } catch {
+    return ''
+  }
+}
+
 /** @returns {string|null} context to inject, or null to stay quiet */
-function nudgeFor({ command = '', stdout = '' } = {}) {
+function nudgeFor({ command = '', stdout = '', stderr = '', cwd = '' } = {}, readSubject = headSubject) {
   if (!/\bgit\b[^|;&]*\bcommit\b/.test(command)) return null
   // An amend re-commits work that was already nudged once.
   if (/--amend/.test(command)) return null
 
   const m = COMMITTED.exec(stdout)
-  if (!m) return null // failed, aborted, or nothing to commit
+  let subject
+  if (m) {
+    subject = m[1].trim()
+  } else if (stdout.trim() === '' && stderr.trim() === '') {
+    // Silence is how `git commit -q` reports success. Every failure path
+    // (nothing to commit, bad pathspec, hook rejection) says so on one stream
+    // or the other, so anything printed that ISN'T the summary line means no
+    // commit was made — fall through to null below.
+    subject = readSubject(cwd)
+  }
+  if (!subject) return null
 
-  const subject = m[1].trim()
   if (INTERNAL.test(subject)) return null
 
   return [
@@ -54,6 +85,8 @@ if (require.main === module) {
       const context = nudgeFor({
         command: e.tool_input?.command,
         stdout: e.tool_response?.stdout,
+        stderr: e.tool_response?.stderr,
+        cwd: e.cwd,
       })
       if (context) {
         process.stdout.write(

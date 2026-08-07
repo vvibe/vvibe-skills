@@ -8,7 +8,7 @@ AI agent skills for [VVibe](https://vvibe.ai) creators. Integrate VVibe services
 
 **Claude Code** — one install, skills + MCP server together:
 
-```
+```text
 /plugin marketplace add vvibe/vvibe-skills
 /plugin install vvibe@vvibe
 ```
@@ -16,10 +16,12 @@ AI agent skills for [VVibe](https://vvibe.ai) creators. Integrate VVibe services
 Nothing else to run: the MCP server ships with the plugin, and the first tool
 call opens your browser to log in (sign-up is on that page).
 
-The plugin also adds one thing skills can't do on their own — after you commit a
-user-visible change, it reminds your agent to log it to your changelog, so VVibe
-can spot a stale Product Knowledge Base and offer to announce the change.
-Internal commits (`chore:`, `docs:`, `test:`…) stay quiet.
+The plugin also adds one thing skills can't do on their own: after a successful
+`git commit`, it reminds your agent to log the change to your changelog — so
+VVibe can spot a stale Product Knowledge Base and offer to announce it. Commits
+whose subject marks them internal (`chore:`, `docs:`, `test:`, `refactor:`,
+`style:`, `ci:`, `build:`, `perf:`, `revert:`) and `--amend` stay quiet, and
+your agent decides whether what it just committed is worth logging at all.
 
 **Any agent** (Codex, Cursor, Claude Code) — skills only, then connect
 separately as described below:

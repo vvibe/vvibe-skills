@@ -8,14 +8,14 @@
 
 **Claude Code** — 一次安裝，skill 與 MCP server 一起裝好：
 
-```
+```text
 /plugin marketplace add vvibe/vvibe-skills
 /plugin install vvibe@vvibe
 ```
 
 不用再跑其他指令：MCP server 隨 plugin 一起附上，第一次呼叫工具時會開瀏覽器帶你登入（註冊也在那一頁）。
 
-plugin 還多了一件 skill 本身做不到的事：當你 commit 了使用者看得到的變更，它會提醒你的 agent 把這筆變更記進 changelog，VVibe 就能發現產品知識庫過期、並提議對外公告。內部性的 commit（`chore:`、`docs:`、`test:`…）不會出聲。
+plugin 還多了一件 skill 本身做不到的事：`git commit` 成功後，它會提醒你的 agent 把這筆變更記進 changelog，VVibe 就能發現產品知識庫過期、並提議對外公告。commit 標題被標為內部性質的（`chore:`、`docs:`、`test:`、`refactor:`、`style:`、`ci:`、`build:`、`perf:`、`revert:`）以及 `--amend` 都不會出聲；至於剛剛提交的東西值不值得記，由你的 agent 判斷。
 
 **任何 agent**（Codex、Cursor、Claude Code）— 只裝 skill，再依下面說明另外連線：
 

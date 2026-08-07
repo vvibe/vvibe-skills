@@ -21,6 +21,16 @@ assert.ok(ok('documented pricing is now live'), 'must not match on prefix letter
 // No commit line in stdout = the commit did not happen.
 assert.equal(nudgeFor({ command: 'git commit -m "x"', stdout: 'nothing to commit, working tree clean' }), null)
 assert.equal(nudgeFor({ command: 'git commit -m "x"', stdout: 'error: pathspec did not match' }), null)
+// ...including when git said so on stderr instead.
+assert.equal(nudgeFor({ command: 'git commit -q', stderr: 'error: could not commit' }, () => 'feat: x'), null)
+
+// `git commit -q` succeeds while printing nothing, so the subject has to come
+// from HEAD instead of the (absent) summary line.
+const quiet = nudgeFor({ command: 'git commit -q -m "x"' }, () => 'feat(billing): annual plans')
+assert.ok(quiet && quiet.includes('feat(billing): annual plans'), 'quiet commit must still nudge')
+assert.equal(nudgeFor({ command: 'git commit -q' }, () => 'chore: bump'), null, 'quiet filters too')
+// An unreadable HEAD (not a repo, git missing) stays quiet rather than throwing.
+assert.equal(nudgeFor({ command: 'git commit -q' }, () => ''), null)
 
 // Amends re-commit already-nudged work.
 assert.equal(ok('feat: thing', 'git commit --amend --no-edit'), null)

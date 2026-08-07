@@ -160,7 +160,7 @@ Two paths, and users must pick exactly one (both = duplicate skills):
 npx skills add vvibe/vvibe-skills          # any agent: Codex, Cursor, Claude Code
 ```
 
-```
+```text
 /plugin marketplace add vvibe/vvibe-skills # Claude Code: skills + MCP in one
 /plugin install vvibe@vvibe
 ```
@@ -174,7 +174,7 @@ This repo root **is** the plugin for both hosts, so the existing `skills/` tree
 is shipped as-is — there is no second copy to keep in sync. Each host wants its
 own manifest pair, because the two plugin formats are not the same file:
 
-```
+```text
 .claude-plugin/marketplace.json   # Claude marketplace, entry source: "./"
 .claude-plugin/plugin.json        # Claude manifest
 .mcp.json                         # HTTP MCP — Claude speaks it directly
