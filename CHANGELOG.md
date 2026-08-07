@@ -34,7 +34,7 @@ whole catalog, newest first, grouped by date.
   an after-the-fact trigger in a SKILL.md never fires because nothing has pulled
   the skill into context by then. `node scripts/check-plugin.mjs` and
   `node hooks/changelog-nudge.check.js` guard the wiring and the parsing. No
-  skill versions bumped (#PR)
+  skill versions bumped (#37)
 
 ## 2026-08-06
 
