@@ -1,6 +1,6 @@
 ---
 name: vvibe-email
-version: 0.6.0
+version: 0.7.0
 manifest_version: 1
 description: Help VVibe creators wire invitation-email integration end-to-end — where the email CTA lands (VVibe-hosted, self-hosted waitlist, or direct register), how to send campaigns via Vibe MCP, how to pull a recipient segment out of the creator's own database and import it into a campaign (saved as a reusable segment definition), and how to manage system + follower-flow email templates. When drafting campaign copy, reads the creator's Product Brain (`vibe_get_product_kb`) for brand voice, value prop, audience, and forbidden claims so the email matches the brand and avoids legal landmines. Trigger when the user mentions invitation emails, follower outreach campaigns, sending an email blast, drafting an email campaign, waitlist signup landing page, app base URL, embedding a waitlist CTA, skipping the waitlist when a member system already exists, or asks where the registration email link lands, or asks to email a particular slice of their users (paying members, a region, recently active) rather than a list they already have.
 
@@ -37,7 +37,7 @@ loses click analytics.
 
 **Out of scope for this skill.** Inbound webhooks (click / open / signup
 event callbacks to the creator's app) are NOT covered here — that's the
-vvibe-member skill's `inbound-webhook` mode (planned, not yet shipping).
+vvibe-member skill's `inbound-webhook` mode.
 This skill is outbound email only: where the CTA lands, how to send
 campaigns, and which templates fire on what triggers.
 
@@ -51,7 +51,7 @@ Detect from the project. Don't ask if you can find out.
 | `has_public_https_endpoint` | Deployed (Vercel / Fly / Render) OR known prod domain. Localhost-only ⇒ false. | self-hosted-waitlist, direct-register |
 | `has_signup_flow` | Discoverable registration handler (route file or auth-provider hook). | direct-register |
 | `has_api_key_local` | `VVIBE_API_KEY` in `.env*` or framework env. | all three click destinations + REST fallbacks |
-| `outbound_sync_wired` | Grep for `POST /api/members/sync` or `syncToVVibe` helper. See vvibe-member skill. | direct-register (required), self-hosted-waitlist (recommended) |
+| `signup_event_wired` | Grep for `POST /api/members/signup-event` or a `notifyVVibeSignup` helper. See vvibe-member skill. | direct-register (required), self-hosted-waitlist (recommended) |
 | `vibe_mcp_connected` | `vibe_*` tools registered on this session. | mcp-campaign only |
 | `product_brain_exists` | `vibe_get_product_kb` returns non-null `data`. The brain tools are always registered (no skill gate), so this read works even if only the email skill is installed — building it still needs vvibe-product-brain. | mcp-campaign (drafting copy) |
 
@@ -108,11 +108,12 @@ modes:
       - "I already have user signup"
       - "inviteRedirectPath"
       - "direct register"
-    requires: [has_server_runtime, has_signup_flow, has_api_key_local, outbound_sync_wired]
+    requires: [has_server_runtime, has_signup_flow, has_api_key_local, signup_event_wired]
     wired_check: >
-      `outbound_sync_wired` = grep for `syncToVVibe` or `POST /api/members/sync`
-      in the project. If absent, route to vvibe-member skill outbound-sync
-      mode FIRST — direct-register cannot stamp campaign analytics without it.
+      `signup_event_wired` = grep for `notifyVVibeSignup` or
+      `POST /api/members/signup-event` in the project. If absent, route to the
+      vvibe-member skill's signup-event mode FIRST — direct-register cannot
+      stamp campaign analytics without it.
     load: references/direct-register.md
 
   mcp-campaign:
@@ -166,15 +167,15 @@ recipes:
     description: >
       Recommended for any app that already has user accounts.
       Direct-register lands invitation clicks on the existing signup
-      page; outbound-sync (vvibe-member) must be wired first so
+      page; the signup event (vvibe-member) must be wired first so
       campaign analytics' signedUp count populates.
-    prerequisite: [vvibe-member: outbound-sync]
+    prerequisite: [vvibe-member: signup-event]
     load_in_order: [direct-register]
     optional: [mcp-campaign]
 
   production-launch:
     description: "Direct-register click destination + MCP campaign authoring + analytics."
-    prerequisite: [vvibe-member: outbound-sync]
+    prerequisite: [vvibe-member: signup-event]
     load_in_order: [direct-register, mcp-campaign]
 ```
 
@@ -211,7 +212,7 @@ disambiguators:
 
       - **A. Hosted waitlist (fastest launch)** — VVibe hosts the page. No backend code.
       - **B. Self-hosted waitlist (brand consistency)** — host `/waitlist/[creatorSlug]` on your own domain.
-      - **C. Direct register (skip the waitlist)** — recommended if your app already has signup. Clicks land directly on `/signup` (or wherever). Requires `appBaseUrl` + `inviteRedirectPath`, and you'll need to call `syncToVVibe` after signup so campaign analytics' `signedUp` count populates.
+      - **C. Direct register (skip the waitlist)** — recommended if your app already has signup. Clicks land directly on `/signup` (or wherever). Requires `appBaseUrl` + `inviteRedirectPath`, and you'll need to fire the VVibe signup event after signup so campaign analytics' `signedUp` count populates.
 
       Which fits your setup?
     map:
@@ -273,7 +274,7 @@ HTTPS on `appBaseUrl`.
 - Use the vibe coder's existing framework and language.
 - For hosted-cta, prefer one short paragraph + the CTA URL. No code.
 - For self-hosted-waitlist, lean on the framework templates in the reference.
-- For direct-register, focus on `inviteRedirectPath` config + the post-signup `syncToVVibe` call.
+- For direct-register, focus on `inviteRedirectPath` config + the post-signup signup-event call.
 - Keep secrets out of chat — write `.env` instructions instead.
 - Always confirm the chosen mode before configuration calls (especially
   `vibe_update_brand` / `PUT /api/store-config`) — switching modes is
@@ -285,7 +286,7 @@ HTTPS on `appBaseUrl`.
 |---|---|---|
 | `references/hosted-cta.md` | Mode A: CTA URL template, placement examples (HTML / React / email signature). | mode = hosted-cta |
 | `references/self-hosted-waitlist.md` | Mode B: full implementation contract + templates for Next.js, React SPA, and plain HTML. | mode = self-hosted-waitlist |
-| `references/direct-register.md` | Mode C: `inviteRedirectPath` configuration, attribution params, post-signup `syncToVVibe` wiring. | mode = direct-register |
+| `references/direct-register.md` | Mode C: `inviteRedirectPath` configuration, attribution params, post-signup signup-event wiring. | mode = direct-register |
 | `references/sending-campaigns.md` | Reads the Product Brain first to ground subject + body, then MCP campaign tools: list / create / update / send / analytics, with body templates and outcome handling. | mode = mcp-campaign |
 | `references/audience-segments.md` | Recipients: check for a segment the creator already built, query their own database read-only, keep the list out of the chat, import it with merge-tag columns, and save the definition so it can be refreshed. | mode = mcp-campaign, whenever *who* receives the email is in question |
 | `references/email-types.md` | Reference: system vs follower-flow email categories, disable/edit flow, avoiding double-emails. | shared reference; load on demand when discussing welcome / cancellation emails or disabling templates. |

@@ -14,6 +14,30 @@ whole catalog, newest first, grouped by date.
 - Entry format: `- **skill x.y.z** — what changed (#PR)`. One commit touching
   several skills gets one line per bumped skill.
 
+## 2026-08-07
+
+- **vvibe-member 0.6.0** — stop mirroring the creator's user table. The
+  `outbound-sync` and `query-read` modes are **removed** and replaced by a
+  single `signup-event` mode: one fire-and-forget call at registration
+  carrying email, display name, ref code and attribution. No login /
+  profile-update / deletion hooks, no backfill, no member list to read back.
+  The mirror only ever existed to pick an email audience, and
+  `vvibe-email`'s audience segments already do that better by querying the
+  creator's own database live. `scripts/sync_user.mjs` → `signup_event.mjs`;
+  `api-contract.md` now documents `POST /api/members/signup-event` (the old
+  `/api/members/sync` still forwards to it so deployed apps don't silently
+  drop signups, but the four read endpoints are gone). §5 of the SKILL.md
+  tells the agent what to say when someone asks for the removed features.
+- **vvibe-email 0.7.0** — the `outbound_sync_wired` capability is now
+  `signup_event_wired` (greps for `notifyVVibeSignup` /
+  `POST /api/members/signup-event`); direct-register and self-hosted-waitlist
+  fire the signup event instead of `syncToVVibe`. Dropped the
+  "disable welcome_free before backfilling" guidance — there is no backfill
+  to protect against any more.
+- **vvibe-analytics 0.4.2** — point first-touch attribution at the
+  vvibe-member `attribution-utm` mode instead of a step number that no
+  longer exists.
+
 ## 2026-08-06
 
 - **vvibe-email 0.6.0** — recipients are no longer dashboard-only: the agent

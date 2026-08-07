@@ -51,7 +51,7 @@ MCP connection nor a key, it steers you to the one-command connect above first.
 | Skill | Description | Triggers |
 |-------|-------------|----------|
 | **vvibe-analytics** | GA4 analytics setup, VVibe event tracking, and dashboard connection | `GA4`, `Google Analytics`, `event tracking` |
-| **vvibe-member** | User sync to VVibe — migration, incremental sync, and dashboard viewing | `user sync`, `member sync`, `user management` |
+| **vvibe-member** | Tell VVibe when someone registers — referral codes, welcome emails, signup attribution, and VVibe-side event webhooks | `signup event`, `member integration`, `ref code`, `signup attribution` |
 | **vvibe-sentry** | Pre-deploy codebase security audit — orchestrates gitleaks, osv-scanner, semgrep, plus VVibe-integration checks. Reports back to the dashboard. | `VVibe sentry scan`, `security audit`, `pre-deploy check`, `secret leak`, `dependency CVE` |
 | **vvibe-email** | Wire invitation-email registration links to either a VVibe-hosted CTA (zero setup) or a self-hosted waitlist landing page on the vibe coder's own domain | `invitation email`, `waitlist landing page`, `app base URL` |
 | **vvibe-product-brain** | Build or refresh the creator's Product Brain on VVibe — extract structured product facts from a repo, public site, or document set, then write via `vibe_set_product_kb`. Every prose-generating skill (email, SEO, conversion) reads this Product Brain before drafting. | `product brain`, `Product Brain`, `knowledge base builder`, `teach VVibe about my product` |
@@ -97,7 +97,7 @@ Helps vibe coders sync their application users to VVibe, so creators can view us
 **Skill triggers:**
 - "Sync my users to VVibe"
 - "Help me migrate existing users to VVibe"
-- "Set up incremental user sync with VVibe"
+- "Tell VVibe when someone signs up"
 
 ## VVibe Sentry Codebase Audit
 
@@ -136,7 +136,7 @@ Helps vibe coders wire the registration link inside VVibe invitation emails to t
 - Mode A — embed `https://vvibe.ai/waitlist/{creatorSlug}` as a CTA, no backend code
 - Mode B — register `appBaseUrl` and host the page yourself; click tracking still goes through VVibe
 - Templates for Next.js, React SPA, and plain HTML in Mode B
-- Cross-links to `vvibe-member` for syncing the new signup back to the dashboard
+- Cross-links to `vvibe-member` for firing the signup event so campaign analytics stamp the signup
 
 **Prerequisites:** A VVibe account and API Key (`pcs_live_*` or `pcs_test_*`) — [new to VVibe?](./ONBOARDING.md). For Mode B, an HTTPS-reachable domain for the waitlist page.
 

@@ -31,11 +31,11 @@ To work unmodified, a fork's backend must be wire-compatible with the VVibe REST
 
 - **Auth**: `Authorization: Bearer ${VVIBE_API_KEY}` on all admin endpoints.
 - **Endpoints** referenced by the skills (relative to `VVIBE_API_HOST`):
-  - Member sync: `/api/members/sync`
+  - Signup event: `/api/members/signup-event`
   - Email: `/api/email/templates/{name}`, `/api/email/campaigns/*`, `/api/waitlist/{slug}`
   - Click tracking: `/r/{code}` (HTTP 302 to the resolved landing page)
   - Sentry reporting: `/api/health-scans/reports`
-- **Response shapes**: The skills assume `{ data: ... }`-wrapped responses. See `skills/vvibe-member/references/api-contract.md` for the user-sync contract.
+- **Response shapes**: The skills assume `{ data: ... }`-wrapped responses. See `skills/vvibe-member/references/api-contract.md` for the signup-event contract.
 
 If your backend diverges from any of the above, `VVIBE_API_HOST` alone won't be enough — you'll need to fork the skills.
 
@@ -50,7 +50,7 @@ VVIBE_API_KEY=...        # the same auth token used by the default backend
 
 The reference scripts that already read these vars:
 
-- `skills/vvibe-member/scripts/sync_user.mjs`
+- `skills/vvibe-member/scripts/signup_event.mjs`
 - `skills/vvibe-sentry/scripts/report.mjs`
 
 When generating new code, the agent should follow the same pattern:

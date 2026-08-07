@@ -1,4 +1,4 @@
-# VVibe User Management API Contract
+# VVibe Signup Event API Contract
 
 ## Base URL
 
@@ -10,276 +10,110 @@ Default; overridable via `VVIBE_API_HOST`. See `PROVIDER.md` at the repo root.
 
 ## Authentication
 
-All endpoints require a Bearer token in the `Authorization` header:
-
 ```
 Authorization: Bearer {VVIBE_API_KEY}
 ```
 
 - API Key prefix determines mode: `pcs_live_*` (production) / `pcs_test_*` (sandbox)
-- The Sync endpoint (`POST .../members/sync`) only accepts API Key auth.
-- GET endpoints also accept Firebase JWT (for Dashboard SSO login).
+- API Key auth only. There is no JWT path — this endpoint is server-to-server.
 
 ---
 
-## Endpoints
+## POST /api/members/signup-event
 
-### 1. POST /api/members/sync
-
-Batch upsert users. Max 100 per call.
-
-**Auth:** API Key only
+Record one registration. Idempotent per `(merchant, mode, email)`.
 
 **Request:**
 ```json
 {
-  "users": [
-    {
-      "email": "alice@example.com",
-      "external_user_id": "usr_123",
-      "display_name": "Alice",
-      "status": "active",
-      "role": "admin",
-      "plan_name": "Pro",
-      "last_login_at": "2026-04-15T08:30:00.000Z",
-      "created_at": "2026-01-10T12:00:00.000Z",
-      "metadata": { "tier": "gold" },
-      "signup_ref_code": "EARLY2026"
-    }
-  ]
+  "email": "alice@example.com",
+  "display_name": "Alice",
+  "metadata": { "attribution": { "utm_source": "InsForge" } },
+  "signup_ref_code": "EARLY2026"
 }
 ```
 
 | Field | Type | Required | Constraints |
 |---|---|---|---|
 | `email` | string | Yes | Valid email, max 255 chars. Dedup key. |
-| `external_user_id` | string | No | Max 255 chars |
-| `display_name` | string | No | Max 255 chars |
-| `status` | string | No | `active` (default), `deleted` (removes the user) |
-| `role` | string | No | Max 255 chars |
-| `plan_name` | string | No | Max 255 chars |
-| `last_login_at` | string | No | ISO 8601 datetime (e.g. `2026-04-15T08:30:00.000Z`) |
-| `created_at` | string | No | ISO 8601 datetime — user registration time in the vibe coder's system (e.g. `2026-01-10T12:00:00.000Z`) |
-| `metadata` | object | No | Arbitrary key-value, max 10KB serialized |
-| `signup_ref_code` | string | No | Discount code used as a referral at signup. 3-40 chars, `[A-Z0-9_-]` (case-insensitive on input; stored UPPERCASE). When this buyer later starts a checkout and verifies their email, VVibe auto-applies the matching rule for the chosen plan — provided the code is still within its `redeemBy` window and the per-customer cap (if any) has not been reached. **First-write-wins** per (profileId, email): once recorded, subsequent syncs cannot overwrite it. |
+| `display_name` | string | No | Max 255 chars. Personalises the welcome email. |
+| `metadata` | object | No | Arbitrary key-value, max 10KB serialized. `attribution` lives here. |
+| `signup_ref_code` | string | No | Discount code used as a referral at signup. 3-40 chars, `[A-Z0-9_-]` (case-insensitive on input; stored UPPERCASE). When this buyer later starts a checkout and verifies their email, VVibe auto-applies the matching rule for the chosen plan — provided the code is still within its `redeemBy` window and the per-customer cap (if any) has not been reached. **First-write-wins** per (merchant, mode, email). |
+
+Unknown keys are ignored rather than rejected, so a payload carrying leftover
+fields from the old sync contract (`role`, `plan_name`, `last_login_at`,
+`external_user_id`, `status`) still succeeds — those values are simply not
+stored.
 
 **Response (200):**
 ```json
 {
   "data": {
-    "synced": 98,
-    "created": 50,
-    "updated": 48,
-    "deleted": 0,
-    "errors": [
-      { "email": "bad-email", "reason": "invalid email format" },
-      { "email": "huge@meta.data", "reason": "metadata exceeds 10KB" },
-      { "email": "carol@example.com", "reason": "unknown_signup_ref_code" },
-      { "email": "dave@example.com", "reason": "signup_ref_code_already_recorded" }
-    ]
+    "recorded": true,
+    "outcome": "created",
+    "refCodeError": null
   }
 }
 ```
 
-**Notes on `signup_ref_code` errors:**
+| Field | Meaning |
+|---|---|
+| `recorded` | Always `true` on 200. |
+| `outcome` | `created` — first event for this address; the welcome email fires. `updated` — already known; no email. |
+| `refCodeError` | `null`, `unknown_signup_ref_code`, or `signup_ref_code_already_recorded`. |
 
-- `unknown_signup_ref_code` — the code does not exist in VVibe, is `disabled`, or is past `redeemBy`. The user is still synced; the code is dropped (not persisted on the user row).
-- `signup_ref_code_already_recorded` — the user already has a different `signup_ref_code` recorded. The original is kept (first-write-wins); the new one is dropped.
+**`refCodeError` values:**
 
-These errors do **not** block the sync — successful user upserts still happen.
+- `unknown_signup_ref_code` — the code does not exist in VVibe, is `disabled`,
+  or is past `redeemBy`. The signup is still recorded; the code is dropped.
+- `signup_ref_code_already_recorded` — a different code is already on file for
+  this address. The original is kept (first-write-wins); the new one is
+  dropped.
+
+Neither blocks the signup.
+
+**Side effects on `outcome: "created"`:**
+
+1. `welcome_free` is enqueued — or `welcome_paid` if the address already has
+   an active VVibe subscription (they bought on hosted checkout, then
+   registered). Deduped per address per template, so a repeat event never
+   double-sends. Disable the template in the dashboard if the creator's app
+   sends its own welcome.
+2. If `signup_ref_code` matches an invitation-campaign recipient, that
+   recipient's `signedUp` stage is stamped.
 
 **Fire-and-forget pattern (required):**
 ```typescript
-// Sync should never block the main flow
-syncToVVibe(userData).catch(err => console.error('[VVibe Sync]', err))
+notifyVVibeSignup(data).catch(err => console.error('[VVibe signup]', err))
 ```
 
 ---
 
-### 2. GET /api/members
+## Deprecated: POST /api/members/sync
 
-List users with pagination, search, and subscription enrichment.
+The old batch upsert. Still accepted so already-deployed apps don't silently
+drop signups, but **do not write new code against it**.
 
-**Auth:** API Key or Firebase JWT
+Behaviour now: each entry in `users[]` is forwarded to the signup-event path.
+Entries with `status: "deleted"` are skipped (there is no mirror to delete
+from). Fields beyond email / display_name / metadata / signup_ref_code are
+ignored.
 
-**Query params:**
-
-| Param | Type | Default | Description |
-|---|---|---|---|
-| `profileId` | string | — | Required for Firebase JWT auth |
-| `mode` | string | from API Key | `live` or `test` |
-| `page` | number | 1 | Page number |
-| `limit` | number | 20 | Max 100 |
-| `search` | string | — | Search email and display_name (ILIKE) |
-
-**Response (200):**
-```json
-{
-  "data": [
-    {
-      "id": "uuid-xxx",
-      "email": "alice@example.com",
-      "displayName": "Alice",
-      "externalUserId": "usr_123",
-      "status": "active",
-      "role": "admin",
-      "planName": "Pro",
-      "lastLoginAt": "2026-04-15T08:30:00.000Z",
-      "metadata": { "tier": "gold" },
-      "syncedAt": "2026-04-13T10:00:00.000Z",
-      "createdAt": "2026-04-13T09:00:00.000Z",
-      "updatedAt": "2026-04-13T10:00:00.000Z",
-      "subscription": {
-        "planName": "Creator Pro",
-        "billingPeriod": "monthly",
-        "status": "active",
-        "amount": 299,
-        "currency": "TWD",
-        "nextBillingAt": "2026-05-01T00:00:00.000Z"
-      }
-    },
-    {
-      "id": "uuid-yyy",
-      "email": "bob@example.com",
-      "displayName": "Bob",
-      "externalUserId": null,
-      "status": "active",
-      "role": null,
-      "planName": null,
-      "lastLoginAt": null,
-      "metadata": null,
-      "syncedAt": "2026-04-13T10:00:00.000Z",
-      "createdAt": "2026-04-13T09:00:00.000Z",
-      "updatedAt": "2026-04-13T10:00:00.000Z",
-      "subscription": null
-    }
-  ],
-  "pagination": {
-    "page": 1,
-    "limit": 20,
-    "total": 150,
-    "totalPages": 8
-  }
-}
-```
-
-**Note:** `subscription` is null for free users (no active VVibe subscription). This field is read-only and populated by the VVibe payment system.
-
----
-
-### 3. GET /api/members/{userId}
-
-Get a single user with subscription info.
-
-**Auth:** API Key or Firebase JWT
-
-**Query params:** `profileId`, `mode` (same as list)
-
-**Response (200):**
 ```json
 {
   "data": {
-    "id": "uuid-xxx",
-    "email": "alice@example.com",
-    "displayName": "Alice",
-    "externalUserId": "usr_123",
-    "status": "active",
-    "role": "admin",
-    "planName": "Pro",
-    "lastLoginAt": "2026-04-15T08:30:00.000Z",
-    "metadata": { "tier": "gold" },
-    "syncedAt": "2026-04-13T10:00:00.000Z",
-    "createdAt": "2026-04-13T09:00:00.000Z",
-    "updatedAt": "2026-04-13T10:00:00.000Z",
-    "subscription": { ... }
+    "synced": 2, "created": 1, "updated": 1, "deleted": 0,
+    "errors": [],
+    "deprecated": "POST /api/members/sync is deprecated. Use POST /api/members/signup-event, fired once at registration."
   }
 }
 ```
 
-**Response (404):**
-```json
-{ "error": "User not found" }
-```
-
----
-
-### 4. GET /api/members/stats
-
-Get aggregated user statistics.
-
-**Auth:** API Key or Firebase JWT
-
-**Query params:** `profileId`, `mode`
-
-**Response (200):**
-```json
-{
-  "data": {
-    "total": 500,
-    "withSubscription": 300,
-    "withoutSubscription": 200
-  }
-}
-```
-
----
-
-### 5. GET /api/members/sync-logs
-
-Get sync history logs.
-
-**Auth:** API Key or Firebase JWT
-
-**Query params:**
-
-| Param | Type | Default | Description |
-|---|---|---|---|
-| `profileId` | string | — | Required for Firebase JWT auth |
-| `mode` | string | from API Key | `live` or `test` |
-| `page` | number | 1 | Page number |
-| `limit` | number | 20 | Max 50 |
-
-**Response (200):**
-```json
-{
-  "data": [
-    {
-      "id": "uuid-xxx",
-      "status": "success",
-      "totalCount": 100,
-      "createdCount": 50,
-      "updatedCount": 50,
-      "errorCount": 0,
-      "errors": null,
-      "createdAt": "2026-04-13T10:05:00.000Z"
-    },
-    {
-      "id": "uuid-yyy",
-      "status": "partial",
-      "totalCount": 100,
-      "createdCount": 48,
-      "updatedCount": 50,
-      "errorCount": 2,
-      "errors": [
-        { "email": "bad-email", "reason": "invalid email format" },
-        { "email": "huge@meta.data", "reason": "metadata exceeds 10KB" }
-      ],
-      "createdAt": "2026-04-13T09:30:00.000Z"
-    }
-  ],
-  "pagination": {
-    "page": 1,
-    "limit": 20,
-    "total": 45,
-    "totalPages": 3
-  }
-}
-```
-
-Sync log `status` values:
-- `success` — all users synced without errors
-- `partial` — some users synced, some failed
-- `failed` — all users failed
+The read endpoints that used to accompany it — `GET /api/members`,
+`GET /api/members/{userId}`, `GET /api/members/stats`,
+`GET /api/members/sync-logs`, `GET /api/members/export` — **are removed** and
+return 404. VVibe is not the source of truth for the creator's users; query
+their own database instead.
 
 ---
 
@@ -289,6 +123,7 @@ Sync log `status` values:
 ```json
 { "error": "Missing bearer token" }
 { "error": "Invalid API key" }
+{ "error": "Signup event API requires API Key authentication" }
 ```
 
 **400 Bad Request:**
