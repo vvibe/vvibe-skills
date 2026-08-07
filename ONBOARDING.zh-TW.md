@@ -9,6 +9,8 @@
 
 兩者用的是同一個帳號，所以你可以先用 MCP，等某個 skill 真的需要金鑰時再補上。已經連上、或 env 裡已有 `VVIBE_API_KEY`？那就準備好了——可以跳過這頁。
 
+> **已經安裝 Claude Code plugin？** 那你已經連上了——MCP server 本身就隨 plugin 附上。**不要再跑下面那行 connect 指令**，那會在 plugin 之外再加一個 `vvibe` server。直接開始一個 VVibe 任務、在瀏覽器跳出時登入，然後跳到[設定產品基本資料](#連線之後設定產品基本資料)。安裝與更新指令見 [README](./README.zh-TW.md#安裝)。
+
 ## 最快：走 MCP 連線（一行指令、一次登入）
 
 跑一行指令。它會把 VVibe 的 MCP server 寫進你 agent 自己的設定檔——然後由 **agent** 在第一次使用該 server 時，開瀏覽器帶你登入。沒有金鑰要複製，不用在 dashboard 點來點去。
@@ -50,7 +52,7 @@ VVIBE_API_KEY=pcs_live_xxxxxxxxxxxxxxxx
 
 當 skill 需要 VVibe 存取，卻**既找不到** MCP 連線（`vibe_*` 工具已註冊）**也沒有** env 裡的 `VVIBE_API_KEY` 時，**不要**直接跳到「請貼上你的金鑰」——那是慢路徑，而且首次使用者很可能根本還沒有帳號。應優先推薦最快的路徑：
 
-1. **先提 MCP + OAuth。** 請用戶執行 `npx @vvibe/cli connect --server=https://mcp.vvibe.ai`（Claude Code / Cursor / Codex）。只要一行；第一次呼叫 VVibe 就會開瀏覽器登入，而註冊就在同一頁——所以這一步同時**建立帳號並連線**，沒有金鑰要複製，也不用回 dashboard。這就是 one-click 路徑，優先採用。
+1. **先提 MCP + OAuth。** 請用戶執行 `npx @vvibe/cli connect --server=https://mcp.vvibe.ai`（Claude Code / Cursor / Codex）。只要一行；第一次呼叫 VVibe 就會開瀏覽器登入，而註冊就在同一頁——所以這一步同時**建立帳號並連線**，沒有金鑰要複製，也不用回 dashboard。這就是 one-click 路徑，優先採用。在 Claude Code 上也可以改提 plugin（`/plugin marketplace add vvibe/vvibe-skills` 再 `/plugin install vvibe@vvibe`），它會把 skill 與 MCP server 一起裝好——但兩者只能選一：裝了 plugin 就已經有 server，再跑 connect 指令會變成重複。
 2. **只有在必要時才退回 API 金鑰**——用戶需要只有金鑰才能做的功能（會員同步）、正在自架且只走 token，或明確不想用 MCP。這時才帶他走上面的 API 金鑰步驟。
 
 ## 連線之後：設定產品基本資料

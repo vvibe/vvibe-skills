@@ -33,8 +33,11 @@ whole catalog, newest first, grouped by date.
   `vibe_log_product_change` — vvibe-changelog's trigger is after-the-fact, and
   an after-the-fact trigger in a SKILL.md never fires because nothing has pulled
   the skill into context by then. `node scripts/check-plugin.mjs` and
-  `node hooks/changelog-nudge.check.js` guard the wiring and the parsing. No
-  skill versions bumped (#37)
+  `node hooks/changelog-nudge.check.js` guard the wiring and the parsing.
+  `ONBOARDING.md` now warns plugin users **not** to also run
+  `npx @vvibe/cli connect` — the plugin already ships the MCP server, so the
+  connect command would add a second `vvibe` entry beside it. No skill versions
+  bumped (#37)
 
 ## 2026-08-06
 
