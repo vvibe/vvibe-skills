@@ -6,6 +6,19 @@
 
 ## 安裝
 
+**Claude Code** — 一次安裝，skill 與 MCP server 一起裝好：
+
+```
+/plugin marketplace add vvibe/vvibe-skills
+/plugin install vvibe@vvibe
+```
+
+不用再跑其他指令：MCP server 隨 plugin 一起附上，第一次呼叫工具時會開瀏覽器帶你登入（註冊也在那一頁）。
+
+plugin 還多了一件 skill 本身做不到的事：當你 commit 了使用者看得到的變更，它會提醒你的 agent 把這筆變更記進 changelog，VVibe 就能發現產品知識庫過期、並提議對外公告。內部性的 commit（`chore:`、`docs:`、`test:`…）不會出聲。
+
+**任何 agent**（Codex、Cursor、Claude Code）— 只裝 skill，再依下面說明另外連線：
+
 ```bash
 # 安裝全部
 npx skills add vvibe/vvibe-skills
@@ -14,7 +27,25 @@ npx skills add vvibe/vvibe-skills
 npx skills add vvibe/vvibe-skills --skill vvibe-analytics
 ```
 
+兩條路選一條，不要都裝 —— plugin 和 `npx skills add` 同時裝會讓每個 skill 出現兩份。
+自架 VVibe 請走 `npx skills add` 加上 `npx @vvibe/cli connect --server=<你的主機>`，因為 plugin 指向的是 `mcp.vvibe.ai`。
+
+<details>
+<summary>Codex plugin（可以用，但要先 clone）</summary>
+
+這裡也附了 Codex 的 plugin manifest。Codex 目前只認本機路徑的 marketplace，所以得先 clone：
+
+```bash
+git clone https://github.com/vvibe/vvibe-skills
+```
+
+在 Codex 開這個 clone、重啟，然後 `codex /plugins` 安裝 **VVibe**。
+因為第一步比兩行 `npx` 重，Codex 還是建議走上面的 `npx skills add`。
+</details>
+
 ## 更新
+
+Claude Code plugin 走 `/plugin update vvibe@vvibe`。其他方式：
 
 ```bash
 # 更新所有已安裝的 skill 到最新版

@@ -6,6 +6,24 @@ AI agent skills for [VVibe](https://vvibe.ai) creators. Integrate VVibe services
 
 ## Installation
 
+**Claude Code** — one install, skills + MCP server together:
+
+```
+/plugin marketplace add vvibe/vvibe-skills
+/plugin install vvibe@vvibe
+```
+
+Nothing else to run: the MCP server ships with the plugin, and the first tool
+call opens your browser to log in (sign-up is on that page).
+
+The plugin also adds one thing skills can't do on their own — after you commit a
+user-visible change, it reminds your agent to log it to your changelog, so VVibe
+can spot a stale Product Knowledge Base and offer to announce the change.
+Internal commits (`chore:`, `docs:`, `test:`…) stay quiet.
+
+**Any agent** (Codex, Cursor, Claude Code) — skills only, then connect
+separately as described below:
+
 ```bash
 # All skills
 npx skills add vvibe/vvibe-skills
@@ -14,7 +32,29 @@ npx skills add vvibe/vvibe-skills
 npx skills add vvibe/vvibe-skills --skill vvibe-analytics
 ```
 
+Pick one path, not both — installing the plugin *and* `npx skills add` loads two
+copies of every skill. Self-hosted VVibe: use `npx skills add` plus
+`npx @vvibe/cli connect --server=<your-host>`, since the plugin points at
+`mcp.vvibe.ai`.
+
+<details>
+<summary>Codex plugin (works, but needs a clone)</summary>
+
+A Codex plugin manifest ships here too. Codex only discovers marketplaces from
+a local path, so it means cloning this repo:
+
+```bash
+git clone https://github.com/vvibe/vvibe-skills
+```
+
+Open the clone in Codex, restart it, then run `codex /plugins` and install
+**VVibe**. Because that's a heavier first step than two `npx` commands, the
+`npx skills add` path above stays the recommendation for Codex.
+</details>
+
 ## Updating
+
+Claude Code plugin: `/plugin update vvibe@vvibe`. Otherwise:
 
 ```bash
 # Update all installed skills to latest

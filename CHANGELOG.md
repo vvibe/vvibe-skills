@@ -14,6 +14,28 @@ whole catalog, newest first, grouped by date.
 - Entry format: `- **skill x.y.z** — what changed (#PR)`. One commit touching
   several skills gets one line per bumped skill.
 
+## 2026-08-07
+
+- **plugin 0.1.0** — this repo is now also a plugin, installing every skill
+  *and* the `vvibe` MCP server in one step instead of `npx skills add` plus
+  `npx @vvibe/cli connect`. Claude Code:
+  `/plugin marketplace add vvibe/vvibe-skills` → `/plugin install vvibe@vvibe`.
+  Codex: manifests ship too (`.agents/plugins/marketplace.json` +
+  `.codex-plugin/plugin.json`, with `codex/mcp.json` bridging the same server
+  over stdio via `mcp-remote`, since Codex has no HTTP transport), but its
+  marketplace source is `local` so it needs a clone — `npx skills add` stays
+  the recommended Codex path. The repo root is the plugin for both hosts, so
+  `skills/` ships as-is with no second copy to keep in sync; users pick one
+  install path, never both. Ships one hook, shared by both hosts
+  (`hooks/claude-codex-hooks.json`): after a successful `git commit` whose
+  subject isn't an internal `chore:`/`docs:`/`test:` one,
+  `hooks/changelog-nudge.js` injects a reminder to log the change via
+  `vibe_log_product_change` — vvibe-changelog's trigger is after-the-fact, and
+  an after-the-fact trigger in a SKILL.md never fires because nothing has pulled
+  the skill into context by then. `node scripts/check-plugin.mjs` and
+  `node hooks/changelog-nudge.check.js` guard the wiring and the parsing. No
+  skill versions bumped (#PR)
+
 ## 2026-08-06
 
 - **vvibe-email 0.6.0** — recipients are no longer dashboard-only: the agent
