@@ -18,6 +18,19 @@ for (const s of ['chore: bump deps', 'docs: fix typo', 'test: add case', 'refact
 // A subject that merely starts with those letters is still user-visible.
 assert.ok(ok('documented pricing is now live'), 'must not match on prefix letters alone')
 
+// Not every summary line is "[branch sha]". These three are verbatim git output.
+for (const line of [
+  '[master 6c0ad56] feat: second thing',
+  '[master (root-commit) 2bd80dd] feat: initial release',
+  '[detached HEAD f6c7d5d] feat: detached thing',
+]) {
+  const n = nudgeFor({ command: 'git commit -m "x"', stdout: `${line}\n 1 file changed` })
+  assert.ok(n, `must parse: ${line}`)
+  assert.ok(n.includes(line.slice(line.indexOf('] ') + 2)), `wrong subject from: ${line}`)
+}
+// The bracket form still has to be a real summary line, not any bracketed text.
+assert.equal(nudgeFor({ command: 'git commit -m "x"', stdout: '[INFO] feat: not a commit' }), null)
+
 // No commit line in stdout = the commit did not happen.
 assert.equal(nudgeFor({ command: 'git commit -m "x"', stdout: 'nothing to commit, working tree clean' }), null)
 assert.equal(nudgeFor({ command: 'git commit -m "x"', stdout: 'error: pathspec did not match' }), null)

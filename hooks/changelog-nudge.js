@@ -16,7 +16,12 @@ const INTERNAL = /^(chore|docs?|test|tests|style|refactor|ci|build|perf|revert)(
 // `git commit` prints "[branch abc1234] subject" on success. Matching it both
 // confirms the commit happened and hands us the subject — no need to parse -m
 // out of the command line.
-const COMMITTED = /^\[[^\]\s]+ +[0-9a-f]{7,40}\] +(.+)$/m
+//
+// What sits before the sha is not always a bare branch name; git also emits
+// "[master (root-commit) 2bd80dd] …" for the first commit in a repo and
+// "[detached HEAD f6c7d5d] …" off a detached checkout. Allow anything up to the
+// sha, so those don't silently go un-nudged.
+const COMMITTED = /^\[[^\]]+ [0-9a-f]{7,40}\] +(.+)$/m
 
 /**
  * Subject of HEAD. Only consulted for `git commit -q`, which succeeds while
