@@ -1,8 +1,8 @@
 ---
 name: vvibe-email
-version: 0.5.1
+version: 0.6.0
 manifest_version: 1
-description: Help VVibe creators wire invitation-email integration end-to-end — where the email CTA lands (VVibe-hosted, self-hosted waitlist, or direct register), how to send campaigns via Vibe MCP, and how to manage system + follower-flow email templates. When drafting campaign copy, reads the creator's Product Brain (`vibe_get_product_kb`) for brand voice, value prop, audience, and forbidden claims so the email matches the brand and avoids legal landmines. Trigger when the user mentions invitation emails, follower outreach campaigns, sending an email blast, drafting an email campaign, waitlist signup landing page, app base URL, embedding a waitlist CTA, skipping the waitlist when a member system already exists, or asks where the registration email link lands.
+description: Help VVibe creators wire invitation-email integration end-to-end — where the email CTA lands (VVibe-hosted, self-hosted waitlist, or direct register), how to send campaigns via Vibe MCP, how to pull a recipient segment out of the creator's own database and import it into a campaign (saved as a reusable segment definition), and how to manage system + follower-flow email templates. When drafting campaign copy, reads the creator's Product Brain (`vibe_get_product_kb`) for brand voice, value prop, audience, and forbidden claims so the email matches the brand and avoids legal landmines. Trigger when the user mentions invitation emails, follower outreach campaigns, sending an email blast, drafting an email campaign, waitlist signup landing page, app base URL, embedding a waitlist CTA, skipping the waitlist when a member system already exists, or asks where the registration email link lands, or asks to email a particular slice of their users (paying members, a region, recently active) rather than a list they already have.
 
 ---
 
@@ -23,7 +23,7 @@ NOT mutually exclusive:
 - **hosted-cta** — embed VVibe's hosted waitlist URL as a button/link. Zero infra.
 - **self-hosted-waitlist** — host `/waitlist/[slug]` on your own domain. Brand control.
 - **direct-register** — skip the waitlist; invitation clicks land on your app's existing register page.
-- **mcp-campaign** — author + send invitation campaigns via the Vibe MCP tools. Independent of which click-destination mode is *configured* (works alongside any of A/B/C) — but sending still requires resolving and confirming the *live* landing URL first (see `references/sending-campaigns.md`).
+- **mcp-campaign** — author + send invitation campaigns via the Vibe MCP tools, including pulling the recipient list out of the creator's own database and remembering that segment for next time. Independent of which click-destination mode is *configured* (works alongside any of A/B/C) — but sending still requires resolving and confirming the *live* landing URL first (see `references/sending-campaigns.md`).
 
 The first three are mutually exclusive *as the click destination* (one
 merchant has one destination per moment), but they're swappable — a
@@ -132,14 +132,19 @@ modes:
       - "draft an email blast"
       - "campaign analytics"
       - "send invitation emails"
+      - "email my paying users / users in <region> / people who haven't logged in"
+      - "who should this go to"
     requires: [vibe_mcp_connected]
     fallback: >
       If MCP isn't connected, the fastest fix is to wire it in one
       command: `npx @vvibe/cli connect --server=https://mcp.vvibe.ai`
       (first call opens a browser login; sign-up is on that same page, so
-      a brand-new user creates the account and connects in one step). Then
-      send via `vibe_send_campaign`. There is no REST/API-key equivalent —
-      without MCP, campaigns can only be created in the dashboard UI at
+      a brand-new user creates the account and connects in one step). Ask
+      first whether they already have a VVibe account: if they don't, or
+      aren't sure, walk them through `ONBOARDING.md` (repo root) rather than
+      dropping them into a login screen cold. Then send via
+      `vibe_send_campaign`. There is no REST/API-key equivalent — without
+      MCP, campaigns can only be created in the dashboard UI at
       vvibe.ai/dashboard. Prefer the connect command.
     load: references/sending-campaigns.md
 ```
@@ -282,4 +287,5 @@ HTTPS on `appBaseUrl`.
 | `references/self-hosted-waitlist.md` | Mode B: full implementation contract + templates for Next.js, React SPA, and plain HTML. | mode = self-hosted-waitlist |
 | `references/direct-register.md` | Mode C: `inviteRedirectPath` configuration, attribution params, post-signup `syncToVVibe` wiring. | mode = direct-register |
 | `references/sending-campaigns.md` | Reads the Product Brain first to ground subject + body, then MCP campaign tools: list / create / update / send / analytics, with body templates and outcome handling. | mode = mcp-campaign |
+| `references/audience-segments.md` | Recipients: check for a segment the creator already built, query their own database read-only, keep the list out of the chat, import it with merge-tag columns, and save the definition so it can be refreshed. | mode = mcp-campaign, whenever *who* receives the email is in question |
 | `references/email-types.md` | Reference: system vs follower-flow email categories, disable/edit flow, avoiding double-emails. | shared reference; load on demand when discussing welcome / cancellation emails or disabling templates. |

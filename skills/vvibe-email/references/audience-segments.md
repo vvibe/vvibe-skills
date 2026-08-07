@@ -1,0 +1,199 @@
+# Audience Segments — pulling a recipient list from the creator's own data
+
+Who an email goes to is usually a question about the creator's *own* database,
+not about VVibe: "the people on the pro plan in Taiwan who logged in this
+month". You can answer it — query their project, import the result into the
+campaign, and save how you pulled it so the same list can be refreshed later.
+
+VVibe never connects to the creator's database. **You** run the query, in
+their project, with their code and credentials. VVibe stores the rows you
+import and a plain-prose note of how you got them.
+
+## Start by checking what already exists
+
+Whenever the conversation turns to *who* should receive something, call
+`vibe_list_audience_segments` **before** designing a query. Each segment
+carries `name`, `definition`, `lastRowCount`, `lastRunAt`, `lastCampaignId`.
+
+If one matches what the creator just described, your **first** line back to
+them names it — before the draft, before any blocker you found, before
+anything else. State all four: the name, the date it was last built
+(`lastRunAt`), the row count (`lastRowCount`), and the choice.
+
+> You built **Taiwan paid actives** on 2026/08/06 — 412 people, defined as
+> `plan = pro AND region = TW AND last_login within 30 days`. Refresh that
+> list, or build a new one?
+
+Say the date out loud even when the answer looks obvious to you. It is how
+the creator judges whether the list is stale — a segment built yesterday and
+one built in March mean completely different things about who is on it, and
+they know their own churn better than you do. "You already have this
+segment" without the date and the count is not the same message.
+
+**A segment that has never been run** carries `lastRunAt: null` and
+`lastRowCount: null` — someone named the rules but no list was ever pulled.
+Say that plainly instead of inventing a date or reporting zero people:
+
+> You have **Taiwan paid actives** saved — `plan = pro AND region = TW` — but
+> it has never actually been run, so there's no count yet. Run it now?
+
+Then wait for the answer before pulling any rows — you may run a `count(*)`
+to make the question concrete (see rule 4 below), but the recipient rows come
+out only after they choose. If something else is
+blocking the send (no production credentials, an unresolved CTA, missing
+copy), raise it *after* the segment line — a blocker doesn't excuse skipping
+the question, and the creator can often answer both in one reply.
+
+- **Refresh** → re-run the definition now (numbers move), import, and pass the
+  same `segmentId` so the count and run date update in place. Into a fresh
+  campaign, that's a plain import; into a draft that already holds the previous
+  pull, add `replace: true` so people who dropped out of the segment drop off
+  the list too.
+- **New** → a different name, and say plainly that both will now exist.
+- **Same rules, different wording** → still a refresh. Don't create twins that
+  mean the same thing; update the `definition` instead.
+
+Never silently reuse the *rows* from last time — a segment is a query, not a
+frozen list. If the creator wants exactly the previous recipients, that's
+`sourceCampaignId` (copy a previous campaign's list) in the dashboard, not a
+segment refresh.
+
+## Pulling the list safely
+
+The creator's database is production data. Rules, in order:
+
+1. **Read-only.** A `SELECT` (or the ORM's read path). Never write, never
+   migrate, never "clean up" the data while you're in there. If reading
+   requires credentials you don't have, ask — don't improvise.
+2. **Find the email column, don't guess it.** Read the schema / model
+   definition. `email`, `email_address`, `contact_email`, `user.email` on a
+   join — confirm which one holds a reachable address, and skip rows where it's
+   null or obviously placeholder (`test@`, `noreply@`).
+3. **Consent, not just reachability — they are different columns.** Consent is
+   an explicit opt-in or opt-out field: `marketing_opt_in`, `newsletter`,
+   `unsubscribed`, `email_preferences`. Filter on it. If the schema has no such
+   field at all, say so and ask the creator on what basis these people agreed
+   to receive email — don't infer consent from the absence of a column.
+   `email_verified` is **not** consent: it says the address is real, not that
+   its owner wants marketing. Use it (and `deleted_at`, `bounced_at`) as
+   deliverability filters on top of consent, never as a substitute. vvibe
+   filters its own unsubscribes at send time, but it cannot see a flag that
+   only exists in the creator's database.
+4. **Bound the query.** Add a `LIMIT` while you're still shaping it. A
+   `count(*)` first tells you whether the definition is even plausible before
+   you pull rows — an aggregate returns no personal data and reaches nobody, so
+   it doesn't need approval; it is what makes the approval meaningful ("this
+   matches 412 people — right?"). Approval gates the row pull, not the count.
+5. **Confirm the rules before pulling the rows.** Read the conditions back in
+   the creator's own words and get a yes. A wrong segment sends a real email to
+   real people. The `rowCount` / run date you save belong to the approved row
+   pull — a scoping `count(*)` is not a run and must not stamp one.
+6. **Pull the columns the copy needs, in the same query.** Plan name, region,
+   last login — each becomes a merge tag. Going back for a second pull means
+   two chances to disagree with yourself.
+
+## Don't put the list in the chat
+
+The names and addresses are the creator's customers' personal data. Report the
+**shape of the pull**, never the people in it:
+
+- the **count** ("412 people"),
+- the **spread** that proves you pulled the right thing — domain mix ("mostly
+  gmail.com, 39% company domains"), and the merge-tag values the rows carry
+  ("every row has `plan=pro`, `country=TW`"),
+- the **column names** you'll expose as merge tags.
+
+Masking an address is not de-identifying it: `j•••@gmail.com — pro, TW` still
+carries a prefix, a domain, and two attributes, which in a small segment is
+enough to name someone. If you want an example row in the chat at all, make it
+synthetic (`user@example.invalid — pro, TW`) and say that it is.
+
+Never paste the full list, never dump raw rows, and don't write the list to a
+file in their repo. It goes from the query straight into
+`vibe_import_campaign_recipients`. When the creator wants to eyeball actual
+people, the Recipients tab in the dashboard already shows them — that's where
+the data belongs, not in a transcript.
+
+## Importing
+
+```text
+vibe_import_campaign_recipients({
+  campaignId,
+  rows: [
+    { email, displayName?, columnData: { plan: 'pro', region: 'TW' } },
+    …
+  ],
+  headers: [ { key: 'plan', label: 'Plan' }, { key: 'region', label: 'Region' } ],
+  segment: { segmentId?, name: 'Taiwan paid actives', definition: '…' },
+})
+```
+
+- `columnData` keys are merge-tag slugs: lowercase, `a-z0-9_`, starting with a
+  letter. Anything you send is usable as `{slug}` in the body, so the copy can
+  say "you're on {plan}" without a second campaign per plan.
+- `headers` gives those slugs human labels in the creator's editor. Register
+  every slug you use, or the creator sees raw keys.
+- `segment` records the pull. Pass `segmentId` when refreshing an existing one;
+  omit it for a new segment (a matching name updates in place rather than
+  duplicating). The stored `rowCount` is the size of the pull, not the number
+  of new rows — dupes already on the campaign don't shrink the segment.
+- Duplicates within the campaign are skipped server-side, so re-importing never
+  double-sends. The result's `imported` / `skipped` tells you which.
+- **Re-running a segment into a campaign that already holds an older pull of it
+  needs `replace: true`.** A plain import only ADDS: anyone who fell out of the
+  segment since last time — downgraded, unsubscribed, deleted — stays on the
+  list and still gets the mail. `replace` clears the campaign's recipients
+  first, so the list matches the definition you just ran. `removed` in the
+  result says how many went. Only drafts allow it; a sent campaign's list is
+  frozen (its rows carry the delivery and conversion stamps), so a refresh after
+  a send goes into a NEW campaign.
+- Over **10,000** rows the import is split across requests automatically;
+  `requests` in the result says how many. Over **50,000** the call is refused
+  outright rather than truncated — narrow the definition (or split the send)
+  and tell the creator why.
+
+`vibe_save_audience_segment` is the same store without an import: use it to
+name a segment you agreed on but haven't run, to correct a `definition` after
+the creator clarifies the rules, or to rename one. Only pass `rowCount` if you
+actually pulled the rows — it stamps the run date the creator reads back later.
+A scoping `count(*)` doesn't count: a segment saved this way stays at
+`lastRunAt: null` until an approved pull, which is what the "never been run"
+line above reads back.
+
+## Then finish the normal send flow
+
+Importing recipients changes nothing about the rest of `sending-campaigns.md`.
+Still:
+
+1. `vibe_get_brand` → resolve where the CTA actually lands (mandatory, every
+   send).
+2. Read the saved draft back and confirm subject + body + **recipient count**
+   with the creator.
+3. `vibe_send_campaign({ campaignId })`.
+
+When the body uses a pulled column, check one rendered example with the
+creator before sending — a `{plan}` that reaches a recipient whose row had no
+plan renders empty, which reads as a bug in their product.
+
+## Worked example
+
+> **Creator:** send this month's update to my paying users in Taiwan.
+
+1. `vibe_list_audience_segments` → empty. Nothing to reuse.
+2. Read the project's schema: `users(email, plan, country, last_login_at,
+   marketing_opt_in, deleted_at)`.
+3. Propose: `plan = 'pro' AND country = 'TW' AND marketing_opt_in = true AND
+   deleted_at IS NULL`; `count(*)` → 412 to make it concrete. Read both back,
+   get a yes.
+4. Pull the 412 approved rows and map each one into the import shape:
+   `{ email, displayName: name, columnData: { plan, country } }`.
+5. `vibe_import_campaign_recipients({ campaignId, rows, headers, segment: {
+   name: 'Taiwan paid actives', definition: "users table: plan='pro',
+   country='TW', marketing_opt_in, not deleted; columns plan + country as
+   merge tags" } })` → imported 412.
+6. Report: "412 people, all `plan=pro` / `country=TW`, mostly gmail.com
+   addresses. `{plan}` and `{country}` are available in the body." Then the
+   normal CTA-resolve → confirm → send.
+
+Next month, step 1 finds the segment and the conversation starts with
+"refresh 412, or new?" instead of rebuilding the query from scratch.

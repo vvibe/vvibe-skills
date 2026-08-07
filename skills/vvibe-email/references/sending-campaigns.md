@@ -43,10 +43,20 @@ The dashboard arranges the work as **Email content → Recipients → Send** —
 |---|---|---|
 | Author | `vibe_create_campaign` | `name`, `subject`, `bodyHtml`, `aiContext` |
 | Revise | `vibe_update_campaign` | any of the above |
-| Recipients | _dashboard only_ | recipient list (CSV / Sheet / typed addresses) |
+| Recipients | `vibe_import_campaign_recipients` | recipient list + per-person merge-tag columns |
 | Send | `vibe_send_campaign` | dispatches the saved draft (campaignId only) |
 
 `vibe_send_campaign` takes only `campaignId`. If the saved draft has no subject or body, it returns `missing_content`.
+
+**Recipients.** You can attach the list yourself: query the creator's own
+database for the segment they described and import the rows (the creator can
+still upload a CSV / Sheet in the dashboard instead — both paths write the same
+list). Confirm *who* before you pull: an existing segment gets reported back
+with its build date and count so the creator picks refresh or new; a fresh one
+gets its rules read back and agreed. Read
+`references/audience-segments.md` before running any query over their data — it covers checking `vibe_list_audience_segments` for a segment
+they already built, reading their data safely, keeping the list out of the
+chat, and batching past the 10,000-row request cap.
 
 ## Flow
 
@@ -59,7 +69,14 @@ draft subject + bodyHtml grounded in the brain, with creator
   ↓
 vibe_create_campaign  ({ name, subject, bodyHtml, aiContext })  # aiContext = brain-derived brief
   ↓
-[creator imports recipients in dashboard]    # not via MCP
+vibe_list_audience_segments                  # who is this going to?
+  ↓
+match? report name + lastRunAt + lastRowCount → creator picks Refresh or New
+no match? read the rules back to the creator
+  ↓                                          # …and WAIT for their answer
+pull the segment from the creator's own data (read-only), report the count
+  ↓
+vibe_import_campaign_recipients  ({ campaignId, rows, headers, segment })
   ↓
 vibe_update_campaign  (optional — only if revising copy)
   ↓
@@ -174,7 +191,12 @@ switch result.outcome:
     re-list with vibe_list_campaigns and confirm the id with the creator
 
   case "no_recipients":
-    say "There are no recipients on this campaign yet. Open the Recipients tab in the dashboard, find this campaign, and import your list (CSV, Google Sheet, or paste addresses). Tell me when you're done and I'll send."
+    ask who it should go to, then pull + import the list yourself
+    (vibe_list_audience_segments → references/audience-segments.md).
+    if their contacts live in a spreadsheet rather than their app's database,
+    say "Open the Recipients tab in the dashboard, find this campaign, and
+    import your list (CSV, Google Sheet, or paste addresses). Tell me when
+    you're done and I'll send."
 
   case "missing_content":
     call vibe_update_campaign with the agreed subject + bodyHtml, then retry
