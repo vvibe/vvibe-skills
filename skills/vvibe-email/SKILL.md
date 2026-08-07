@@ -139,9 +139,12 @@ modes:
       If MCP isn't connected, the fastest fix is to wire it in one
       command: `npx @vvibe/cli connect --server=https://mcp.vvibe.ai`
       (first call opens a browser login; sign-up is on that same page, so
-      a brand-new user creates the account and connects in one step). Then
-      send via `vibe_send_campaign`. There is no REST/API-key equivalent —
-      without MCP, campaigns can only be created in the dashboard UI at
+      a brand-new user creates the account and connects in one step). Ask
+      first whether they already have a VVibe account: if they don't, or
+      aren't sure, walk them through `ONBOARDING.md` (repo root) rather than
+      dropping them into a login screen cold. Then send via
+      `vibe_send_campaign`. There is no REST/API-key equivalent — without
+      MCP, campaigns can only be created in the dashboard UI at
       vvibe.ai/dashboard. Prefer the connect command.
     load: references/sending-campaigns.md
 ```

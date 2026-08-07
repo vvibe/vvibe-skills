@@ -23,8 +23,11 @@ whole catalog, newest first, grouped by date.
   same segment can be refreshed later (`vibe_list_audience_segments` /
   `vibe_save_audience_segment`). New `references/audience-segments.md` covers
   offering a refresh of a segment the creator already built, read-only query
-  discipline, keeping the list out of the chat (PII), and batching past the
-  10,000-row request cap without silent truncation (VV-97) (#PR)
+  discipline (consent is an explicit opt-in field — `email_verified` is
+  deliverability, not permission), keeping the list out of the chat (PII),
+  refreshing with `replace` so people who fell out of a segment come off the
+  list, and batching past the 10,000-row request cap without silent
+  truncation (VV-97) (#36)
 
 ## 2026-08-04
 

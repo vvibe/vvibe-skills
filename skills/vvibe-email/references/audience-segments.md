@@ -36,7 +36,10 @@ copy), raise it *after* the segment line — a blocker doesn't excuse skipping
 the question, and the creator can often answer both in one reply.
 
 - **Refresh** → re-run the definition now (numbers move), import, and pass the
-  same `segmentId` so the count and run date update in place.
+  same `segmentId` so the count and run date update in place. Into a fresh
+  campaign, that's a plain import; into a draft that already holds the previous
+  pull, add `replace: true` so people who dropped out of the segment drop off
+  the list too.
 - **New** → a different name, and say plainly that both will now exist.
 - **Same rules, different wording** → still a refresh. Don't create twins that
   mean the same thing; update the `definition` instead.
@@ -57,11 +60,16 @@ The creator's database is production data. Rules, in order:
    definition. `email`, `email_address`, `contact_email`, `user.email` on a
    join — confirm which one holds a reachable address, and skip rows where it's
    null or obviously placeholder (`test@`, `noreply@`).
-3. **Consent, not just reachability.** If the schema has anything resembling
-   `unsubscribed`, `marketing_opt_in`, `email_verified`, or `deleted_at` —
-   respect it in the query. Ask if you're unsure whether a flag means consent.
-   VVibe filters its own unsubscribes at send time, but it cannot know about a
-   flag that only exists in the creator's database.
+3. **Consent, not just reachability — they are different columns.** Consent is
+   an explicit opt-in or opt-out field: `marketing_opt_in`, `newsletter`,
+   `unsubscribed`, `email_preferences`. Filter on it. If the schema has no such
+   field at all, say so and ask the creator on what basis these people agreed
+   to receive email — don't infer consent from the absence of a column.
+   `email_verified` is **not** consent: it says the address is real, not that
+   its owner wants marketing. Use it (and `deleted_at`, `bounced_at`) as
+   deliverability filters on top of consent, never as a substitute. vvibe
+   filters its own unsubscribes at send time, but it cannot see a flag that
+   only exists in the creator's database.
 4. **Bound the query.** Add a `LIMIT` while you're still shaping it. A
    `count(*)` first tells you whether the definition is even plausible before
    you pull rows.
@@ -86,7 +94,7 @@ file in their repo. It goes from the query straight into
 
 ## Importing
 
-```
+```text
 vibe_import_campaign_recipients({
   campaignId,
   rows: [
@@ -107,8 +115,16 @@ vibe_import_campaign_recipients({
   omit it for a new segment (a matching name updates in place rather than
   duplicating). The stored `rowCount` is the size of the pull, not the number
   of new rows — dupes already on the campaign don't shrink the segment.
-- Duplicates within the campaign are skipped server-side, so a refresh into the
-  same campaign is safe. The result's `imported` / `skipped` tells you which.
+- Duplicates within the campaign are skipped server-side, so re-importing never
+  double-sends. The result's `imported` / `skipped` tells you which.
+- **Re-running a segment into a campaign that already holds an older pull of it
+  needs `replace: true`.** A plain import only ADDS: anyone who fell out of the
+  segment since last time — downgraded, unsubscribed, deleted — stays on the
+  list and still gets the mail. `replace` clears the campaign's recipients
+  first, so the list matches the definition you just ran. `removed` in the
+  result says how many went. Only drafts allow it; a sent campaign's list is
+  frozen (its rows carry the delivery and conversion stamps), so a refresh after
+  a send goes into a NEW campaign.
 - Over **10,000** rows the import is split across requests automatically;
   `requests` in the result says how many. Over **50,000** the call is refused
   outright rather than truncated — narrow the definition (or split the send)
