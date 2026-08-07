@@ -30,6 +30,13 @@ one built in March mean completely different things about who is on it, and
 they know their own churn better than you do. "You already have this
 segment" without the date and the count is not the same message.
 
+**A segment that has never been run** carries `lastRunAt: null` and
+`lastRowCount: null` — someone named the rules but no list was ever pulled.
+Say that plainly instead of inventing a date or reporting zero people:
+
+> You have **Taiwan paid actives** saved — `plan = pro AND region = TW` — but
+> it has never actually been run, so there's no count yet. Run it now?
+
 Then wait for the answer before pulling anything. If something else is
 blocking the send (no production credentials, an unresolved CTA, missing
 copy), raise it *after* the segment line — a blocker doesn't excuse skipping
@@ -72,7 +79,9 @@ The creator's database is production data. Rules, in order:
    only exists in the creator's database.
 4. **Bound the query.** Add a `LIMIT` while you're still shaping it. A
    `count(*)` first tells you whether the definition is even plausible before
-   you pull rows.
+   you pull rows — an aggregate returns no personal data and reaches nobody, so
+   it doesn't need approval; it is what makes the approval meaningful ("this
+   matches 412 people — right?"). Approval gates the row pull, not the count.
 5. **Confirm the rules before the run that counts.** Read the conditions back
    in the creator's own words and get a yes. A wrong segment sends a real email
    to real people.
@@ -134,6 +143,8 @@ vibe_import_campaign_recipients({
 name a segment you agreed on but haven't run, to correct a `definition` after
 the creator clarifies the rules, or to rename one. Only pass `rowCount` if you
 actually ran the query — it stamps the run date the creator reads back later.
+A segment saved this way stays at `lastRunAt: null` until a real run, which is
+what the "never been run" line above reads back.
 
 ## Then finish the normal send flow
 
