@@ -92,30 +92,41 @@ In the signup handler (Better Auth `databaseHooks.user.create.after`, Supabase `
 
 ```ts
 async function onUserSignup(newUser: User, req: Request) {
-  const raw = getCookie(req, 'attribution')
-  const attribution = raw ? safeParse(raw) : null
+  // Every attribution step is best-effort. A cookie that won't parse or a
+  // failed insert must not reject this handler — the account already exists,
+  // and throwing here would also skip the signup event below.
+  let attribution = null
+  try {
+    const raw = getCookie(req, 'attribution')
+    attribution = raw ? safeParse(raw) : null
 
-  if (attribution) {
-    await db.insert(user_attribution).values({
-      user_id: newUser.id,
-      utm_source: attribution.utm_source,
-      utm_medium: attribution.utm_medium,
-      utm_campaign: attribution.utm_campaign,
-      utm_term: attribution.utm_term,
-      utm_content: attribution.utm_content,
-      referrer: attribution.referrer,
-      landing_path: attribution.landing_path,
-      captured_at: new Date(attribution.captured_at),
-    }).onConflictDoNothing()  // first-write-wins enforcement
+    if (attribution) {
+      await db.insert(user_attribution).values({
+        user_id: newUser.id,
+        utm_source: attribution.utm_source,
+        utm_medium: attribution.utm_medium,
+        utm_campaign: attribution.utm_campaign,
+        utm_term: attribution.utm_term,
+        utm_content: attribution.utm_content,
+        referrer: attribution.referrer,
+        landing_path: attribution.landing_path,
+        captured_at: new Date(attribution.captured_at),
+      }).onConflictDoNothing()  // first-write-wins enforcement
+    }
+  } catch (err) {
+    console.error('[attribution]', err)
+    attribution = null
   }
 
-  // Send to VVibe inside the signup event's metadata field.
-  // Fire-and-forget — never block signup on VVibe.
+  // Send to vvibe inside the signup event's metadata field. Outside the
+  // try/catch above, so a failed attribution write still lets the signup
+  // event through — it just carries a null attribution.
+  // Fire-and-forget — never block signup on vvibe.
   notifyVVibeSignup({
     email: newUser.email,
-    displayName: newUser.name,
+    display_name: newUser.name,
     metadata: { attribution },  // null if nothing captured
-  }).catch(err => console.error('[VVibe signup]', err))
+  }).catch(err => console.error('[vvibe signup]', err))
 }
 ```
 

@@ -51,7 +51,7 @@ Detect from the project. Don't ask if you can find out.
 | `has_public_https_endpoint` | Deployed (Vercel / Fly / Render) OR known prod domain. Localhost-only ⇒ false. | self-hosted-waitlist, direct-register |
 | `has_signup_flow` | Discoverable registration handler (route file or auth-provider hook). | direct-register |
 | `has_api_key_local` | `VVIBE_API_KEY` in `.env*` or framework env. | all three click destinations + REST fallbacks |
-| `signup_event_wired` | Grep for `POST /api/members/signup-event` or a `notifyVVibeSignup` helper. See vvibe-member skill. | direct-register (required), self-hosted-waitlist (recommended) |
+| `signup_event_wired` | Grep **application source only** (exclude `.claude/skills/`, `docs/`, `*.md`) for an import or call of `notifyVVibeSignup(` , or a `fetch` to `/api/members/signup-event`. A match inside skill docs is not wiring. See vvibe-member skill. | direct-register (required), self-hosted-waitlist (recommended) |
 | `vibe_mcp_connected` | `vibe_*` tools registered on this session. | mcp-campaign only |
 | `product_brain_exists` | `vibe_get_product_kb` returns non-null `data`. The brain tools are always registered (no skill gate), so this read works even if only the email skill is installed — building it still needs vvibe-product-brain. | mcp-campaign (drafting copy) |
 
@@ -110,10 +110,13 @@ modes:
       - "direct register"
     requires: [has_server_runtime, has_signup_flow, has_api_key_local, signup_event_wired]
     wired_check: >
-      `signup_event_wired` = grep for `notifyVVibeSignup` or
-      `POST /api/members/signup-event` in the project. If absent, route to the
-      vvibe-member skill's signup-event mode FIRST — direct-register cannot
-      stamp campaign analytics without it.
+      `signup_event_wired` = in the project's APPLICATION source (skip
+      `.claude/skills/`, `.agents/skills/`, `docs/`, and any `*.md`), find an
+      import or call of `notifyVVibeSignup(` , or a `fetch` to
+      `/api/members/signup-event`. The skill's own documentation contains both
+      strings, so a repo-wide grep says "wired" for a project that has done
+      nothing. If absent, route to the vvibe-member skill's signup-event mode
+      FIRST — direct-register cannot stamp campaign analytics without it.
     load: references/direct-register.md
 
   mcp-campaign:

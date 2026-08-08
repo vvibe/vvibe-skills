@@ -127,19 +127,22 @@ Helps creators install Google Analytics 4 on their websites and connect analytic
 npx skills add vvibe/vvibe-skills --skill vvibe-member
 ```
 
-Helps vibe coders sync their application users to VVibe, so creators can view users and subscription status in the Dashboard.
+Helps vibe coders tell vvibe when someone registers, so referral codes apply at checkout and welcome emails go out.
 
-- Bulk migration with batching and backoff
-- Incremental sync with fire-and-forget pattern
-- Dashboard viewing at `https://vvibe.ai/dashboard/users`
-- Sync log tracking
+- One fire-and-forget call at registration — no sync loop, no backfill
+- Referral / promo code captured at signup, auto-applied at the buyer's first checkout
+- First-touch attribution (utm_*, referrer) shipped with the signup
+- Inbound webhooks for vvibe-side events (hosted-checkout subscription, waitlist signup)
+
+vvibe does not keep a copy of your user table. When something needs your user
+data — an email audience, a report — query your own database.
 
 **Prerequisites:** A VVibe account and API Key (`pcs_live_*` or `pcs_test_*`). New to VVibe? [Create an account and get your key](./ONBOARDING.md).
 
 **Skill triggers:**
-- "Sync my users to VVibe"
-- "Help me migrate existing users to VVibe"
-- "Tell VVibe when someone signs up"
+- "Tell vvibe when someone signs up"
+- "Capture the referral code at registration"
+- "Track where my signups came from"
 
 ## VVibe Sentry Codebase Audit
 

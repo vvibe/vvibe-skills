@@ -27,16 +27,16 @@ whole catalog, newest first, grouped by date.
   `api-contract.md` now documents `POST /api/members/signup-event` (the old
   `/api/members/sync` still forwards to it so deployed apps don't silently
   drop signups, but the four read endpoints are gone). §5 of the SKILL.md
-  tells the agent what to say when someone asks for the removed features.
+  tells the agent what to say when someone asks for the removed features (#39)
 - **vvibe-email 0.7.0** — the `outbound_sync_wired` capability is now
   `signup_event_wired` (greps for `notifyVVibeSignup` /
   `POST /api/members/signup-event`); direct-register and self-hosted-waitlist
   fire the signup event instead of `syncToVVibe`. Dropped the
-  "disable welcome_free before backfilling" guidance — there is no backfill
-  to protect against any more.
+  "disable welcome_free before backfilling" guidance — no backfill remains
+  to protect against (#39)
 - **vvibe-analytics 0.4.2** — point first-touch attribution at the
   vvibe-member `attribution-utm` mode instead of a step number that no
-  longer exists.
+  longer exists (#39)
 - **plugin 0.1.0** — this repo is now also a plugin, installing every skill
   *and* the `vvibe` MCP server in one step instead of `npx skills add` plus
   `npx @vvibe/cli connect`. Claude Code:

@@ -8,7 +8,7 @@ Auto-fired on subscription-lifecycle events. One shared template per merchant â€
 
 | Template type | Triggered by | Common reason to disable |
 |---|---|---|
-| `welcome_free` | `POST /members/signup-event` records a new address with no active subscription | The vibe coder's app already sends its own welcome email |
+| `welcome_free` | `POST /api/members/signup-event` records a new address with no active subscription | The vibe coder's app already sends its own welcome email |
 | `welcome_paid` | Payment callback (status `completed`), or sync that adds an active subscription | The vibe coder customizes the upgrade email in their own product |
 | `subscription_canceled` | `POST /subscriptions/{id}/cancel`, or self-service portal cancel | The vibe coder wants control over cancellation timing/copy |
 

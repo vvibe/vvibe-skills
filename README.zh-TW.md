@@ -109,19 +109,22 @@ npx skills add vvibe/vvibe-skills --skill vvibe-analytics
 npx skills add vvibe/vvibe-skills --skill vvibe-member
 ```
 
-協助 vibe coder 將應用程式的用戶資料同步到 VVibe，讓創作者在 Dashboard 查看完整的使用者與訂閱狀態。
+協助 vibe coder 在有人註冊時通知 vvibe，讓推薦碼能在結帳時自動套用、歡迎信能寄出。
 
-- 全量同步：批次匯入既有用戶，支援分批與指數退避
-- 增量同步：在註冊/更新/停用事件中以 fire-and-forget 模式自動同步
-- Dashboard 可視化：`https://vvibe.ai/dashboard/users`
-- 同步紀錄：追蹤每次同步的成功/失敗狀態
+- 註冊時打一次 fire-and-forget 呼叫 —— 沒有同步迴圈，也沒有全量匯入
+- 註冊時帶入的推薦／優惠碼，會在該買家第一次結帳時自動套用
+- 首次接觸來源歸因（utm_*、referrer）隨註冊事件一起送出
+- Inbound webhook：vvibe 側事件（hosted checkout 訂閱、waitlist 註冊）回推到你的 app
+
+vvibe 不會保留你的用戶名單副本。需要用到用戶資料時（Email 分眾、報表），
+直接查你自己的資料庫。
 
 **前置條件：** VVibe 帳號與 API 金鑰（`pcs_live_*` 或 `pcs_test_*`）。VVibe 新手？[先註冊帳號再取得金鑰](./ONBOARDING.zh-TW.md)。
 
 **Skill 觸發條件：**
-- 「幫我同步用戶到 VVibe」
-- 「幫我把既有的會員資料遷移到 VVibe」
-- 「幫我設定用戶增量同步」
+- 「有人註冊時通知 vvibe」
+- 「註冊時記錄推薦碼」
+- 「追蹤我的註冊來源」
 
 ## VVibe Sentry 程式碼安全稽核
 

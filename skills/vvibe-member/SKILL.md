@@ -105,10 +105,14 @@ modes:
       - "marketing attribution"
     requires: [signup-event wired, has_signup_flow]
     wired_check: >
-      "signup-event wired" = grep the repo for a POST to
-      /api/members/signup-event, or a helper named notifyVVibeSignup /
-      syncToVVibe. If absent, load signup-event.md FIRST and wire it; then
-      return to this mode. Do not interleave.
+      "signup-event wired" = in the project's APPLICATION source (skip
+      .claude/skills/, .agents/skills/, docs/, and any *.md — this skill's
+      own files contain every string you'd grep for), find an import or call
+      of notifyVVibeSignup(, or a fetch to /api/members/signup-event.
+      A legacy syncToVVibe helper does NOT count: it points at the removed
+      sync endpoint, so attribution written into its payload never lands.
+      If absent, load signup-event.md FIRST and wire it; then return to this
+      mode. Do not interleave.
     load: references/attribution-utm.md
 ```
 

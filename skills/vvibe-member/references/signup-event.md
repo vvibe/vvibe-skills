@@ -49,9 +49,21 @@ here — do not proceed to any subsequent step.
 Check local env files (`.env`, `.env.local`, `.env.development`, framework env
 config) for an existing key. If found, confirm with the user it's the right
 one for the target environment (`pcs_test_*` → test, `pcs_live_*` →
-production). If not found, ask the user to grab it from
-`https://vvibe.ai/dashboard` and paste it; save to the appropriate local env
-file.
+production).
+
+If it's missing, follow the account check in the routing `SKILL.md` §6 — a
+brand-new user has no account yet, so asking for a key gets you nothing.
+Once they have one, **have them write it into the env file themselves**:
+
+> Add this line to `.env.local` — paste the key straight in, don't send it to
+> me. Tell me when it's saved.
+>
+>     VVIBE_API_KEY=pcs_test_...
+
+**Never ask the user to paste a key into the chat.** The transcript is stored
+and may be shared; a key that appears in it has to be rotated. The same goes
+for reading one back to confirm it — check that the variable is *set*, not
+what it contains.
 
 **Stop here if the key isn't available.** Tell the user to re-run once they
 have one.
@@ -79,10 +91,14 @@ created, detached from the response path.
 const VVIBE_API_KEY = process.env.VVIBE_API_KEY
 const VVIBE_API_HOST = process.env.VVIBE_API_HOST || 'https://vvibe.ai'
 
+// The input keys match the wire payload exactly — same names as the API
+// contract, `scripts/signup_event.mjs`, and every call site in these docs.
+// A camelCase wrapper around a snake_case body is one rename away from
+// silently dropping display_name / signup_ref_code, so don't add one.
 export async function notifyVVibeSignup(signup: {
   email: string
-  displayName?: string
-  signupRefCode?: string
+  display_name?: string
+  signup_ref_code?: string
   metadata?: Record<string, unknown>
 }) {
   if (!VVIBE_API_KEY) return
@@ -95,8 +111,8 @@ export async function notifyVVibeSignup(signup: {
     },
     body: JSON.stringify({
       email: signup.email,
-      display_name: signup.displayName,
-      signup_ref_code: signup.signupRefCode,
+      display_name: signup.display_name,
+      signup_ref_code: signup.signup_ref_code,
       metadata: signup.metadata,
     }),
   })
@@ -119,9 +135,9 @@ try {
 }
 notifyVVibeSignup({
   email: userData.email,
-  displayName: userData.name,
-  signupRefCode: refCodeFromUrlOrForm, // ?ref= / ?code= / ?promo= / ?coupon=
-}).catch((err) => console.error('[VVibe signup]', err))
+  display_name: userData.name,
+  signup_ref_code: refCodeFromUrlOrForm, // ?ref= / ?code= / ?promo= / ?coupon=
+}).catch((err) => console.error('[vvibe signup]', err))
 
 // ❌ Wrong — a VVibe outage would cascade into registration failure
 await createUser(userData)
