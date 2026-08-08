@@ -2,11 +2,11 @@
 
 ## When to use this
 
-This mode is a **layer on top of outbound-sync**. It captures where each user came from (`utm_*`, HTTP `Referer`) at signup and ships it to VVibe inside the sync payload's `metadata.attribution` field — that's what powers the "how many signups did our InsForge / Twitter / blog post send us this month?" report in the Dashboard. **If outbound-sync isn't wired yet, wire that first.** Without it, attribution rows land in the local DB but never reach VVibe. VVibe itself uses this pattern for its own creator signups — canonical reference at <https://github.com/vvibe/vvibe/tree/main/apps/web/lib/attribution> (Next.js + Better Auth, but the pattern is framework-agnostic).
+This mode is a **layer on top of signup-event**. It captures where each user came from (`utm_*`, HTTP `Referer`) at signup and ships it to VVibe inside the signup event's `metadata.attribution` field, which is what lets VVibe attribute a signup (and any revenue that follows it) to the source that brought them. **If signup-event isn't wired yet, wire that first.** Without it, attribution rows land in the local DB but never reach VVibe. VVibe itself uses this pattern for its own creator signups — canonical reference at <https://github.com/vvibe/vvibe/tree/main/apps/web/lib/attribution> (Next.js + Better Auth, but the pattern is framework-agnostic).
 
 ## Prerequisites
 
-- **outbound-sync is wired.** `syncToVVibe` (or equivalent) exists and is called on registration. Attribution writes piggy-back on that call.
+- **signup-event is wired.** `notifyVVibeSignup` (or equivalent) exists and is called on registration. Attribution writes piggy-back on that call.
 - **`has_signup_flow` is true.** There's a discoverable registration handler where you can snapshot the cookie into a DB row.
 - **You can add a new DB table.** The agent needs to create `user_attribution` (don't mutate the auth provider's managed user table).
 - **Cookie support.** The runtime can set HTTP cookies (rules out pure-static / edge-only setups without middleware).
@@ -92,42 +92,49 @@ In the signup handler (Better Auth `databaseHooks.user.create.after`, Supabase `
 
 ```ts
 async function onUserSignup(newUser: User, req: Request) {
-  const raw = getCookie(req, 'attribution')
-  const attribution = raw ? safeParse(raw) : null
+  // Every attribution step is best-effort. A cookie that won't parse or a
+  // failed insert must not reject this handler — the account already exists,
+  // and throwing here would also skip the signup event below.
+  let attribution = null
+  try {
+    const raw = getCookie(req, 'attribution')
+    attribution = raw ? safeParse(raw) : null
 
-  if (attribution) {
-    await db.insert(user_attribution).values({
-      user_id: newUser.id,
-      utm_source: attribution.utm_source,
-      utm_medium: attribution.utm_medium,
-      utm_campaign: attribution.utm_campaign,
-      utm_term: attribution.utm_term,
-      utm_content: attribution.utm_content,
-      referrer: attribution.referrer,
-      landing_path: attribution.landing_path,
-      captured_at: new Date(attribution.captured_at),
-    }).onConflictDoNothing()  // first-write-wins enforcement
+    if (attribution) {
+      await db.insert(user_attribution).values({
+        user_id: newUser.id,
+        utm_source: attribution.utm_source,
+        utm_medium: attribution.utm_medium,
+        utm_campaign: attribution.utm_campaign,
+        utm_term: attribution.utm_term,
+        utm_content: attribution.utm_content,
+        referrer: attribution.referrer,
+        landing_path: attribution.landing_path,
+        captured_at: new Date(attribution.captured_at),
+      }).onConflictDoNothing()  // first-write-wins enforcement
+    }
+  } catch (err) {
+    console.error('[attribution]', err)
+    attribution = null
   }
 
-  // Send to VVibe in the Sync payload's metadata field.
-  // Fire-and-forget — never block signup on VVibe; helper takes an array.
-  syncToVVibe([{
+  // Send to vvibe inside the signup event's metadata field. Outside the
+  // try/catch above, so a failed attribution write still lets the signup
+  // event through — it just carries a null attribution.
+  // Fire-and-forget — never block signup on vvibe.
+  notifyVVibeSignup({
     email: newUser.email,
-    id: newUser.id,
-    // ... existing fields ...
-    metadata: {
-      // ... existing metadata ...
-      attribution,  // null if nothing captured
-    },
-  }]).catch(err => console.error('[VVibe Sync]', err))
+    display_name: newUser.name,
+    metadata: { attribution },  // null if nothing captured
+  }).catch(err => console.error('[vvibe signup]', err))
 }
 ```
 
 The attribution object lives inside `metadata.attribution` — mind the overall `metadata` size cap, see [`./api-contract.md`](./api-contract.md) for the 10KB limit. **Critical: must not throw on attribution errors.** Account creation MUST succeed even if the attribution write fails — wrap in try/catch and log, never propagate.
 
-## 4. VVibe-side display
+## 4. VVibe-side use
 
-The VVibe Dashboard surfaces `metadata.attribution.utm_source` as a column / filter on the Members page. No additional Sync API changes needed — the existing `metadata` jsonb field carries it through. For partner-program creators (cloud-only), VVibe additionally joins `metadata.attribution.utm_source` against the platform's partner table to compute revenue attribution — invisible to the creator, surfaces in admin reporting.
+The signup event's `metadata` is stored as-is, so no API change is needed to carry attribution through. For partner-program creators (cloud-only), VVibe joins `metadata.attribution.utm_source` against the platform's partner table to compute revenue attribution — invisible to the creator, surfaces in admin reporting. There is no Members page any more; the creator reads their own attribution table for their own reporting, which is why §1 stores it locally as well as shipping it.
 
 ## 5. Hard rules
 
@@ -142,4 +149,4 @@ The VVibe Dashboard surfaces `metadata.attribution.utm_source` as a column / fil
 - **First-touch-wins — don't overwrite the cookie.** The middleware checks `request.cookies.has(ATTRIBUTION_COOKIE)` before writing. Removing that guard turns the system into last-touch and silently rewrites history.
 - **Don't throw on attribution errors.** Wrap the DB insert and cookie parse in try/catch. Account creation must succeed even if every attribution step fails. A botched utm capture should never block a signup.
 - **Cookie size limit — truncate defensively.** `utm_*` values can be arbitrarily long (or hostile: `?utm_source=<10KB>`). Browsers cap cookies near 4KB total; clamp each field to the column width in §1 before writing.
-- **Forgot to wire outbound-sync first.** Without it, the `user_attribution` row lands in the local DB but `metadata.attribution` never reaches VVibe — the Dashboard column stays empty. Verify `syncToVVibe` is called from the same signup handler before declaring done.
+- **Forgot to wire signup-event first.** Without it, the `user_attribution` row lands in the local DB but `metadata.attribution` never reaches VVibe. Verify `notifyVVibeSignup` is called from the same signup handler before declaring done.

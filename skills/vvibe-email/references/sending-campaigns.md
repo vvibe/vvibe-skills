@@ -244,7 +244,7 @@ The funnel is cumulative left-to-right:
 - `delivered` = SES confirmed delivery
 - `opened`, `clicked` = engagement (tracking pixel + `/r/{code}` redirect)
 - `bounced`, `complained` = SES hygiene signals
-- `signedUp` = recipient submitted the waitlist form (Mode A/B) or `syncToVVibe` ran with their refcode (Mode C). Requires the per-recipient `outboxId` (URL `utm_content`) to pin — campaign-level refcodes alone don't pin and stay at 0.
+- `signedUp` = recipient submitted the waitlist form (Mode A/B) or the app's signup event fired with their refcode (Mode C). Requires the per-recipient `outboxId` (URL `utm_content`) to pin — campaign-level refcodes alone don't pin and stay at 0.
 - `converted` = recipient later completed a paid checkout in the vibe coder's payment integration and the checkout email matched the imported email on a `signedUp` row.
 
 Report 3–4 numbers, not all 9. Most creators want: delivered, opened, clicked, signedUp.

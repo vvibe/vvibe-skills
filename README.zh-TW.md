@@ -75,7 +75,7 @@ npx @vvibe/cli connect --server=https://mcp.vvibe.ai
 | Skill | 說明 | 觸發關鍵字 |
 |-------|------|-----------|
 | **vvibe-analytics** | GA4 分析安裝、VVibe 事件追蹤、儀表板連結 | `GA4`、`Google Analytics`、`事件追蹤` |
-| **vvibe-member** | 用戶同步至 VVibe — 全量遷移、增量同步、Dashboard 查看 | `用戶同步`、`member sync`、`用戶管理` |
+| **vvibe-member** | 註冊時通知 VVibe — 推薦碼、歡迎信、註冊來源歸因，以及 VVibe 側事件 webhook | `signup event`、`會員整合`、`ref code`、`註冊歸因` |
 | **vvibe-sentry** | 部署前的程式碼安全稽核 — 串接 gitleaks、osv-scanner、semgrep 加上 VVibe 整合檢查，結果回報至 Vibe 儀表板 | `sentry 掃描`、`安全稽核`、`部署前檢查`、`機密外洩`、`依賴 CVE` |
 | **vvibe-email** | 將 Invitation Email 註冊連結導向 VVibe 託管 CTA（零設定）或 vibe coder 自架的 waitlist 落地頁 | `Invitation Email`、`Waitlist 落地頁`、`app base URL` |
 | **vvibe-product-brain** | 建立或更新創作者在 VVibe 上的「產品腦」—— 從 repo、公開網站或文件抽取結構化產品事實，再透過 `vibe_set_product_kb` 寫回。其他會產出文案的 skill（email、SEO、轉換優化）下筆前都會先讀這份。 | `產品腦`、`Product Brain`、`知識庫建構器`、`告訴 VVibe 你的產品` |
@@ -109,19 +109,22 @@ npx skills add vvibe/vvibe-skills --skill vvibe-analytics
 npx skills add vvibe/vvibe-skills --skill vvibe-member
 ```
 
-協助 vibe coder 將應用程式的用戶資料同步到 VVibe，讓創作者在 Dashboard 查看完整的使用者與訂閱狀態。
+協助 vibe coder 在有人註冊時通知 vvibe，讓推薦碼能在結帳時自動套用、歡迎信能寄出。
 
-- 全量同步：批次匯入既有用戶，支援分批與指數退避
-- 增量同步：在註冊/更新/停用事件中以 fire-and-forget 模式自動同步
-- Dashboard 可視化：`https://vvibe.ai/dashboard/users`
-- 同步紀錄：追蹤每次同步的成功/失敗狀態
+- 註冊時打一次 fire-and-forget 呼叫 —— 沒有同步迴圈，也沒有全量匯入
+- 註冊時帶入的推薦／優惠碼，會在該買家第一次結帳時自動套用
+- 首次接觸來源歸因（utm_*、referrer）隨註冊事件一起送出
+- Inbound webhook：vvibe 側事件（hosted checkout 訂閱、waitlist 註冊）回推到你的 app
+
+vvibe 不會保留你的用戶名單副本。需要用到用戶資料時（Email 分眾、報表），
+直接查你自己的資料庫。
 
 **前置條件：** VVibe 帳號與 API 金鑰（`pcs_live_*` 或 `pcs_test_*`）。VVibe 新手？[先註冊帳號再取得金鑰](./ONBOARDING.zh-TW.md)。
 
 **Skill 觸發條件：**
-- 「幫我同步用戶到 VVibe」
-- 「幫我把既有的會員資料遷移到 VVibe」
-- 「幫我設定用戶增量同步」
+- 「有人註冊時通知 vvibe」
+- 「註冊時記錄推薦碼」
+- 「追蹤我的註冊來源」
 
 ## VVibe Sentry 程式碼安全稽核
 
@@ -160,7 +163,7 @@ npx skills add vvibe/vvibe-skills --skill vvibe-email
 - Mode A — 直接嵌入 `https://vvibe.ai/waitlist/{creatorSlug}` CTA，不用寫任何後端
 - Mode B — 設定 `appBaseUrl` 並在自己的網域實作頁面；點擊追蹤仍走 VVibe
 - Mode B 提供 Next.js、React SPA、純 HTML 三種範本
-- 與 `vvibe-member` 串接，把新訂閱者同步進創作者儀表板
+- 與 `vvibe-member` 串接，註冊時送出 signup event，讓 campaign analytics 能記到這筆註冊
 
 **前置條件：** VVibe 帳號與 API 金鑰（`pcs_live_*` 或 `pcs_test_*`）——[VVibe 新手？](./ONBOARDING.zh-TW.md)。Mode B 需要一個可公開存取的 HTTPS 網域。
 

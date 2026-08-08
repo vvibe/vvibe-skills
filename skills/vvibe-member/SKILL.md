@@ -1,8 +1,8 @@
 ---
 name: vvibe-member
-version: 0.5.0
+version: 0.6.0
 manifest_version: 1
-description: Help users wire member data between their app and VVibe — push their users to VVibe, query VVibe for member state, and capture signup attribution. Trigger when the user mentions VVibe user sync, member sync, user management, fetching members from VVibe, building a member admin UI, signup attribution, utm tracking, or referral tracking.
+description: Help users wire signup events between their app and VVibe — tell VVibe when someone registers so referral codes and welcome emails work, capture signup attribution, and receive VVibe-side member events. Trigger when the user mentions VVibe signup events, member integration, telling VVibe about new users, referral / ref code capture at signup, signup attribution, utm tracking, or VVibe webhooks.
 ---
 
 # VVibe Member Skill — Routing
@@ -15,19 +15,31 @@ When you load this skill: read this whole file, run the capability checks in
 §2, pick a mode using §3 / §4, then **Read the matching references/*.md**.
 Do not read every reference file upfront.
 
-## 1. What this skill does
+## 1. What this skill does — and what it deliberately doesn't
 
-Wire the seams between the vibe coder's app and VVibe's member system.
-Three independent directions of data flow — pick any combination, not
-mutually exclusive:
+**VVibe does not hold a copy of your users.** It used to; that's gone. A
+mirror of the creator's user table has to be re-synced every time any field
+changes, and the thing it was built for — picking a fine-grained email
+audience — is better served by querying the creator's own database live at
+send time (that's what `vvibe-email`'s audience segments do).
 
-- **outbound-sync** — your app → VVibe (push your users so creators see them)
-- **query-read** — your app → VVibe (read back members, stats, sync logs)
-- **inbound-webhook** — VVibe → your app (get notified when VVibe-side state changes)
+So this skill wires exactly two seams, plus one cross-cutting concern:
 
-A cross-cutting concern that hangs off `outbound-sync`:
+- **signup-event** — your app → VVibe, **once per registration**. VVibe
+  records the address, any referral code, and any attribution. Nothing else.
+- **inbound-webhook** — VVibe → your app (get notified when VVibe-side state
+  changes: hosted-checkout subscription, waitlist signup on a VVibe page)
+- **attribution-utm** — capture utm_* / referrer at signup, ship it inside
+  the signup event. Hangs off `signup-event`.
 
-- **attribution-utm** — capture utm_* / referrer at signup, ship in sync payload
+**Do not build a sync loop.** No login hook, no profile-update hook, no
+deletion hook, no backfill of existing users. If you catch yourself wiring
+`syncToVVibe` into more than the registration handler, stop — that's the old
+shape and it no longer buys anything.
+
+**Where the creator's user data belongs: in the creator's database.** When a
+task needs it (an audience for a campaign, a report, a lookup), query it
+there. `vvibe-email`'s `audience-segments.md` is the canonical pattern.
 
 ## 2. Capability checklist (run BEFORE asking the user anything)
 
@@ -37,10 +49,9 @@ language / framework — read `package.json`, glob for files, look at `.env`.
 | Capability | How to detect | Used by |
 |---|---|---|
 | `has_server_runtime` | Server framework present (Next.js with API routes, Express, FastAPI, Rails, Django, Payload, etc.). Static-only sites fail this. | all modes |
-| `has_user_model` | Database schema / ORM model with users (Prisma, Drizzle, Mongoose, Payload collections, raw SQL migrations). | outbound-sync |
 | `has_api_key_local` | `VVIBE_API_KEY` present in `.env*` or framework env config. | all modes |
+| `has_signup_flow` | Discoverable registration handler (route file or auth-provider hook). | signup-event, attribution-utm |
 | `has_public_https_endpoint` | Deployed (Vercel / Fly / Render / etc.) OR has a known reverse-proxied prod domain. Localhost-only ⇒ false. | inbound-webhook |
-| `has_signup_flow` | Discoverable registration handler (route file or auth-provider hook). | outbound-sync, attribution-utm |
 
 After detection, briefly tell the human user what you found and what's
 missing — don't ask them to confirm capabilities you can verify yourself.
@@ -49,45 +60,29 @@ missing — don't ask them to confirm capabilities you can verify yourself.
 
 ```yaml
 modes:
-  outbound-sync:
+  signup-event:
     status: available
     when: >
-      The vibe coder owns their own user DB and wants creators to see
-      those users (and their subscription status) in the VVibe Dashboard.
-      This is the default starting mode for any new integration.
-    triggers:                              # the "to VVibe" phrases are directional — route directly, skip §5
-      - "sync users to VVibe"              # directional
-      - "migrate users to VVibe"           # directional
-      - "push members to VVibe"            # directional
-      - "track signups"
-      - "VVibe user integration"
-    requires: [has_server_runtime, has_user_model, has_api_key_local, has_signup_flow]
-    load: references/outbound-sync.md
-
-  query-read:
-    status: available
-    when: >
-      The vibe coder wants to BUILD something with VVibe's member data —
-      a custom admin UI in their own app, a CRM lookup, a report, a
-      pre-send eligibility check, gating a premium feature by plan. Read-only.
+      The vibe coder wants VVibe to know when someone registers, so that
+      referral codes captured at signup can auto-apply at checkout, the
+      welcome email fires, and invitation-campaign analytics can stamp a
+      signup. This is the default starting mode for any new integration.
     triggers:
-      - "build admin UI for members"
-      - "fetch users from VVibe"
-      - "show subscription status in my app"
-      - "check if user is subscribed / on paid plan"
-      - "gate premium feature by subscription status"
-      - "list members programmatically"
-      - "member stats / sync history"
-    requires: [has_server_runtime, has_api_key_local]
-    load: references/query-read.md
+      - "tell VVibe about new signups"
+      - "VVibe user integration"
+      - "track signups"
+      - "referral code at signup"
+      - "ref code / promo code capture"
+      - "sync users to VVibe"          # legacy phrasing — route here and say why
+    requires: [has_server_runtime, has_api_key_local, has_signup_flow]
+    load: references/signup-event.md
 
   inbound-webhook:
     status: available
     when: >
       VVibe-side state changes (subscription created/canceled, payout
       completed, waitlist signup on VVibe-hosted page) should push to the
-      vibe coder's app in realtime, instead of being learned via polling
-      or outbound-sync feedback loops.
+      vibe coder's app in realtime.
     triggers:
       - "VVibe notify my app when X"
       - "subscribe to VVibe events"
@@ -100,84 +95,62 @@ modes:
     status: available
     when: >
       The vibe coder wants to know where signups came from (utm_*,
-      referrer). This is a layer on top of outbound-sync — do not enable
-      it before outbound-sync is wired.
+      referrer). This is a layer on top of signup-event — do not enable
+      it before signup-event is wired.
     triggers:
       - "attribution"
       - "utm tracking"
       - "referrer tracking"
       - "where signups came from"
       - "marketing attribution"
-    requires: [outbound-sync wired, has_signup_flow]
+    requires: [signup-event wired, has_signup_flow]
     wired_check: >
-      "outbound-sync wired" = grep the repo for a VVibe sync call
-      (POST to /api/members/sync, or import/definition of a syncToVVibe
-      helper). If absent, load outbound-sync.md FIRST and wire it; then
-      return to this mode. Do not interleave.
+      "signup-event wired" = in the project's APPLICATION source (skip
+      .claude/skills/, .agents/skills/, docs/, and any *.md — this skill's
+      own files contain every string you'd grep for), find an import or call
+      of notifyVVibeSignup(, or a fetch to /api/members/signup-event.
+      A legacy syncToVVibe helper does NOT count: it points at the removed
+      sync endpoint, so attribution written into its payload never lands.
+      If absent, load signup-event.md FIRST and wire it; then return to this
+      mode. Do not interleave.
     load: references/attribution-utm.md
 ```
 
-## 4. Recipes (common multi-mode combos)
+## 4. Recipes
 
 ```yaml
 recipes:
   starter:
-    description: "MVP — just push signups so VVibe knows about your users."
-    load_in_order: [outbound-sync]
+    description: "MVP — tell VVibe when someone registers."
+    load_in_order: [signup-event]
 
   production-launch:
     description: >
-      Production-ready integration — outbound sync + marketing attribution +
+      Production-ready integration — signup events + marketing attribution +
       realtime inbound events. Pick this for "set up properly",
       "production integration", "launch-ready", "full bidirectional".
     aliases: [full-bidirectional]
-    load_in_order: [outbound-sync, attribution-utm, inbound-webhook]
-
-  reverse-only:
-    description: "VVibe hosts the user list; the app only reads."
-    load_in_order: [query-read]
-    note: >
-      Rare. Most vibe coders own their user DB. Use only when the vibe
-      coder explicitly says VVibe is the source of truth (e.g. their app
-      embeds VVibe-hosted auth).
+    load_in_order: [signup-event, attribution-utm, inbound-webhook]
 ```
 
 When the human user says something matching a recipe (e.g. "set up VVibe
 properly", "production integration"), pick the recipe, name it back to
 them, and load the referenced files in order.
 
-## 5. Disambiguators
+## 5. When the user asks for something this skill no longer does
 
-Use these only when the user's phrase genuinely maps to >1 mode AND
-capability detection didn't narrow it down.
+Three asks used to be modes here. Answer them straight — don't route to a
+reference that no longer exists, and don't improvise a replacement API.
 
-**Tiebreaker rule.** If the user's phrase matches a §3 trigger as a full,
-directional phrase (e.g. "sync users **to** VVibe" — the preposition
-disambiguates), route directly and **skip** the disambiguator. Only ask
-when the phrase matches a §5 `signal` as a substring without any
-disambiguating preposition or object ("sync users", "user integration").
+| They ask for | Say |
+|---|---|
+| "sync my users to VVibe" / "migrate my users" / "backfill" | VVibe doesn't hold a copy of your users any more — only a signup record per address. Wire `signup-event` and new registrations flow through; there is nothing to backfill. |
+| "show my members in the VVibe dashboard" / "member list" | That page is gone. Paying members are on the Payment surface (they come from VVibe's own checkout). Everyone else lives in your database, where your agent can query them directly. |
+| "read members back from VVibe" / "build an admin UI from VVibe data" | VVibe is not the source of truth for your users, so there's nothing to read back. Query your own database — that's the same path `vvibe-email` uses to build an audience. |
 
-**Ask at most one question per ambiguity** — do not chain. Phrase
-verbatim (translate to the conversation's language); the bracketed
-mapping is for your routing, not for the user.
-
-```yaml
-disambiguators:
-  - signal: ["sync users", "user sync", "user integration"]
-    ask: >
-      Are you pushing your existing users to VVibe (your DB is the source
-      of truth), or fetching member data from VVibe to use in your app
-      (VVibe is the source)?
-    map:
-      "push|to VVibe|outbound": outbound-sync
-      "fetch|from VVibe|read|inbound": query-read
-      "both": [outbound-sync, query-read]
-
-  - signal: ["VVibe notify", "webhook", "VVibe push", "subscription event"]
-    ask: null
-    map:
-      "*": inbound-webhook
-```
+If they specifically want a **campaign audience**, that's `vvibe-email`'s
+`audience-segments.md`: you run a read-only query against their database and
+import the rows straight into the campaign.
 
 ## 6. Cross-cutting facts (apply to ALL modes)
 
@@ -188,7 +161,7 @@ disambiguators:
 const VVIBE_API_HOST = process.env.VVIBE_API_HOST || 'https://vvibe.ai'
 ```
 
-`scripts/sync_user.mjs` follows this pattern. See `PROVIDER.md` at the
+`scripts/signup_event.mjs` follows this pattern. See `PROVIDER.md` at the
 repo root for the backend compatibility contract.
 
 **Authentication.** Bearer token in `Authorization` header:
@@ -198,8 +171,7 @@ Authorization: Bearer ${VVIBE_API_KEY}
 ```
 
 API Key prefix determines mode: `pcs_live_*` → production, `pcs_test_*` →
-sandbox. The Sync endpoint requires API Key. GET endpoints also accept
-Firebase JWT (for in-browser Dashboard usage).
+sandbox.
 
 **No VVibe account yet? Register before asking for a key.** When
 `VVIBE_API_KEY` is missing from the project's env, don't just ask the
@@ -215,13 +187,13 @@ ask whether they already have a VVibe account:
 
 Only once the key is in `.env` can any mode proceed.
 
-**Consent gate (outbound-sync and attribution-utm only).** Before
+**Consent gate (signup-event and attribution-utm only).** Before
 modifying the vibe coder's codebase, the agent **must** ask explicit
-consent. The exact wording lives in `references/outbound-sync.md` §1.
+consent. The exact wording lives in `references/signup-event.md` §1.
 Don't skip it — wait for an unambiguous yes. When attribution-utm is
-loaded as part of the same conversation that already wired outbound-sync,
+loaded as part of the same conversation that already wired signup-event,
 the §1 consent covers both — do not re-prompt. When attribution-utm is
-loaded standalone (later session, outbound-sync already wired in prior
+loaded standalone (later session, signup-event already wired in prior
 work), surface a short re-confirmation: "I'm about to add an attribution
 table and signup-time capture. OK to proceed?" Don't generate code
 before the user agrees.
@@ -230,18 +202,17 @@ before the user agrees.
 
 - Prefer code snippets over architecture explanations.
 - Use the vibe coder's existing framework and language.
-- Sync calls are always fire-and-forget — never let a VVibe failure break
-  the app's main flow.
+- The signup call is always fire-and-forget — never let a VVibe failure
+  break the app's registration flow.
 - Show `.env` setup before any API call.
 
 ## 8. Reference documents
 
 | File | Contains | Load when |
 |---|---|---|
-| `references/outbound-sync.md` | Schema mapping, sync helper, incremental hooks, initial backfill, sync-specific guardrails. | mode = outbound-sync |
-| `references/query-read.md` | List members, get one, stats, sync logs. Read-only walkthrough. | mode = query-read |
+| `references/signup-event.md` | The one call, where to put it, what to send, guardrails. | mode = signup-event |
 | `references/inbound-webhook.md` | Webhook registration, signature verification flow, framework receiver templates (Next.js / Express / FastAPI), retry + response semantics. | mode = inbound-webhook |
-| `references/attribution-utm.md` | Cookie + middleware + signup snapshot. Hangs off outbound-sync. | mode = attribution-utm |
+| `references/attribution-utm.md` | Cookie + middleware + signup snapshot. Hangs off signup-event. | mode = attribution-utm |
 | `references/_shared/webhook-signature-verify.md` | Signing canonical reference. Wire format + 5-step verification + test vectors. | loaded by inbound-webhook.md; flat reference data. |
-| `references/api-contract.md` | Authoritative wire spec for all 5 endpoints. | reference data — link to it from other refs, don't read end-to-end. |
-| `scripts/sync_user.mjs` | Runnable single-user sync helper. | optional starter template for outbound-sync. |
+| `references/api-contract.md` | Authoritative wire spec for the signup-event endpoint. | reference data — link to it from other refs, don't read end-to-end. |
+| `scripts/signup_event.mjs` | Runnable signup-event helper. | optional starter template for signup-event. |

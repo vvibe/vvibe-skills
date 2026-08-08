@@ -2,7 +2,7 @@
 
 ## When to use this
 
-Load this reference when VVibe-side state changes (subscription created or canceled, waitlist signup on a hosted page, member deletion) should push into the vibe coder's app in realtime instead of being learned through polling or outbound-sync feedback loops. If you are pushing data from the app to VVibe, you are in the wrong mode — return to the routing SKILL.md and pick `outbound-sync`. For exact wire shapes (envelope, signing) see [./_shared/webhook-signature-verify.md](./_shared/webhook-signature-verify.md).
+Load this reference when VVibe-side state changes (subscription created or canceled, waitlist signup on a hosted page, member deletion) should push into the vibe coder's app in realtime instead of being learned through polling. If you are telling VVibe about a registration in the app, you are in the wrong mode — return to the routing SKILL.md and pick `signup-event`. For exact wire shapes (envelope, signing) see [./_shared/webhook-signature-verify.md](./_shared/webhook-signature-verify.md).
 
 ## 1. Consent
 
@@ -26,13 +26,13 @@ Confirm before generating code:
 
 | Check | Required | If false |
 |---|---|---|
-| App has a server runtime (Next.js / Express / FastAPI / Rails / etc.) | Yes | **Stop.** Inbound webhooks need a server-side receiver. Static sites cannot receive them — tell the user this and offer to fall back to the `query-read` mode (their app polls VVibe). |
+| App has a server runtime (Next.js / Express / FastAPI / Rails / etc.) | Yes | **Stop.** Inbound webhooks need a server-side receiver. Static sites cannot receive them — tell the user this and tell them a static site cannot receive webhooks and that this mode needs a server before it can be wired. |
 | App is reachable via a public HTTPS URL | Yes | Stop until the user has a tunnel or production deployment. Localhost is fine for development if they're using ngrok / Cloudflare tunnel / Vercel preview — confirm with them. |
 | Has a way to persist a small dedup table (DB / Redis / KV) | Yes | Stop. At-least-once delivery means the same `event_id` can arrive twice — receivers MUST dedup or risk double-grants / double-emails. |
 
 ## 3. Register the webhook
 
-The agent registers the webhook by calling VVibe's API with the creator's existing `VVIBE_API_KEY` (the same `pcs_*` key used by `outbound-sync`). The plaintext secret is shown **exactly once** — write it to the user's secrets surface (`.env`, Vercel env vars, etc.) before continuing.
+The agent registers the webhook by calling VVibe's API with the creator's existing `VVIBE_API_KEY` (the same `pcs_*` key used by `signup-event`). The plaintext secret is shown **exactly once** — write it to the user's secrets surface (`.env`, Vercel env vars, etc.) before continuing.
 
 ```typescript
 const VVIBE_API_HOST = process.env.VVIBE_API_HOST || 'https://vvibe.ai'

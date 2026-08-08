@@ -8,7 +8,7 @@ Auto-fired on subscription-lifecycle events. One shared template per merchant �
 
 | Template type | Triggered by | Common reason to disable |
 |---|---|---|
-| `welcome_free` | `POST /members/sync` upserts a user with no active subscription | The vibe coder's app already sends its own welcome email |
+| `welcome_free` | `POST /api/members/signup-event` records a new address with no active subscription | The vibe coder's app already sends its own welcome email |
 | `welcome_paid` | Payment callback (status `completed`), or sync that adds an active subscription | The vibe coder customizes the upgrade email in their own product |
 | `subscription_canceled` | `POST /subscriptions/{id}/cancel`, or self-service portal cancel | The vibe coder wants control over cancellation timing/copy |
 
@@ -42,7 +42,7 @@ Tied to the invitation / waitlist loop. Body source differs:
 
 If the vibe coder has their own welcome / upgrade / cancellation flow, disable the matching VVibe template *before* wiring the trigger that would fire it. The two common pitfalls:
 
-- **Before backfilling members.** Disable `welcome_free` before the first `syncToVVibe` bulk sync. Otherwise that sync sends a VVibe `welcome_free` to every existing user the creator already onboarded — usually duplicating an email those users received months ago.
+- **Never loop the signup event over an existing user list.** There is no backfill in the current vvibe-member skill precisely because it would fire `welcome_free` at every existing user the creator already onboarded. If you inherit a script that does this, disable `welcome_free` first — or better, don't run it.
 - **Before wiring the payment callback.** Disable `welcome_paid` and/or `subscription_canceled` before the creator's checkout-completion or cancellation handler calls into VVibe. Otherwise every successful checkout sends a `welcome_paid` on top of the vibe coder's own upgrade message, and every cancel fires a duplicate cancellation notice.
 
 Order matters: toggle the template first, *then* wire the trigger. Disabling after the fact doesn't claw back already-enqueued emails.

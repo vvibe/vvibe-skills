@@ -9,21 +9,21 @@ any production app with user accounts.
 
 **Prerequisites — both are hard requirements:**
 
-- **Outbound sync must already be wired** via the prerequisite skill
-  (vvibe-member). Grep for `syncToVVibe` or `POST /api/members/sync`. If
-  absent, set that up first — direct-register cannot stamp campaign
+- **The signup event must already be wired** via the prerequisite skill
+  (vvibe-member). Grep for `notifyVVibeSignup` or `POST /api/members/signup-event`.
+  If absent, set that up first — direct-register cannot stamp campaign
   analytics' `signedUp` without it. Install with `npx skills add vvibe/vvibe-skills --skill vvibe-member` if it's not present.
 - **The app must have an existing signup flow** at a known path (e.g.
   `/signup`). This mode configures *where* clicks land; it does not create
   the signup page.
 
 **Trade-off you must call out to the creator.** In this mode, recipients
-bypass the VVibe waitlist entirely. To get the new follower into the
-creator's user list and stamp the `signedUp` funnel stage, the register
-flow **must** call `syncToVVibe` with `signupRefCode` set. Without that
-call, the creator never sees the user and the campaign analytics'
-`signedUp` and `converted` both stay at 0 — `converted` only stamps for
-recipients whose `signedUp` has already been recorded.
+bypass the VVibe waitlist entirely, so VVibe never sees the signup unless
+the app tells it. To stamp the `signedUp` funnel stage, the register flow
+**must** call `notifyVVibeSignup` with `signup_ref_code` set. Without that
+call, campaign analytics' `signedUp` and `converted` both stay at 0 —
+`converted` only stamps for recipients whose `signedUp` has already been
+recorded.
 
 ## 1. Set `appBaseUrl` and `inviteRedirectPath`
 
@@ -60,7 +60,7 @@ VVibe appends these query params to every redirect:
 
 | Param | Purpose |
 |---|---|
-| `ref` | Referral code; pass back to `syncToVVibe` so the signup attributes to the campaign |
+| `ref` | Referral code; pass back in the signup event so the signup attributes to the campaign |
 | `utm_source` | Always `invitation` |
 | `utm_campaign` | Campaign id |
 | `utm_content` | Outbox id (per-recipient identifier) |
@@ -68,18 +68,17 @@ VVibe appends these query params to every redirect:
 Read these on first hit and stash them (cookie / localStorage / hidden form
 field) so they survive multi-step signup.
 
-## 3. Wire `syncToVVibe` after register
+## 3. Fire the signup event after register
 
-After register completes, call `syncToVVibe` (from the prerequisite
-vvibe-member skill) with the new user's email + name + `signupRefCode` set
+After register completes, call `notifyVVibeSignup` (from the prerequisite
+vvibe-member skill) with the new user's email + name + `signup_ref_code` set
 to the URL's `utm_content` (preferred — the per-recipient outbox UUID) or
 `ref` as fallback.
 
 ```ts
 const signupRefCode = utm_content || ref
-syncToVVibe([{ email, name, signupRefCode }]).catch((err) =>
-  console.error('[VVibe Sync]', err)
-)
+notifyVVibeSignup({ email, display_name: name, signup_ref_code: signupRefCode })
+  .catch((err) => console.error('[VVibe signup]', err))
 ```
 
 `converted` stamps automatically when the recipient later completes a paid
@@ -90,12 +89,12 @@ buyer's checkout email against this campaign's import list.
 
 1. Send a test invitation email from the dashboard.
 2. Click the CTA. The browser should redirect through `vvibe.ai/r/...` and land on `https://your-app.example.com{inviteRedirectPath}?ref=...&utm_source=invitation&...`.
-3. Complete signup. Confirm the new user appears in the VVibe Dashboard's user list (= `syncToVVibe` ran).
+3. Complete signup. The signup event is fire-and-forget, so check your own logs (or the welcome email landing) to confirm it ran — there is no members list in the dashboard to look at.
 4. A few minutes later, call `vibe_get_campaign_analytics` and check `signedUp ≥ 1`.
 
 ## Pitfalls
 
 - **Wrong:** `inviteRedirectPath` includes `?` or `#`. VVibe rejects the value — it appends its own query string and the two would collide.
-- **Wrong:** forgetting to call `syncToVVibe` with `signupRefCode = utm_content || ref` after register. Campaign analytics' `signedUp` stays at 0, `converted` never stamps, and the new follower never appears in the creator's user list on the dashboard.
+- **Wrong:** forgetting to call `notifyVVibeSignup` with `signup_ref_code = utm_content || ref` after register. Campaign analytics' `signedUp` stays at 0 and `converted` never stamps.
 - **Wrong:** setting `appBaseUrl` to `localhost` (or any non-HTTPS URL). VVibe enforces HTTPS — use ngrok / Cloudflare Tunnel for local dev.
 - **Wrong:** switching modes (direct-register ↔ self-hosted-waitlist ↔ hosted-cta) without informing recipients in flight. The toggle propagates within ~60 seconds (VVibe's per-process cache TTL) and applies to every email already sent — recipients who haven't clicked yet land on the new destination.

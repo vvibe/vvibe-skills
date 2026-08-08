@@ -16,10 +16,10 @@ skills/
     SKILL.md                  # Skill definition (entry point)
     references/               # GA4 setup guide, event tracking contract
     scripts/                  # gtag.js and event tracking examples (.mjs)
-  vvibe-member/             # Member sync and management
+  vvibe-member/             # Signup events, attribution, inbound webhooks
     SKILL.md                  # Skill definition (entry point)
-    references/               # User sync API contract
-    scripts/                  # Migration and sync examples (.mjs)
+    references/               # Signup-event API contract
+    scripts/                  # Signup-event example (.mjs)
   vvibe-email/              # Invitation email + waitlist landing
     SKILL.md                  # Skill definition (entry point)
     references/               # Hosted-CTA / self-hosted waitlist / campaign sending
@@ -64,10 +64,11 @@ SKILL.md is the entry point when an agent loads a skill. References are loaded o
 **Member Skill:**
 - API host: `https://vvibe.ai`
 - Uses the same Creator Subscription API Key (`pcs_live_*` / `pcs_test_*`)
-- Email is the dedup key: `UNIQUE(profile_id, api_key_id, email)`
-- Batch limit: max 100 users per sync call
-- Sync calls must be fire-and-forget — never block the main business flow
-- Deletion: sync with `status: "deleted"` removes the user (no separate DELETE endpoint)
+- One `POST /api/members/signup-event` per registration — never on login, profile update, or deletion
+- The call must be fire-and-forget — never block the main business flow
+- Email is the dedup key; `signup_ref_code` is first-write-wins
+- vvibe does NOT mirror the creator's user table: no member list, no bulk sync, no backfill
+- Three modes: `signup-event`, `attribution-utm`, `inbound-webhook`
 
 **Product Brain Skill:**
 - Writes the merchant's Product Brain via the `vibe_set_product_kb` MCP tool (or REST fallback to `PUT /api/product-brain/kb`)

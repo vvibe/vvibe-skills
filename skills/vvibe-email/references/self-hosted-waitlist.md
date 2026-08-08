@@ -165,9 +165,9 @@ export default function WaitlistForm({ creatorSlug, ref, utm }: Props) {
       }
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       setStatus('done')
-      // Optional: fire-and-forget user sync to VVibe Dashboard.
-      // import { syncToVVibe } from '@/lib/vvibe-member-sync'
-      // syncToVVibe([{ email, name }]).catch(console.error)
+      // Do NOT call notifyVVibeSignup here — this component runs in the
+      // browser and the helper sends VVIBE_API_KEY as a bearer token.
+      // Fire it from the /api/waitlist route handler instead (see below).
     } catch (err) {
       setStatus('error')
       setErrorMessage(err instanceof Error ? err.message : 'Unknown error')
@@ -300,18 +300,23 @@ Add the route: `<Route path="/waitlist/:creatorSlug" element={<WaitlistPage />} 
 </html>
 ```
 
-## Wiring to VVibe User Sync
+## Wiring to the VVibe signup event
 
-After a successful POST, fire-and-forget a sync so the new follower also appears in the creator's user list (not just the waitlist):
+After a successful POST, fire-and-forget a signup event so vvibe can send the welcome email and stamp campaign analytics (not just record the waitlist row).
+
+**This runs server-side only.** `notifyVVibeSignup` sends `VVIBE_API_KEY` as a
+bearer token, so it belongs in the `/api/waitlist` route handler (or a server
+action) — never in the form component, which ships to the browser.
 
 ```ts
-// fire-and-forget — never block the success message on this
-syncToVVibe([{ email, name, status: 'active' }]).catch((err) =>
-  console.error('[VVibe Sync]', err)
+// app/api/waitlist/route.ts — after the waitlist row is stored
+// fire-and-forget — never block the success response on this
+notifyVVibeSignup({ email, display_name: name }).catch((err) =>
+  console.error('[vvibe signup]', err)
 )
 ```
 
-`syncToVVibe` lives in your codebase if you've already integrated `vvibe-member`. If not, install that skill (`npx skills add vvibe/vvibe-skills --skill vvibe-member`) to generate the helper.
+`notifyVVibeSignup` lives in your codebase if you've already integrated `vvibe-member`. If not, install that skill (`npx skills add vvibe/vvibe-skills --skill vvibe-member`) to generate the helper.
 
 ## Common Mistakes
 
