@@ -8,6 +8,7 @@
   "plugins": [
     {
       "name": "vvibe",
+      "displayName": "VVibe",
       "description": "Every VVibe skill plus the vvibe MCP server, in one install. Browser login on first use — no API key to copy.",
       "category": "development",
       "tags": ["vvibe", "analytics", "seo", "security", "creator"],
