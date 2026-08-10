@@ -28,6 +28,22 @@ const skills = readdirSync('skills', { withFileTypes: true }).filter((d) => d.is
 assert.ok(skills.length > 0, 'no skills found')
 for (const s of skills) {
   assert.ok(existsSync(`skills/${s.name}/SKILL.md`), `${s.name} is missing SKILL.md`)
+  // `description` is a YAML plain scalar, so a ": " inside it ends the value
+  // early and the loader drops the description entirely. The skill still
+  // registers — it just carries no trigger text, so the model never fires it.
+  // Silent: both this script and `claude plugin validate` passed for weeks
+  // while vvibe-changelog shipped dead. Symptom is an always-on cost of
+  // < 20 tok in `claude plugin details`.
+  // Normalize CRLF first — checkouts on Windows would otherwise miss every match.
+  const src = readFileSync(`skills/${s.name}/SKILL.md`, 'utf8').replace(/\r\n/g, '\n')
+  const front = src.match(/^---\n([\s\S]*?)\n---/)
+  assert.ok(front, `${s.name}: SKILL.md has no frontmatter`)
+  const desc = front[1].match(/^description:[ \t]*(.*)$/m)
+  assert.ok(desc, `${s.name}: SKILL.md frontmatter has no description`)
+  assert.ok(
+    !/:[ \t]/.test(desc[1]),
+    `${s.name}: description contains ": " — YAML truncates the value there and the skill loads with no trigger text. Use an em dash.`,
+  )
 }
 assert.equal(codex.skills, './skills/', 'codex manifest must point at the shared skills/ tree')
 
