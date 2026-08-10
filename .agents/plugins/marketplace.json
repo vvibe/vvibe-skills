@@ -1,7 +1,7 @@
 {
   "name": "vvibe",
   "interface": {
-    "displayName": "VVibe"
+    "displayName": "vvibe"
   },
   "plugins": [
     {

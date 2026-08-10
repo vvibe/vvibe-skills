@@ -1,9 +1,9 @@
 {
   "name": "vvibe",
   "version": "0.1.0",
-  "description": "Integrate VVibe services into any project: GA4 analytics, member sync, invitation email, pre-deploy security scanning, Product Knowledge Base extraction, SEO blog writing and rendering, and product change logging.",
+  "description": "Integrate vvibe services into any project: GA4 analytics, member sync, invitation email, pre-deploy security scanning, Product Knowledge Base extraction, SEO blog writing and rendering, and product change logging.",
   "author": {
-    "name": "VVibe",
+    "name": "vvibe",
     "email": "support@vvibe.ai",
     "url": "https://vvibe.ai"
   },
@@ -15,17 +15,17 @@
   "mcpServers": "./codex/mcp.json",
   "hooks": "./hooks/claude-codex-hooks.json",
   "interface": {
-    "displayName": "VVibe",
-    "shortDescription": "Analytics, members, email, SEO blog, and security scanning for VVibe creators.",
-    "longDescription": "Skills that act on your own VVibe account, plus the vvibe MCP server. The first tool call opens your browser to log in — sign-up is on the same page, and there is no API key to copy.",
-    "developerName": "VVibe",
+    "displayName": "vvibe",
+    "shortDescription": "Analytics, members, email, SEO blog, and security scanning for vvibe creators.",
+    "longDescription": "Skills that act on your own vvibe account, plus the vvibe MCP server. The first tool call opens your browser to log in — sign-up is on the same page, and there is no API key to copy.",
+    "developerName": "vvibe",
     "category": "Development",
     "capabilities": ["Read", "Write"],
     "websiteURL": "https://vvibe.ai",
     "defaultPrompt": [
-      "Set up VVibe analytics in this app.",
-      "Build my VVibe Product Knowledge Base from this repo.",
-      "Run a VVibe sentry scan before I deploy."
+      "Set up vvibe analytics in this app.",
+      "Build my vvibe Product Knowledge Base from this repo.",
+      "Run a vvibe sentry scan before I deploy."
     ]
   }
 }

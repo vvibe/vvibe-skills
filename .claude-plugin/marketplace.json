@@ -1,15 +1,15 @@
 {
   "name": "vvibe",
-  "description": "VVibe skills and MCP for Claude Code.",
+  "description": "vvibe skills and MCP for Claude Code.",
   "owner": {
-    "name": "VVibe",
+    "name": "vvibe",
     "email": "support@vvibe.ai"
   },
   "plugins": [
     {
       "name": "vvibe",
-      "displayName": "VVibe",
-      "description": "Every VVibe skill plus the vvibe MCP server, in one install. Browser login on first use — no API key to copy.",
+      "displayName": "vvibe",
+      "description": "Every vvibe skill plus the vvibe MCP server, in one install. Browser login on first use — no API key to copy.",
       "category": "development",
       "tags": ["vvibe", "analytics", "seo", "security", "creator"],
       "source": "./"
