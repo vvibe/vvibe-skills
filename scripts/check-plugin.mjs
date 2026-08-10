@@ -28,22 +28,32 @@ const skills = readdirSync('skills', { withFileTypes: true }).filter((d) => d.is
 assert.ok(skills.length > 0, 'no skills found')
 for (const s of skills) {
   assert.ok(existsSync(`skills/${s.name}/SKILL.md`), `${s.name} is missing SKILL.md`)
-  // `description` is a YAML plain scalar, so a ": " inside it ends the value
-  // early and the loader drops the description entirely. The skill still
-  // registers — it just carries no trigger text, so the model never fires it.
-  // Silent: both this script and `claude plugin validate` passed for weeks
-  // while vvibe-changelog shipped dead. Symptom is an always-on cost of
-  // < 20 tok in `claude plugin details`.
   // Normalize CRLF first — checkouts on Windows would otherwise miss every match.
   const src = readFileSync(`skills/${s.name}/SKILL.md`, 'utf8').replace(/\r\n/g, '\n')
   const front = src.match(/^---\n([\s\S]*?)\n---/)
   assert.ok(front, `${s.name}: SKILL.md has no frontmatter`)
   const desc = front[1].match(/^description:[ \t]*(.*)$/m)
-  assert.ok(desc, `${s.name}: SKILL.md frontmatter has no description`)
-  assert.ok(
-    !/:[ \t]/.test(desc[1]),
-    `${s.name}: description contains ": " — YAML truncates the value there and the skill loads with no trigger text. Use an em dash.`,
-  )
+  assert.ok(desc && desc[1].trim(), `${s.name}: SKILL.md frontmatter has no description`)
+  // `description` is a YAML plain scalar, and every way it can end early costs
+  // us the whole value: ": " terminates it, " #" opens a comment, and a leading
+  // indicator char makes the line parse as something else. The skill still
+  // *registers* either way — it just carries no trigger text, so the model
+  // never has a reason to fire it. vvibe-changelog shipped dead for weeks on
+  // exactly this, with both this script and `claude plugin validate` green,
+  // because neither looks at description content. The tell is the always-on
+  // cost in `claude plugin details`: < 20 tok against 150-370 for a healthy
+  // sibling. Both truncators below were confirmed by measuring that number.
+  const breakers = [
+    [/:[ \t]/, '": " — ends the YAML value there; use an em dash'],
+    [/[ \t]#/, '" #" — opens a YAML comment; drop the "#"'],
+    [/^[-?:,[\]{}#&*!|>'"%@`]/, 'a leading YAML indicator char; reword so it starts with a letter'],
+  ]
+  for (const [re, why] of breakers) {
+    assert.ok(
+      !re.test(desc[1]),
+      `${s.name}: description contains ${why}. YAML truncates it and the skill loads with no trigger text.`,
+    )
+  }
 }
 assert.equal(codex.skills, './skills/', 'codex manifest must point at the shared skills/ tree')
 
