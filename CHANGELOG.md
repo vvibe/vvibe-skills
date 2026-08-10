@@ -14,6 +14,20 @@ whole catalog, newest first, grouped by date.
 - Entry format: `- **skill x.y.z** — what changed (#PR)`. One commit touching
   several skills gets one line per bumped skill.
 
+## 2026-08-10
+
+- **vvibe-changelog 0.2.1** — the skill had been inert since 0.2.0: a `": "`
+  inside its `description` ended that YAML plain scalar early, so the loader
+  dropped the value. The skill still registered, it just carried no trigger
+  text and never fired. Replaced the colon with an em dash — always-on cost
+  goes from < 20 tok back to ~480. Also tightened the same sentence so the
+  trigger stays broad while logging defers to the changelog-worthiness rules,
+  instead of reading as "log every pricing change" against the exclusions in
+  §Hard rules. `scripts/check-plugin.mjs` now rejects every way a description
+  can be truncated (`": "`, `" #"`, a leading YAML indicator, or an empty
+  value), since neither it nor `claude plugin validate` looked at description
+  content. (#40)
+
 ## 2026-08-07
 
 - **vvibe-member 0.6.0** — stop mirroring the creator's user table. The
