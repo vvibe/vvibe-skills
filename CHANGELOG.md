@@ -14,6 +14,22 @@ whole catalog, newest first, grouped by date.
 - Entry format: `- **skill x.y.z** — what changed (#PR)`. One commit touching
   several skills gets one line per bumped skill.
 
+## 2026-08-13
+
+- **vvibe-changelog 0.3.0** — §2 now checks whether the commit-time reminder is
+  actually wired. The `PostToolUse` nudge ships with the plugin, but `npx skills
+  add` (the path the README recommends) copies the skill directory only, so
+  those installs silently had no after-the-fact trigger at all — nothing in the
+  skill, the CLI, or the MCP server mentioned the gap. The agent now detects it
+  from whether `hooks/changelog-nudge.js` sits above the skill directory, falls
+  back to the §5 / `logging.md` §3 self-detection, and tells the creator once
+  that `/plugin install vvibe` automates it.
+- `hooks/changelog-nudge.js` dedupes per session: five feature commits in a row
+  are one change to log, not five nudges. An atomic `wx` marker file in the
+  tmpdir, claimed only once a commit clears the internal-prefix filter, so a
+  `chore:` commit can't burn the session's one nudge. A missing session id or an
+  unwritable tmpdir degrades to always-nudging, never to silence.
+
 ## 2026-08-10
 
 - **vvibe-changelog 0.2.1** — the skill had been inert since 0.2.0: a `": "`

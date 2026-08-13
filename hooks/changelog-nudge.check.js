@@ -1,6 +1,6 @@
 // node hooks/changelog-nudge.check.js
 const assert = require('node:assert/strict')
-const { nudgeFor } = require('./changelog-nudge.js')
+const { nudgeFor, claimSession } = require('./changelog-nudge.js')
 
 const ok = (subject, command = 'git commit -m "x"') =>
   nudgeFor({ command, stdout: `[main a1b2c3d] ${subject}\n 2 files changed, 9 insertions(+)` })
@@ -55,5 +55,29 @@ assert.equal(nudgeFor({ command: 'git log --oneline | grep commit', stdout: '[ma
 // Missing fields must not throw.
 assert.equal(nudgeFor(), null)
 assert.equal(nudgeFor({}), null)
+
+// One nudge per session, and no way for dedupe to become silence.
+const fs = require('node:fs')
+const path = require('node:path')
+const tmp = fs.mkdtempSync(path.join(require('node:os').tmpdir(), 'nudge-check-'))
+try {
+  assert.equal(claimSession('s-1', tmp), true)
+  assert.equal(claimSession('s-1', tmp), false, 'second commit of a session stays quiet')
+  assert.equal(claimSession('s-2', tmp), true, 'a different session nudges again')
+  // No id (another host's payload) and an unusable dir both fall back to nudging.
+  assert.equal(claimSession(undefined, tmp), true)
+  assert.equal(claimSession('', tmp), true)
+  assert.equal(claimSession('s-3', path.join(tmp, 'does-not-exist')), true)
+  // An id carrying path separators lands inside dir, and still dedupes.
+  assert.equal(claimSession('../../escape', tmp), true)
+  assert.equal(claimSession('../../escape', tmp), false, 'sanitized id must still dedupe')
+  assert.deepEqual(
+    fs.readdirSync(tmp).sort(),
+    ['vvibe-changelog-nudge-....escape', 'vvibe-changelog-nudge-s-1', 'vvibe-changelog-nudge-s-2'],
+    'markers must stay in dir',
+  )
+} finally {
+  fs.rmSync(tmp, { recursive: true, force: true })
+}
 
 console.log('OK changelog-nudge')

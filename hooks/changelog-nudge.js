@@ -76,11 +76,35 @@ function nudgeFor({ command = '', stdout = '', stderr = '', cwd = '' } = {}, rea
   ].join(' ')
 }
 
-module.exports = { nudgeFor }
+/**
+ * One nudge per session: five feature commits in a row are one change to log,
+ * not five. `wx` makes the claim atomic, so two hooks firing at once can't both
+ * win it.
+ *
+ * Degrades to always-nudging rather than to silence — a session with no usable
+ * id (another host's payload shape) or an unwritable tmpdir must not turn the
+ * nudge off permanently.
+ *
+ * @returns {boolean} true when this call owns the session's single nudge
+ */
+function claimSession(sessionId, dir = require('node:os').tmpdir()) {
+  // The id reaches the filesystem, so strip it to a filename first.
+  const safe = String(sessionId ?? '').replace(/[^A-Za-z0-9._-]/g, '')
+  if (!safe) return true
+  const fs = require('node:fs')
+  try {
+    fs.closeSync(fs.openSync(require('node:path').join(dir, `vvibe-changelog-nudge-${safe}`), 'wx'))
+    return true
+  } catch (err) {
+    return err.code !== 'EEXIST'
+  }
+}
 
-// ponytail: fires once per matching commit, with no per-session dedupe — five
-// feature commits get five nudges. Add a session-keyed marker file if that
-// turns out to be noisy in practice.
+module.exports = { nudgeFor, claimSession }
+
+// ponytail: the marker files are left for the OS to reap, and the session's one
+// nudge covers the whole session even if a second, unrelated change ships later
+// in it. Key the marker on session + repo if that proves too coarse.
 if (require.main === module) {
   let raw = ''
   process.stdin.on('data', (c) => (raw += c))
@@ -93,7 +117,9 @@ if (require.main === module) {
         stderr: e.tool_response?.stderr,
         cwd: e.cwd,
       })
-      if (context) {
+      // Claim only once there's something to say, so an internal commit doesn't
+      // burn the session's one nudge.
+      if (context && claimSession(e.session_id)) {
         process.stdout.write(
           JSON.stringify({
             hookSpecificOutput: { hookEventName: 'PostToolUse', additionalContext: context },
