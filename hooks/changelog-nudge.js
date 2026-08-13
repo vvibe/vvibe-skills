@@ -108,7 +108,14 @@ function claimSession(sessionId, dir = require('node:os').tmpdir(), ttlMs = MARK
   } catch (err) {
     if (err.code !== 'EEXIST') return true
     try {
-      if (Date.now() - fs.statSync(marker).mtimeMs < ttlMs) return false
+      // Distance, not a signed age. A marker dated in the future (clock step
+      // back, restored snapshot, skewed network mount) is stale too — read as a
+      // signed age it would be a nudge that never expires. A small lead is
+      // ordinary: filesystem timestamps and `Date.now()` come from different
+      // clock sources, and on Windows the file time runs a few ms ahead, so a
+      // just-written marker can measure as negative age.
+      const age = Date.now() - fs.statSync(marker).mtimeMs
+      if (Math.abs(age) < ttlMs) return false
       // Stale: an earlier run of a resumed session, or debris that happens to
       // carry this name. Take it over, and re-date it so this run dedupes.
       fs.utimesSync(marker, new Date(), new Date())

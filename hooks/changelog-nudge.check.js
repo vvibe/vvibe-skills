@@ -82,6 +82,15 @@ try {
   assert.equal(claimSession('s-resumed', tmp), false, 'taking a stale marker over re-dates it')
   // A marker inside the window still dedupes.
   assert.equal(claimSession('s-1', tmp, 60_000), false)
+
+  // Dated in the future (clock step back, restored snapshot) is stale as well —
+  // a negative age read literally would be a nudge that never expires.
+  const future = path.join(tmp, 'vvibe-changelog-nudge-s-future')
+  fs.closeSync(fs.openSync(future, 'wx'))
+  const ahead = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
+  fs.utimesSync(future, ahead, ahead)
+  assert.equal(claimSession('s-future', tmp), true, 'a future-dated marker must not silence a session')
+  assert.equal(claimSession('s-future', tmp), false, 'and it gets re-dated on take-over')
   // An id carrying path separators lands inside dir, and still dedupes.
   assert.equal(claimSession('../../escape', tmp), true)
   assert.equal(claimSession('../../escape', tmp), false, 'sanitized id must still dedupe')
@@ -91,6 +100,7 @@ try {
       'vvibe-changelog-nudge-....escape',
       'vvibe-changelog-nudge-s-1',
       'vvibe-changelog-nudge-s-2',
+      'vvibe-changelog-nudge-s-future',
       'vvibe-changelog-nudge-s-resumed',
     ],
     'markers must stay in dir',
