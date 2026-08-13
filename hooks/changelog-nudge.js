@@ -76,11 +76,67 @@ function nudgeFor({ command = '', stdout = '', stderr = '', cwd = '' } = {}, rea
   ].join(' ')
 }
 
-module.exports = { nudgeFor }
+// A marker this old is not a nudge anyone remembers seeing. Sessions outlive
+// their own working day only by being resumed.
+const MARKER_TTL_MS = 12 * 60 * 60 * 1000
 
-// ponytail: fires once per matching commit, with no per-session dedupe — five
-// feature commits get five nudges. Add a session-keyed marker file if that
-// turns out to be noisy in practice.
+// How far a marker's timestamp may lead the clock before it reads as stale.
+// Measured lead between a write and the next `stat` is under 2ms, so 60s is a
+// five-thousand-fold margin that still can't be reached by a real clock step.
+const CLOCK_LEAD_SLACK_MS = 60 * 1000
+
+/**
+ * One nudge per session: five feature commits in a row are one change to log,
+ * not five. `wx` makes the claim atomic, so two hooks firing at once can't both
+ * win it.
+ *
+ * Every failure degrades to nudging, never to silence. An id that isn't a
+ * string (another host's payload shape), an unwritable tmpdir, an unreadable
+ * marker, or a marker older than `ttlMs` all nudge — the last of those is what
+ * keeps `--resume` working, since `session_id` survives it and the tmpdir
+ * marker outlives the run that wrote it.
+ *
+ * @returns {boolean} true when this call owns the session's single nudge
+ */
+function claimSession(sessionId, dir = require('node:os').tmpdir(), ttlMs = MARKER_TTL_MS) {
+  // Stringifying can't keep ids apart (123 and '123' collide, as do any two
+  // objects), and the id reaches the filesystem — so demand a string, then
+  // strip it to a filename.
+  if (typeof sessionId !== 'string') return true
+  const safe = sessionId.replace(/[^A-Za-z0-9._-]/g, '')
+  if (!safe) return true
+  const fs = require('node:fs')
+  const marker = require('node:path').join(dir, `vvibe-changelog-nudge-${safe}`)
+  try {
+    fs.closeSync(fs.openSync(marker, 'wx'))
+    return true
+  } catch (err) {
+    if (err.code !== 'EEXIST') return true
+    try {
+      // Filesystem timestamps and `Date.now()` read different clock sources —
+      // on Windows the file time leads by a millisecond or two — so a marker
+      // written moments ago can measure as a slightly negative age. Tolerate
+      // that much lead and no more: a marker dated genuinely ahead (clock step
+      // back, restored snapshot, skewed network mount) is stale, since read as
+      // a plain signed age it would be a nudge that never expires.
+      const age = Date.now() - fs.statSync(marker).mtimeMs
+      if (age > -CLOCK_LEAD_SLACK_MS && age < ttlMs) return false
+      // Stale: an earlier run of a resumed session, or debris that happens to
+      // carry this name. Take it over, and re-date it so this run dedupes.
+      fs.utimesSync(marker, new Date(), new Date())
+    } catch {
+      // Can't judge its age. Nudge rather than go quiet.
+    }
+    return true
+  }
+}
+
+module.exports = { nudgeFor, claimSession }
+
+// ponytail: marker files are left for the OS to reap, the 12h TTL is a guess at
+// "same working day" rather than a real session boundary, and one nudge covers a
+// whole session even if a second, unrelated change ships later in it. Key the
+// marker on session + repo if that proves too coarse.
 if (require.main === module) {
   let raw = ''
   process.stdin.on('data', (c) => (raw += c))
@@ -93,7 +149,9 @@ if (require.main === module) {
         stderr: e.tool_response?.stderr,
         cwd: e.cwd,
       })
-      if (context) {
+      // Claim only once there's something to say, so an internal commit doesn't
+      // burn the session's one nudge.
+      if (context && claimSession(e.session_id)) {
         process.stdout.write(
           JSON.stringify({
             hookSpecificOutput: { hookEventName: 'PostToolUse', additionalContext: context },

@@ -1,6 +1,6 @@
 // node hooks/changelog-nudge.check.js
 const assert = require('node:assert/strict')
-const { nudgeFor } = require('./changelog-nudge.js')
+const { nudgeFor, claimSession } = require('./changelog-nudge.js')
 
 const ok = (subject, command = 'git commit -m "x"') =>
   nudgeFor({ command, stdout: `[main a1b2c3d] ${subject}\n 2 files changed, 9 insertions(+)` })
@@ -55,5 +55,93 @@ assert.equal(nudgeFor({ command: 'git log --oneline | grep commit', stdout: '[ma
 // Missing fields must not throw.
 assert.equal(nudgeFor(), null)
 assert.equal(nudgeFor({}), null)
+
+// One nudge per session, and no way for dedupe to become silence.
+const fs = require('node:fs')
+const path = require('node:path')
+const tmp = fs.mkdtempSync(path.join(require('node:os').tmpdir(), 'nudge-check-'))
+try {
+  assert.equal(claimSession('s-1', tmp), true)
+  assert.equal(claimSession('s-1', tmp), false, 'second commit of a session stays quiet')
+  assert.equal(claimSession('s-2', tmp), true, 'a different session nudges again')
+  // Anything that isn't a usable string id, and an unusable dir, fall back to
+  // nudging. Non-strings are rejected rather than stringified: `123` and `'123'`
+  // would land on one marker, as would any two objects.
+  for (const id of [undefined, null, '', 123, {}, { a: 1 }, ['x']]) {
+    assert.equal(claimSession(id, tmp), true, `must nudge for ${JSON.stringify(id) ?? typeof id}`)
+  }
+  assert.equal(claimSession('s-3', path.join(tmp, 'does-not-exist')), true)
+
+  // `session_id` survives --resume and the marker outlives the run that wrote
+  // it, so an aged marker must not silence the resumed session for good.
+  const aged = path.join(tmp, 'vvibe-changelog-nudge-s-resumed')
+  fs.closeSync(fs.openSync(aged, 'wx'))
+  const longAgo = new Date(Date.now() - 13 * 60 * 60 * 1000)
+  fs.utimesSync(aged, longAgo, longAgo)
+  assert.equal(claimSession('s-resumed', tmp), true, 'a stale marker must not silence a resumed session')
+  assert.equal(claimSession('s-resumed', tmp), false, 'taking a stale marker over re-dates it')
+  // A marker inside the window still dedupes.
+  assert.equal(claimSession('s-1', tmp, 60_000), false)
+
+  // Dated in the future (clock step back, restored snapshot) is stale as well —
+  // a negative age read literally would be a nudge that never expires.
+  const future = path.join(tmp, 'vvibe-changelog-nudge-s-future')
+  fs.closeSync(fs.openSync(future, 'wx'))
+  const ahead = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
+  fs.utimesSync(future, ahead, ahead)
+  assert.equal(claimSession('s-future', tmp), true, 'a future-dated marker must not silence a session')
+  assert.equal(claimSession('s-future', tmp), false, 'and it gets re-dated on take-over')
+
+  // Only the sub-second lead a filesystem clock actually produces is tolerated.
+  // Two hours ahead is inside the TTL but far outside that slack, so it is a
+  // clock that moved, not measurement noise — stale.
+  const leading = path.join(tmp, 'vvibe-changelog-nudge-s-ahead')
+  fs.closeSync(fs.openSync(leading, 'wx'))
+  const soon = new Date(Date.now() + 2 * 60 * 60 * 1000)
+  fs.utimesSync(leading, soon, soon)
+  assert.equal(claimSession('s-ahead', tmp), true, 'a lead beyond clock noise is stale, not fresh')
+  // An id carrying path separators lands inside dir, and still dedupes.
+  assert.equal(claimSession('../../escape', tmp), true)
+  assert.equal(claimSession('../../escape', tmp), false, 'sanitized id must still dedupe')
+  assert.deepEqual(
+    fs.readdirSync(tmp).sort(),
+    [
+      'vvibe-changelog-nudge-....escape',
+      'vvibe-changelog-nudge-s-1',
+      'vvibe-changelog-nudge-s-2',
+      'vvibe-changelog-nudge-s-ahead',
+      'vvibe-changelog-nudge-s-future',
+      'vvibe-changelog-nudge-s-resumed',
+    ],
+    'markers must stay in dir',
+  )
+} finally {
+  fs.rmSync(tmp, { recursive: true, force: true })
+}
+
+// Claiming only AFTER nudgeFor() returns something is what stops a `chore:`
+// commit from burning the session's one nudge — and that ordering lives in the
+// main block, so only running the script end to end can check it.
+{
+  const dir = fs.mkdtempSync(path.join(require('node:os').tmpdir(), 'nudge-e2e-'))
+  const run = (subject) =>
+    require('node:child_process').execFileSync(process.execPath, [path.join(__dirname, 'changelog-nudge.js')], {
+      input: JSON.stringify({
+        session_id: 'e2e',
+        tool_input: { command: 'git commit -m "x"' },
+        tool_response: { stdout: `[main a1b2c3d] ${subject}\n 1 file changed` },
+      }),
+      encoding: 'utf8',
+      // os.tmpdir() reads TMPDIR on POSIX and TEMP/TMP on Windows.
+      env: { ...process.env, TMPDIR: dir, TEMP: dir, TMP: dir },
+    })
+  try {
+    assert.equal(run('chore: bump deps'), '', 'an internal commit stays silent')
+    assert.match(run('feat: dark mode'), /vibe_log_product_change/, 'the chore must not have burned the nudge')
+    assert.equal(run('feat: something else'), '', 'and the session is spent after its one nudge')
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true })
+  }
+}
 
 console.log('OK changelog-nudge')
