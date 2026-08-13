@@ -91,6 +91,15 @@ try {
   fs.utimesSync(future, ahead, ahead)
   assert.equal(claimSession('s-future', tmp), true, 'a future-dated marker must not silence a session')
   assert.equal(claimSession('s-future', tmp), false, 'and it gets re-dated on take-over')
+
+  // Only the sub-second lead a filesystem clock actually produces is tolerated.
+  // Two hours ahead is inside the TTL but far outside that slack, so it is a
+  // clock that moved, not measurement noise — stale.
+  const leading = path.join(tmp, 'vvibe-changelog-nudge-s-ahead')
+  fs.closeSync(fs.openSync(leading, 'wx'))
+  const soon = new Date(Date.now() + 2 * 60 * 60 * 1000)
+  fs.utimesSync(leading, soon, soon)
+  assert.equal(claimSession('s-ahead', tmp), true, 'a lead beyond clock noise is stale, not fresh')
   // An id carrying path separators lands inside dir, and still dedupes.
   assert.equal(claimSession('../../escape', tmp), true)
   assert.equal(claimSession('../../escape', tmp), false, 'sanitized id must still dedupe')
@@ -100,6 +109,7 @@ try {
       'vvibe-changelog-nudge-....escape',
       'vvibe-changelog-nudge-s-1',
       'vvibe-changelog-nudge-s-2',
+      'vvibe-changelog-nudge-s-ahead',
       'vvibe-changelog-nudge-s-future',
       'vvibe-changelog-nudge-s-resumed',
     ],

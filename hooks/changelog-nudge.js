@@ -80,6 +80,11 @@ function nudgeFor({ command = '', stdout = '', stderr = '', cwd = '' } = {}, rea
 // their own working day only by being resumed.
 const MARKER_TTL_MS = 12 * 60 * 60 * 1000
 
+// How far a marker's timestamp may lead the clock before it reads as stale.
+// Measured lead between a write and the next `stat` is under 2ms, so 60s is a
+// five-thousand-fold margin that still can't be reached by a real clock step.
+const CLOCK_LEAD_SLACK_MS = 60 * 1000
+
 /**
  * One nudge per session: five feature commits in a row are one change to log,
  * not five. `wx` makes the claim atomic, so two hooks firing at once can't both
@@ -108,14 +113,14 @@ function claimSession(sessionId, dir = require('node:os').tmpdir(), ttlMs = MARK
   } catch (err) {
     if (err.code !== 'EEXIST') return true
     try {
-      // Distance, not a signed age. A marker dated in the future (clock step
-      // back, restored snapshot, skewed network mount) is stale too — read as a
-      // signed age it would be a nudge that never expires. A small lead is
-      // ordinary: filesystem timestamps and `Date.now()` come from different
-      // clock sources, and on Windows the file time runs a few ms ahead, so a
-      // just-written marker can measure as negative age.
+      // Filesystem timestamps and `Date.now()` read different clock sources —
+      // on Windows the file time leads by a millisecond or two — so a marker
+      // written moments ago can measure as a slightly negative age. Tolerate
+      // that much lead and no more: a marker dated genuinely ahead (clock step
+      // back, restored snapshot, skewed network mount) is stale, since read as
+      // a plain signed age it would be a nudge that never expires.
       const age = Date.now() - fs.statSync(marker).mtimeMs
-      if (Math.abs(age) < ttlMs) return false
+      if (age > -CLOCK_LEAD_SLACK_MS && age < ttlMs) return false
       // Stale: an earlier run of a resumed session, or debris that happens to
       // carry this name. Take it over, and re-date it so this run dedupes.
       fs.utimesSync(marker, new Date(), new Date())
