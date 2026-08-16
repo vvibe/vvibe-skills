@@ -1,6 +1,6 @@
 ---
 name: vvibe-member
-version: 0.6.0
+version: 0.7.0
 manifest_version: 1
 description: Help users wire signup events between their app and VVibe — tell VVibe when someone registers so referral codes and welcome emails work, capture signup attribution, and receive VVibe-side member events. Trigger when the user mentions VVibe signup events, member integration, telling VVibe about new users, referral / ref code capture at signup, signup attribution, utm tracking, or VVibe webhooks.
 ---
@@ -55,6 +55,21 @@ language / framework — read `package.json`, glob for files, look at `.env`.
 
 After detection, briefly tell the human user what you found and what's
 missing — don't ask them to confirm capabilities you can verify yourself.
+
+**`vibe_list_members` missing? Two different cases — don't conflate them.**
+No `vibe_*` tools at all means VVibe isn't connected: the fastest fix is `npx
+@vvibe/cli connect --server=https://mcp.vvibe.ai` (the first call opens a
+browser login, and sign-up is on that same page, so a brand-new user creates
+the account and connects in one step). Core `vibe_*` tools present (e.g.
+`vibe_get_product_kb`) but no `vibe_list_members` means the opposite: you're
+connected, but this skill isn't activated for the connection. That is normal
+whenever the files arrived outside VVibe's install flow — most often bundled
+with the `vvibe` plugin, which ships every skill but runs no per-skill install
+step. Call `vibe_report_skill_installed({ skillId: 'member', version: '<from
+this file's frontmatter>' })` and the tool becomes available on the same
+session (reconnect once if your MCP client caches the tool list). The signup
+event itself is unaffected either way — it is a plain HTTP call authenticated
+by `VVIBE_API_KEY`, not an MCP tool.
 
 ## 3. Modes
 

@@ -1,6 +1,6 @@
 ---
 name: vvibe-email
-version: 0.7.0
+version: 0.8.0
 manifest_version: 1
 description: Help VVibe creators wire invitation-email integration end-to-end — where the email CTA lands (VVibe-hosted, self-hosted waitlist, or direct register), how to send campaigns via Vibe MCP, how to pull a recipient segment out of the creator's own database and import it into a campaign (saved as a reusable segment definition), and how to manage system + follower-flow email templates. When drafting campaign copy, reads the creator's Product Brain (`vibe_get_product_kb`) for brand voice, value prop, audience, and forbidden claims so the email matches the brand and avoids legal landmines. Trigger when the user mentions invitation emails, follower outreach campaigns, sending an email blast, drafting an email campaign, waitlist signup landing page, app base URL, embedding a waitlist CTA, skipping the waitlist when a member system already exists, or asks where the registration email link lands, or asks to email a particular slice of their users (paying members, a region, recently active) rather than a list they already have.
 
@@ -52,10 +52,25 @@ Detect from the project. Don't ask if you can find out.
 | `has_signup_flow` | Discoverable registration handler (route file or auth-provider hook). | direct-register |
 | `has_api_key_local` | `VVIBE_API_KEY` in `.env*` or framework env. | all three click destinations + REST fallbacks |
 | `signup_event_wired` | Grep **application source only** (exclude `.claude/skills/`, `docs/`, `*.md`) for an import or call of `notifyVVibeSignup(` , or a `fetch` to `/api/members/signup-event`. A match inside skill docs is not wiring. See vvibe-member skill. | direct-register (required), self-hosted-waitlist (recommended) |
-| `vibe_mcp_connected` | `vibe_*` tools registered on this session. | mcp-campaign only |
+| `vibe_mcp_connected` | The campaign tools (`vibe_create_campaign`, `vibe_send_campaign`, …) are in your tool list — not merely some `vibe_*` tool, see below. | mcp-campaign only |
 | `product_brain_exists` | `vibe_get_product_kb` returns non-null `data`. The brain tools are always registered (no skill gate), so this read works even if only the email skill is installed — building it still needs vvibe-product-brain. | mcp-campaign (drafting copy) |
 
 After detection, tell the user briefly what you found.
+
+**Campaign tools missing? Two different cases — don't conflate them.** No
+`vibe_*` tools at all means VVibe isn't connected: the fastest fix is `npx
+@vvibe/cli connect --server=https://mcp.vvibe.ai` (the first call opens a
+browser login, and sign-up is on that same page, so a brand-new user creates
+the account and connects in one step). Core `vibe_*` tools present (e.g.
+`vibe_get_product_kb`) but no `vibe_create_campaign` / `vibe_send_campaign`
+means the opposite: you're connected, but this skill isn't activated for the
+connection. That is normal whenever the files arrived outside VVibe's install
+flow — most often bundled with the `vvibe` plugin, which ships every skill but
+runs no per-skill install step. Call `vibe_report_skill_installed({ skillId:
+'email', version: '<from this file's frontmatter>' })` and the campaign tools
+become available on the same session (reconnect once if your MCP client caches
+the tool list). Confirm with `vibe_list_skills`, which shows `installed` per
+skill.
 
 **If detection is impossible** (closed-source repo, thin context, agent
 can't run filesystem operations): name the capability you couldn't verify
