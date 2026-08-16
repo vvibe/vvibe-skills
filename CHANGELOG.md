@@ -16,21 +16,33 @@ whole catalog, newest first, grouped by date.
 
 ## 2026-08-13
 
-- **vvibe-email 0.8.0**, **vvibe-sentry 0.5.0**, **vvibe-member 0.7.0**,
-  **vvibe-blog-render 0.4.0** — each now documents how to recover when its
-  own `vibe_*` tools are missing. The MCP server registers every skill's
-  tools but disables the ones whose skill isn't installed for the connection
-  (`mcp-server.ts`), and only `vibe_report_skill_installed` re-enables them.
-  The `npx skills add` path reports as part of installing; **the plugin path
-  has no per-skill install step**, so on a `/plugin install vvibe` these four
-  skills' tools stayed dead with nothing in their `SKILL.md` saying why or
-  how to fix it — the agent could read the whole skill and still not find the
-  one call that turns it on. Each §2 now separates the two cases the old
-  wording conflated (not connected at all vs connected but not activated) and
-  names the call. `vvibe-changelog` and `vvibe-blog-writer` already had this;
-  `vvibe-analytics` and `vvibe-product-brain` don't need it (their tools carry
-  no `requiresSkill` gate). Groundwork for VV-159, which makes the plugin the
-  default install path so hooks ship by default. (#42)
+- **vvibe-email 0.8.0** — §2 now documents how to revive the campaign tools
+  when they're missing, and its `vibe_mcp_connected` check names them instead
+  of saying "`vibe_*` tools registered", which was true-but-useless while all
+  twelve campaign tools sat disabled. (#42)
+- **vvibe-sentry 0.5.0** — same recovery note for `vibe_report_health_check`,
+  plus the reassurance that `local-scan-only` needs no VVibe connection at
+  all, so a creator isn't told the skill is broken when only reporting is. (#42)
+- **vvibe-member 0.7.0** — same for `vibe_list_members`, noting that the
+  signup event is unaffected either way: it's a plain HTTP call authenticated
+  by `VVIBE_API_KEY`, not an MCP tool. (#42)
+- **vvibe-blog-render 0.4.0** — same for
+  `vibe_report_blog_render_connected`, noting that rendering itself is
+  unaffected because the content API is public. (#42)
+
+  All four share one cause. The MCP server registers every skill's tools and
+  disables the ones whose skill isn't installed *for that connection*
+  (`mcp-server.ts`); registration is what re-enables them. Onboarding
+  registers whatever the agent **recommends** — completing an install task
+  registers the skill, and the task queue already tells plugin users to skip
+  the install and just report the task done. What it can't cover is a skill
+  the agent never recommended, which the `vvibe` plugin installs anyway
+  because it ships the whole catalog. Those come up with dead tools, and
+  until now nothing in their `SKILL.md` said why or how to fix it — the agent
+  could read the entire skill and never find the one call that turns it on.
+  `vvibe-changelog` and `vvibe-blog-writer` already carried this note;
+  `vvibe-analytics` and `vvibe-product-brain` don't need it (no
+  `requiresSkill` gate on their tools). Groundwork for VV-159.
 
 - **vvibe-changelog 0.3.0** — §2 now checks whether the commit-time reminder is
   actually wired. The `PostToolUse` nudge ships with the plugin, but `npx skills
