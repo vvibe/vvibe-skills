@@ -16,6 +16,22 @@ whole catalog, newest first, grouped by date.
 
 ## 2026-08-13
 
+- **vvibe-email 0.8.0**, **vvibe-sentry 0.5.0**, **vvibe-member 0.7.0**,
+  **vvibe-blog-render 0.4.0** — each now documents how to recover when its
+  own `vibe_*` tools are missing. The MCP server registers every skill's
+  tools but disables the ones whose skill isn't installed for the connection
+  (`mcp-server.ts`), and only `vibe_report_skill_installed` re-enables them.
+  The `npx skills add` path reports as part of installing; **the plugin path
+  has no per-skill install step**, so on a `/plugin install vvibe` these four
+  skills' tools stayed dead with nothing in their `SKILL.md` saying why or
+  how to fix it — the agent could read the whole skill and still not find the
+  one call that turns it on. Each §2 now separates the two cases the old
+  wording conflated (not connected at all vs connected but not activated) and
+  names the call. `vvibe-changelog` and `vvibe-blog-writer` already had this;
+  `vvibe-analytics` and `vvibe-product-brain` don't need it (their tools carry
+  no `requiresSkill` gate). Groundwork for VV-159, which makes the plugin the
+  default install path so hooks ship by default. (#42)
+
 - **vvibe-changelog 0.3.0** — §2 now checks whether the commit-time reminder is
   actually wired. The `PostToolUse` nudge ships with the plugin, but `npx skills
   add` (the path the README recommends) copies the skill directory only, so

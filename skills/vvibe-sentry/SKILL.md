@@ -1,6 +1,6 @@
 ---
 name: vvibe-sentry
-version: 0.4.0
+version: 0.5.0
 manifest_version: 1
 description: Run a pre-deploy security and reliability audit on a VVibe creator's codebase end-to-end — orchestrate gitleaks / osv-scanner / semgrep / VVibe-internal checks, present a plain-language summary, and (optionally) report results back to the VVibe dashboard via REST or the Vibe MCP. Trigger when the user mentions VVibe sentry scan, security audit, pre-deploy check, secret leak, dependency CVE, vulnerability scan, code-pattern check, wants to verify the codebase is safe to go live, or asks to push a health-check report to the VVibe dashboard.
 
@@ -51,6 +51,21 @@ After detection, tell the user briefly what you found. If detection is
 impossible (closed-source repo, thin context): ask one yes/no per missing
 capability, defaulting to *assume missing* — over-routing to
 `local-scan-only` is safer than claiming integration that doesn't work.
+
+**`vibe_report_health_check` missing? Two different cases — don't conflate
+them.** No `vibe_*` tools at all means VVibe isn't connected: the fastest fix
+is `npx @vvibe/cli connect --server=https://mcp.vvibe.ai` (the first call
+opens a browser login, and sign-up is on that same page, so a brand-new user
+creates the account and connects in one step). Core `vibe_*` tools present
+(e.g. `vibe_get_product_kb`) but no `vibe_report_health_check` means the
+opposite: you're connected, but this skill isn't activated for the
+connection. That is normal whenever the files arrived outside VVibe's install
+flow — most often bundled with the `vvibe` plugin, which ships every skill but
+runs no per-skill install step. Call `vibe_report_skill_installed({ skillId:
+'sentry', version: '<from this file's frontmatter>' })` and the tool becomes
+available on the same session (reconnect once if your MCP client caches the
+tool list). Until then `local-scan-only` still works — the scan itself needs
+no VVibe connection; only reporting the result back does.
 
 ## 3. Modes
 

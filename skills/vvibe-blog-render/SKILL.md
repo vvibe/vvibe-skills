@@ -1,6 +1,6 @@
 ---
 name: vvibe-blog-render
-version: 0.3.0
+version: 0.4.0
 manifest_version: 1
 description: Build a blog frontend in the creator's OWN app that renders their VVibe-published articles by reading the VVibe public content API — index + post pages, the SEO VVibe already generated (meta tags + JSON-LD), incremental revalidation, and an RSS feed + sitemap at the creator's own domain. VVibe is a headless CMS — it serves content but does not render pages; this skill is the "head". Trigger when the user wants to show / display / render their VVibe blog on their website, "put my vvibe articles on my site", set up the blog frontend, connect their site to the VVibe content API, or add a blog page to their app.
 ---
@@ -54,6 +54,22 @@ endpoints a reader's browser could.
 
 Detect, don't interrogate: probe the repo and the content API yourself
 before asking.
+
+**`vibe_report_blog_render_connected` missing? Two different cases — don't
+conflate them.** No `vibe_*` tools at all means VVibe isn't connected: the
+fastest fix is `npx @vvibe/cli connect --server=https://mcp.vvibe.ai` (the
+first call opens a browser login, and sign-up is on that same page, so a
+brand-new user creates the account and connects in one step). Core `vibe_*`
+tools present (e.g. `vibe_get_product_kb`) but no
+`vibe_report_blog_render_connected` means the opposite: you're connected, but
+this skill isn't activated for the connection. That is normal whenever the
+files arrived outside VVibe's install flow — most often bundled with the
+`vvibe` plugin, which ships every skill but runs no per-skill install step.
+Call `vibe_report_skill_installed({ skillId: 'blog_render', version: '<from
+this file's frontmatter>' })` and the tool becomes available on the same
+session (reconnect once if your MCP client caches the tool list). Rendering
+itself is unaffected either way — the content API is public and needs no
+credentials; only reporting the connection back to the dashboard is gated.
 
 ## 3. The flow — pick where the user is
 
