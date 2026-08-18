@@ -10,6 +10,26 @@
             "statusMessage": "VVibe: checking for a change to log",
             "command": "command -v node >/dev/null 2>&1 && node \"${CLAUDE_PLUGIN_ROOT}/hooks/changelog-nudge.js\" || exit 0",
             "commandWindows": "if (Get-Command node -ErrorAction SilentlyContinue) { node \"$env:CLAUDE_PLUGIN_ROOT\\hooks\\changelog-nudge.js\" }"
+          },
+          {
+            "type": "command",
+            "timeout": 5,
+            "statusMessage": "VVibe: recording session activity",
+            "command": "command -v node >/dev/null 2>&1 && node \"${CLAUDE_PLUGIN_ROOT}/hooks/activity-collector.js\" || exit 0",
+            "commandWindows": "if (Get-Command node -ErrorAction SilentlyContinue) { node \"$env:CLAUDE_PLUGIN_ROOT\\hooks\\activity-collector.js\" }"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "timeout": 5,
+            "statusMessage": "VVibe: checking for activity to journal",
+            "command": "command -v node >/dev/null 2>&1 && node \"${CLAUDE_PLUGIN_ROOT}/hooks/activity-recap-nudge.js\" || exit 0",
+            "commandWindows": "if (Get-Command node -ErrorAction SilentlyContinue) { node \"$env:CLAUDE_PLUGIN_ROOT\\hooks\\activity-recap-nudge.js\" }"
           }
         ]
       }

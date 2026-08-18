@@ -229,4 +229,6 @@ After touching any manifest or hook:
 ```bash
 node scripts/check-plugin.mjs
 node hooks/changelog-nudge.check.js
+node hooks/activity-collector.check.js
+node hooks/activity-recap-nudge.check.js
 ```

@@ -1,7 +1,7 @@
 {
   "name": "vvibe",
   "description": "vvibe for Claude Code — one install wires the vvibe MCP server plus every vvibe skill: GA4 analytics, member sync, invitation email, pre-deploy security scanning (gitleaks/osv-scanner/semgrep), Product Knowledge Base extraction, SEO blog writing and rendering, and product change logging. The skills act on your own vvibe account; the first tool call opens your browser to log in (sign-up is on the same page), so there is no key to copy.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "author": {
     "name": "vvibe",
     "email": "support@vvibe.ai"
