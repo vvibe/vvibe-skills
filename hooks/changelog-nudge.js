@@ -98,7 +98,12 @@ const CLOCK_LEAD_SLACK_MS = 60 * 1000
  *
  * @returns {boolean} true when this call owns the session's single nudge
  */
-function claimSession(sessionId, dir = require('node:os').tmpdir(), ttlMs = MARKER_TTL_MS) {
+function claimSession(
+  sessionId,
+  dir = require('node:os').tmpdir(),
+  ttlMs = MARKER_TTL_MS,
+  prefix = 'vvibe-changelog-nudge-',
+) {
   // Stringifying can't keep ids apart (123 and '123' collide, as do any two
   // objects), and the id reaches the filesystem — so demand a string, then
   // strip it to a filename.
@@ -106,7 +111,7 @@ function claimSession(sessionId, dir = require('node:os').tmpdir(), ttlMs = MARK
   const safe = sessionId.replace(/[^A-Za-z0-9._-]/g, '')
   if (!safe) return true
   const fs = require('node:fs')
-  const marker = require('node:path').join(dir, `vvibe-changelog-nudge-${safe}`)
+  const marker = require('node:path').join(dir, `${prefix}${safe}`)
   try {
     fs.closeSync(fs.openSync(marker, 'wx'))
     return true
@@ -131,7 +136,11 @@ function claimSession(sessionId, dir = require('node:os').tmpdir(), ttlMs = MARK
   }
 }
 
-module.exports = { nudgeFor, claimSession }
+// Exported so hooks/activity-collector.js doesn't re-derive the same "did a
+// commit just happen, what's its subject" logic — only the internal-prefix
+// and --amend filtering below is specific to the changelog nudge; activity
+// collection wants every commit, filtered or not.
+module.exports = { nudgeFor, claimSession, COMMITTED, headSubject }
 
 // ponytail: marker files are left for the OS to reap, the 12h TTL is a guess at
 // "same working day" rather than a real session boundary, and one nudge covers a

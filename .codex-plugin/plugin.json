@@ -1,6 +1,6 @@
 {
   "name": "vvibe",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Integrate vvibe services into any project: GA4 analytics, member sync, invitation email, pre-deploy security scanning, Product Knowledge Base extraction, SEO blog writing and rendering, and product change logging.",
   "author": {
     "name": "vvibe",
